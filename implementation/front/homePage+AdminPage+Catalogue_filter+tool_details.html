@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIFinder - Maquettes projet complet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --surface2: #eef0f8;
+      --surface3: #e5e8f4;
+      --border: rgba(23,23,36,.11);
+      --accent: #6c63ff;
+      --accent2: #ff6b6b;
+      --accent3: #00d9a6;
+      --warning: #ffc400;
+      --text: #171724;
+      --muted: #6b6f85;
+      --glow: rgba(108,99,255,.16);
+      --shadow: 0 14px 36px rgba(22,24,38,.09);
+      --radius: 12px;
+      --nav-h: 70px;
+      --sidebar: 276px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100vh;
+      font-family: "DM Sans", system-ui, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 40% at 12% 12%, rgba(108,99,255,.16), transparent 60%),
+        radial-gradient(ellipse 48% 36% at 92% 78%, rgba(0,217,166,.10), transparent 55%),
+        radial-gradient(ellipse 38% 30% at 78% 8%, rgba(255,107,107,.08), transparent 50%);
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    h1, h2, h3, h4, .brand strong, .metric strong, .score {
+      font-family: Syne, sans-serif;
+      letter-spacing: -0.01em;
+    }
+    .screen {
+      position: relative;
+      z-index: 1;
+      display: none;
+      min-height: 100vh;
+    }
+    .screen.active { display: block; }
+    .container { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+    .muted { color: var(--muted); }
+
+    .topnav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--bg) 82%, transparent);
+      backdrop-filter: blur(20px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      min-width: max-content;
+    }
+    .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      box-shadow: 0 0 28px var(--glow);
+      font-weight: 800;
+    }
+    .brand em { color: var(--accent); font-style: normal; }
+    .navlinks {
+      display: flex;
+      gap: 4px;
+      margin: 0 auto;
+      align-items: center;
+      overflow-x: auto;
+    }
+    .navlinks button, .pill-btn {
+      min-height: 36px;
+      padding: 0 13px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      white-space: nowrap;
+      transition: .2s;
+    }
+    .navlinks button:hover, .navlinks button.active, .pill-btn.active {
+      color: var(--text);
+      background: var(--surface2);
+      border-color: var(--border);
+    }
+    .auth { display: flex; gap: 9px; align-items: center; }
+    .btn {
+      min-height: 38px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 8px 20px rgba(22,24,38,.05);
+      transition: .2s;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(108,99,255,.28); }
+    .btn.primary {
+      border-color: transparent;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #7e77ff);
+      box-shadow: 0 12px 26px rgba(108,99,255,.22);
+    }
+    .btn.success {
+      color: #fff;
+      border-color: transparent;
+      background: linear-gradient(135deg, #00b987, var(--accent3));
+    }
+    .btn.danger {
+      color: #fff;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--accent2), #ff8c8c);
+    }
+    .btn.ghost { background: transparent; box-shadow: none; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 9px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--surface2) 76%, transparent);
+      font-size: .74rem;
+      white-space: nowrap;
+    }
+    .badge.ok { color: #009f78; border-color: rgba(0,217,166,.30); background: rgba(0,217,166,.09); }
+    .badge.warn { color: #a77d00; border-color: rgba(255,196,0,.34); background: rgba(255,196,0,.14); }
+    .badge.danger { color: #dd4545; border-color: rgba(255,107,107,.34); background: rgba(255,107,107,.10); }
+    .badge.info { color: var(--accent); border-color: rgba(108,99,255,.30); background: rgba(108,99,255,.10); }
+
+    .hero {
+      padding: 76px 0 34px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(360px, .95fr);
+      gap: 34px;
+      align-items: center;
+    }
+    .hero h1 {
+      max-width: 760px;
+      font-size: clamp(2.45rem, 5.2vw, 5rem);
+      line-height: 1.02;
+      margin: 18px 0 18px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p { max-width: 640px; color: var(--muted); font-size: 1.05rem; line-height: 1.75; }
+    .search-hero {
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      align-items: center;
+      width: min(720px, 100%);
+      min-height: 56px;
+      margin: 26px 0 14px;
+      border: 1px solid rgba(108,99,255,.24);
+      border-radius: 15px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .search-hero span { text-align: center; color: var(--muted); }
+    .search-hero input { min-width: 0; border: 0; outline: 0; color: var(--text); background: transparent; }
+    .hero-tags, .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hero-panel {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .live-list { display: grid; gap: 0; }
+    .live-item {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 12px;
+      padding: 15px 16px;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .live-item:last-child { border-bottom: 0; }
+    .tool-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      background: rgba(108,99,255,.12);
+      color: var(--accent);
+      font-weight: 800;
+      overflow: hidden;
+    }
+    .tool-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .mini { color: var(--muted); font-size: .78rem; line-height: 1.45; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      padding: 20px 0 44px;
+    }
+    .metric, .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      box-shadow: 0 10px 28px rgba(22,24,38,.06);
+    }
+    .metric { padding: 18px; }
+    .metric strong { display: block; font-size: 1.7rem; margin-bottom: 4px; }
+    .section { padding: 34px 0; }
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .section-head h2 { font-size: 1.55rem; }
+    .grid { display: grid; gap: 14px; }
+    .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cat-card, .tool-card, .workflow-card {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 10px 28px rgba(22,24,38,.05);
+      transition: .2s;
+    }
+    .cat-card:hover, .tool-card:hover { transform: translateY(-2px); border-color: rgba(108,99,255,.28); }
+    .cat-card {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .cat-ico {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(108,99,255,.12);
+    }
+    .tool-card { position: relative; overflow: hidden; display: grid; gap: 13px; }
+    .tool-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent3));
+    }
+    .tool-top {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 12px;
+      align-items: start;
+    }
+    .tool-desc { color: var(--muted); font-size: .86rem; line-height: 1.6; min-height: 54px; }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+    }
+    .meta {
+      padding: 8px;
+      border-radius: 9px;
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: .76rem;
+    }
+    .meta b { display: block; color: var(--text); font-size: .82rem; margin-top: 2px; }
+    .tool-actions { display: flex; justify-content: space-between; gap: 9px; align-items: center; flex-wrap: wrap; }
+    .actions { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+    .progress {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .progress i {
+      display: block;
+      width: var(--value);
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent3));
+    }
+    .chip, .tab {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      padding: 7px 12px;
+      font-size: .8rem;
+      transition: .2s;
+    }
+    .chip.active, .tab.active {
+      color: var(--accent);
+      border-color: rgba(108,99,255,.40);
+      background: rgba(108,99,255,.10);
+    }
+
+    .catalog-layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 16px;
+      padding: 24px 0 46px;
+    }
+    .filters {
+      position: sticky;
+      top: calc(var(--nav-h) + 14px);
+      align-self: start;
+      padding: 16px;
+    }
+    .field { display: grid; gap: 7px; margin-bottom: 13px; }
+    label { color: var(--muted); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+      color: var(--text);
+      background: var(--surface);
+      outline: 0;
+    }
+    textarea { min-height: 96px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: rgba(108,99,255,.45); box-shadow: 0 0 0 3px rgba(108,99,255,.10); }
+    .check-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 0;
+      color: var(--muted);
+      font-size: .9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .check-row input { width: auto; }
+    .catalog-toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .wide-search {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      align-items: center;
+      min-height: 46px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+    .wide-search span { text-align: center; color: var(--muted); }
+    .wide-search input { border: 0; background: transparent; box-shadow: none; }
+
+    .detail-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 16px;
+      padding: 24px 0 46px;
+    }
+    .detail-hero { padding: 22px; }
+    .detail-title {
+      display: grid;
+      grid-template-columns: 70px 1fr auto;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+    .big-icon {
+      width: 70px;
+      height: 70px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: var(--accent);
+      background: rgba(108,99,255,.12);
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+    .tabs button {
+      border: 0;
+      border-bottom: 2px solid transparent;
+      padding: 12px 9px;
+      background: transparent;
+      color: var(--muted);
+    }
+    .tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .feature-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .feature {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+    .rating-bars { display: grid; gap: 9px; }
+    .bar-row { display: grid; grid-template-columns: 76px 1fr 38px; gap: 8px; align-items: center; color: var(--muted); font-size: .84rem; }
+    .bar { height: 8px; border-radius: 999px; background: var(--surface2); overflow: hidden; }
+    .bar i { display: block; height: 100%; width: var(--w); border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent3)); }
+    .side-stack { display: grid; gap: 14px; }
+    .side-card { padding: 16px; }
+    .price { font-size: 2rem; font-family: Syne, sans-serif; font-weight: 800; }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar) minmax(0, 1fr);
+      min-height: calc(100vh - var(--nav-h));
+    }
+    .dash-section { display: none; }
+    .dash-section.active { display: block; animation: fade .22s ease both; }
+    .dash-topbar {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .dash-search {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      min-height: 46px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      box-shadow: 0 8px 22px rgba(22,24,38,.06);
+    }
+    .dash-search span { text-align: center; color: var(--muted); }
+    .dash-search input { border: 0; background: transparent; box-shadow: none; }
+    .kbd {
+      margin-right: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      padding: 4px 8px;
+      background: var(--surface2);
+      font-size: .75rem;
+    }
+    .dash-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .hero-card {
+      padding: 18px;
+      overflow: hidden;
+      position: relative;
+      background: linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface2) 76%, var(--surface)));
+    }
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -70px -110px auto;
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(108,99,255,.22), transparent 65%);
+      pointer-events: none;
+    }
+    .hero-card.admin::after { background: radial-gradient(circle, rgba(255,107,107,.22), transparent 65%); }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid rgba(108,99,255,.30);
+      border-radius: 999px;
+      padding: 5px 12px;
+      color: var(--accent);
+      background: rgba(108,99,255,.08);
+      font-size: .78rem;
+      margin-bottom: 12px;
+    }
+    .pill.admin {
+      color: var(--accent2);
+      border-color: rgba(255,107,107,.32);
+      background: rgba(255,107,107,.08);
+    }
+    .lead {
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 760px;
+      margin-bottom: 12px;
+    }
+    .grid-kpi {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .layout-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(305px, .55fr);
+      gap: 12px;
+    }
+    .queue {
+      display: grid;
+      gap: 8px;
+    }
+    .queue-card {
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 70%, var(--surface2));
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .queue-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+    .queue-card p {
+      color: var(--muted);
+      font-size: .84rem;
+      line-height: 1.45;
+      margin-bottom: 9px;
+    }
+    .item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--surface) 70%, var(--surface2));
+      padding: 10px;
+    }
+    .item strong { display: block; font-size: .9rem; margin-bottom: 3px; }
+    .item small { color: var(--muted); line-height: 1.45; }
+    .chart {
+      height: 160px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      align-items: end;
+      padding: 16px 0 28px;
+    }
+    .chart-bar {
+      min-height: 24px;
+      border-radius: 10px 10px 4px 4px;
+      background: linear-gradient(180deg, var(--accent), var(--accent3));
+      position: relative;
+    }
+    .chart-bar span {
+      position: absolute;
+      left: 50%;
+      bottom: -22px;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: .7rem;
+    }
+    .drawer {
+      position: fixed;
+      inset: var(--nav-h) 0 0 auto;
+      z-index: 80;
+      width: min(430px, 94vw);
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: -18px 0 55px rgba(22,24,38,.22);
+      transform: translateX(104%);
+      transition: .24s;
+      padding: 18px;
+      overflow-y: auto;
+    }
+    .drawer.open { transform: translateX(0); }
+    .sidebar {
+      position: sticky;
+      top: var(--nav-h);
+      height: calc(100vh - var(--nav-h));
+      padding: 18px;
+      border-right: 1px solid var(--border);
+      background: color-mix(in srgb, var(--bg) 84%, transparent);
+      backdrop-filter: blur(20px);
+      overflow-y: auto;
+    }
+    .profile-card {
+      padding: 13px;
+      border-radius: 14px;
+      border: 1px solid rgba(108,99,255,.28);
+      background: linear-gradient(135deg, rgba(108,99,255,.16), rgba(0,217,166,.08));
+      margin-bottom: 16px;
+    }
+    .admin-profile {
+      border-color: rgba(255,107,107,.30);
+      background: linear-gradient(135deg, rgba(255,107,107,.13), rgba(108,99,255,.11));
+    }
+    .avatar-row {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+    }
+    .nav-title {
+      margin: 18px 10px 8px;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+    }
+    .side-nav { display: grid; gap: 6px; }
+    .side-nav button {
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      padding: 0 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: transparent;
+      color: var(--muted);
+      transition: .2s;
+    }
+    .side-nav button:hover, .side-nav button.active {
+      color: var(--text);
+      background: var(--surface2);
+      border-color: var(--border);
+    }
+    .main { min-width: 0; padding: 22px; }
+    .dash-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .kpi { padding: 17px; }
+    .kpi strong { display: block; font-size: 1.55rem; margin-bottom: 4px; }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
+      gap: 14px;
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-body { padding: 16px; }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+      font-size: .88rem;
+    }
+    th {
+      color: var(--muted);
+      font-size: .73rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .timeline { display: grid; gap: 12px; }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+    }
+    .dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--accent);
+      font-size: .76rem;
+      margin-top: 2px;
+    }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .upload-box {
+      min-height: 142px;
+      border: 1px dashed rgba(108,99,255,.36);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background: rgba(108,99,255,.06);
+      color: var(--muted);
+      padding: 16px;
+    }
+    .moderation-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 14px;
+    }
+    .review-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      background: var(--surface);
+      display: grid;
+      gap: 12px;
+    }
+    .review-top { display: grid; grid-template-columns: 48px 1fr auto; gap: 12px; align-items: start; }
+    .compare-table td:first-child, .compare-table th:first-child { color: var(--muted); font-weight: 700; }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 100;
+      display: none;
+      padding: 13px 15px;
+      border: 1px solid rgba(0,217,166,.32);
+      border-radius: 12px;
+      color: #02775b;
+      background: #effffb;
+      box-shadow: var(--shadow);
+    }
+    .toast.show { display: block; animation: fade .2s ease both; }
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(12,13,22,.38);
+      backdrop-filter: blur(10px);
+    }
+    .modal.show { display: grid; }
+    .modal-card {
+      width: min(560px, 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: 0 24px 80px rgba(22,24,38,.22);
+      overflow: hidden;
+    }
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 24px 0;
+      color: var(--muted);
+    }
+
+    @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 980px) {
+      .hero, .catalog-layout, .detail-layout, .app-shell, .dashboard-grid, .moderation-layout { grid-template-columns: 1fr; }
+      .sidebar { position: relative; top: 0; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+      .metrics, .kpis, .grid.cols-4, .grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .navlinks { display: none; }
+    }
+    @media (max-width: 640px) {
+      .topnav { padding: 0 12px; }
+      .auth .btn.ghost { display: none; }
+      .hero { padding-top: 44px; }
+      .metrics, .kpis, .grid.cols-2, .grid.cols-3, .grid.cols-4, .feature-list, .form-grid { grid-template-columns: 1fr; }
+      .catalog-toolbar, .dash-head, .detail-title { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <a class="brand" href="#" onclick="showScreen('home')">
+      <span class="logo">AI</span>
+      <strong>AI<em>Finder</em></strong>
+    </a>
+    <div class="navlinks">
+      <button class="active" data-nav="home" onclick="showScreen('home')">Accueil</button>
+      <button data-nav="catalog" onclick="showScreen('catalog')">Catalogue</button>
+      <button data-nav="detail" onclick="showScreen('detail')">Fiche outil</button>
+      <button data-nav="admin" onclick="showScreen('admin')">Dashboard admin</button>
+    </div>
+    <div class="auth">
+      <button class="btn ghost" onclick="openModal('loginModal')">Se connecter</button>
+      <button class="btn primary" onclick="showScreen('user')">Proposer un outil</button>
+    </div>
+  </nav>
+
+  <main id="home" class="screen active">
+    <section class="container hero">
+      <div>
+        <span class="badge info">Catalogue vérifié basé sur catégories, tags, avis et signalements</span>
+        <h1>Trouvez <span>l'outil IA</span> fiable pour votre prochain workflow.</h1>
+        <p>AIFinder organise les outils IA avec des métadonnées utiles : prix, modèle économique, API, conformité, cas d'usage, alternatives, avis, historique de recherche et statut de vérification.</p>
+        <div class="search-hero">
+          <span>⌕</span>
+          <input id="heroSearch" placeholder="Ex : transcription réunion, agent code, générateur vidéo, API OCR">
+          <button class="btn primary" onclick="showScreen('catalog')">Rechercher</button>
+        </div>
+        <div class="hero-tags">
+          <button class="pill-btn active">Image</button>
+          <button class="pill-btn">Texte & SEO</button>
+          <button class="pill-btn">Code</button>
+          <button class="pill-btn">Automatisation</button>
+          <button class="pill-btn">Audio</button>
+          <button class="pill-btn">Entreprise</button>
+        </div>
+      </div>
+      <aside class="hero-panel">
+        <div class="panel-head">
+          <div>
+            <h3>Outils à vérifier aujourd'hui</h3>
+            <p class="mini">Extrait de la file admin et du workflow de modération.</p>
+          </div>
+          <span class="badge warn">7 en attente</span>
+        </div>
+        <div class="live-list">
+          <div class="live-item">
+            <div class="tool-icon">P</div>
+            <div><h4>PromptLayer</h4><p class="mini">LLMOps · données prix manquantes</p></div>
+            <span class="badge warn">Review</span>
+          </div>
+          <div class="live-item">
+            <div class="tool-icon">R</div>
+            <div><h4>Runway</h4><p class="mini">Vidéo · 12 signalements de lien cassé</p></div>
+            <span class="badge danger">Signalé</span>
+          </div>
+          <div class="live-item">
+            <div class="tool-icon">C</div>
+            <div><h4>Cursor</h4><p class="mini">Code · fiche enrichie par la communauté</p></div>
+            <span class="badge ok">Publié</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="container metrics">
+      <div class="metric"><strong>1 286</strong><span class="muted">outils publiés</span></div>
+      <div class="metric"><strong>31</strong><span class="muted">catégories métier</span></div>
+      <div class="metric"><strong>8 940</strong><span class="muted">avis vérifiés</span></div>
+      <div class="metric"><strong>98.2%</strong><span class="muted">liens contrôlés</span></div>
+    </section>
+
+    <section class="container section">
+      <div class="section-head">
+        <div><h2>Catégories principales</h2><p class="muted">Inspiré des directories actuels : pricing, collections, tags, API, comparaison et alternatives.</p></div>
+        <button class="btn" onclick="showScreen('catalog')">Voir tout</button>
+      </div>
+      <div class="grid cols-4">
+        <div class="cat-card"><div class="cat-ico">✍</div><div><h3>Rédaction & SEO</h3><p class="mini">154 outils · briefs, blogs, ads, emails</p></div></div>
+        <div class="cat-card"><div class="cat-ico">🎨</div><div><h3>Image & Design</h3><p class="mini">138 outils · génération, retouche, brand kits</p></div></div>
+        <div class="cat-card"><div class="cat-ico">💻</div><div><h3>Code & DevOps</h3><p class="mini">96 outils · IDE, tests, review, agents</p></div></div>
+        <div class="cat-card"><div class="cat-ico">⚙</div><div><h3>Automatisation</h3><p class="mini">121 outils · workflows, RPA, intégrations</p></div></div>
+        <div class="cat-card"><div class="cat-ico">🎬</div><div><h3>Vidéo</h3><p class="mini">72 outils · avatars, montage, text-to-video</p></div></div>
+        <div class="cat-card"><div class="cat-ico">🎙</div><div><h3>Audio & Voix</h3><p class="mini">64 outils · TTS, clonage, musique</p></div></div>
+        <div class="cat-card"><div class="cat-ico">📊</div><div><h3>Données</h3><p class="mini">88 outils · BI, extraction, notebooks</p></div></div>
+        <div class="cat-card"><div class="cat-ico">🔎</div><div><h3>Recherche</h3><p class="mini">43 outils · veille, citations, knowledge base</p></div></div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="section-head">
+        <div><h2>Tendances vérifiées</h2><p class="muted">Chaque carte montre plus qu'un nom : prix, API, tags, modèle, statut et score.</p></div>
+        <button class="btn" onclick="showScreen('compare')">Comparer</button>
+      </div>
+      <div class="grid cols-3" id="homeTools"></div>
+    </section>
+
+    <section class="container section">
+      <div class="grid cols-3">
+        <div class="workflow-card">
+          <h3>Visiteur</h3>
+          <p class="mini">Accès au catalogue, recherche, filtres, fiche détail, comparaison publique limitée et lecture des avis.</p>
+        </div>
+        <div class="workflow-card">
+          <h3>Utilisateur connecté</h3>
+          <p class="mini">Dashboard, favoris, historique de recherches, commentaires, réactions, proposition d'outil, suivi des refus.</p>
+        </div>
+        <div class="workflow-card">
+          <h3>Admin</h3>
+          <p class="mini">Validation, refus avec motif, gestion catégories/tags/modèles, signalements, audit qualité et métriques.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <main id="catalog" class="screen">
+    <section class="container catalog-layout">
+      <aside class="card filters">
+        <h3>Filtres avancés</h3>
+        <p class="mini" style="margin:6px 0 14px">Accessible aux visiteurs sans connexion.</p>
+        <div class="field"><label>Catégorie</label><select><option>Toutes</option><option>Code & DevOps</option><option>Image & Design</option><option>Automatisation</option></select></div>
+        <div class="field"><label>Pricing</label><select><option>Tous</option><option>Gratuit</option><option>Freemium</option><option>Payant</option><option>Open source</option></select></div>
+        <div class="field"><label>Plateforme</label><select><option>Web app</option><option>API</option><option>Extension navigateur</option><option>Desktop</option><option>Mobile</option></select></div>
+        <label>Caractéristiques</label>
+        <div class="check-row"><span>API disponible</span><input type="checkbox" checked></div>
+        <div class="check-row"><span>Essai gratuit</span><input type="checkbox" checked></div>
+        <div class="check-row"><span>Open source</span><input type="checkbox"></div>
+        <div class="check-row"><span>RGPD / privacy</span><input type="checkbox"></div>
+        <div class="check-row"><span>Team workspace</span><input type="checkbox"></div>
+        <div class="field" style="margin-top:13px"><label>Score minimum</label><input type="range" min="0" max="100" value="82"></div>
+        <button class="btn primary" style="width:100%">Appliquer les filtres</button>
+      </aside>
+      <section>
+        <div class="section-head">
+          <div><h1>Catalogue IA</h1><p class="muted">Résultats enrichis par tags, note, statut, pricing, date d'ajout et qualité des métadonnées.</p></div>
+          <span class="badge info">1 286 résultats</span>
+        </div>
+        <div class="catalog-toolbar">
+          <div class="wide-search"><span>⌕</span><input id="catalogSearch" placeholder="Rechercher par nom, tag, cas d'usage ou modèle"></div>
+          <select><option>Trier : meilleur score</option><option>Nouveautés</option><option>Plus commentés</option><option>Prix croissant</option></select>
+          <button class="btn" onclick="showScreen('compare')">Comparer 3</button>
+        </div>
+        <div class="grid cols-3" id="catalogTools"></div>
+      </section>
+    </section>
+  </main>
+
+  <main id="detail" class="screen">
+    <section class="container detail-layout">
+      <article class="card detail-hero">
+        <div class="detail-title">
+          <div class="big-icon">C</div>
+          <div>
+            <div class="chips"><span class="badge ok">Publié</span><span class="badge info">Code & DevOps</span><span class="badge">API</span><span class="badge">Team</span></div>
+            <h1 style="margin:12px 0 8px">Cursor</h1>
+            <p class="muted">IDE assisté par IA pour compréhension de codebase, refactoring, génération de tests et édition multi-fichiers.</p>
+          </div>
+          <button class="btn primary">Visiter le site</button>
+        </div>
+        <div class="tabs">
+          <button class="active">Vue d'ensemble</button><button>Métadonnées</button><button>Avis</button><button>Alternatives</button><button>Historique</button>
+        </div>
+        <div class="grid cols-2" style="margin-bottom:16px">
+          <div class="feature"><h3>Cas d'usage</h3><p class="mini">Autocomplétion, édition agentique, onboarding codebase, génération de tests, migration framework.</p></div>
+          <div class="feature"><h3>Public cible</h3><p class="mini">Développeurs, équipes produit, freelances, startups, équipes QA.</p></div>
+          <div class="feature"><h3>Intégrations</h3><p class="mini">GitHub, GitLab, VS Code keybindings, terminal, docs internes.</p></div>
+          <div class="feature"><h3>Risques à afficher</h3><p class="mini">Confidentialité du code, hallucinations, coût par siège, gouvernance entreprise.</p></div>
+        </div>
+        <h2 style="margin-bottom:10px">Matrice de qualité</h2>
+        <div class="rating-bars">
+          <div class="bar-row"><span>Utilité</span><div class="bar"><i style="--w:94%"></i></div><b>94</b></div>
+          <div class="bar-row"><span>Prix</span><div class="bar"><i style="--w:78%"></i></div><b>78</b></div>
+          <div class="bar-row"><span>Docs</span><div class="bar"><i style="--w:88%"></i></div><b>88</b></div>
+          <div class="bar-row"><span>Privacy</span><div class="bar"><i style="--w:72%"></i></div><b>72</b></div>
+        </div>
+      </article>
+      <aside class="side-stack">
+        <div class="card side-card">
+          <h3>Résumé décisionnel</h3>
+          <div class="price">9.4<span class="mini"> / 10</span></div>
+          <p class="mini">Score calculé avec avis, fraîcheur, pricing, tags, signalements et vérification admin.</p>
+        </div>
+        <div class="card side-card">
+          <h3>Pricing & accès</h3>
+          <div class="meta-grid" style="margin-top:10px">
+            <div class="meta">Modèle<b>Freemium</b></div>
+            <div class="meta">Essai<b>Oui</b></div>
+            <div class="meta">API<b>Non public</b></div>
+            <div class="meta">Ajout<b>2026-04-18</b></div>
+          </div>
+        </div>
+        <div class="card side-card">
+          <h3>Tags</h3>
+          <div class="chips" style="margin-top:10px"><span class="badge">coding</span><span class="badge">agent</span><span class="badge">refactor</span><span class="badge">IDE</span><span class="badge">tests</span></div>
+        </div>
+        <div class="card side-card">
+          <h3>Actions user</h3>
+          <div class="grid" style="margin-top:10px"><button class="btn">Ajouter aux favoris</button><button class="btn">Commenter</button><button class="btn danger" onclick="openModal('reportModal')">Signaler</button></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <main id="compare" class="screen">
+    <section class="container section">
+      <div class="section-head">
+        <div><h1>Comparaison d'outils</h1><p class="muted">Maquette inspirée des directories modernes : comparer prix, API, modèles, cas d'usage, privacy et adoption.</p></div>
+        <button class="btn primary">Exporter PDF</button>
+      </div>
+      <div class="card table-wrap">
+        <table class="compare-table">
+          <thead><tr><th>Critère</th><th>ChatGPT</th><th>Claude</th><th>Cursor</th><th>Perplexity</th></tr></thead>
+          <tbody>
+            <tr><td>Catégorie</td><td>Assistant général</td><td>Assistant rédaction/code</td><td>Code & DevOps</td><td>Recherche</td></tr>
+            <tr><td>Pricing</td><td><span class="badge info">Freemium</span></td><td><span class="badge info">Freemium</span></td><td><span class="badge info">Freemium</span></td><td><span class="badge info">Freemium</span></td></tr>
+            <tr><td>API</td><td>Oui</td><td>Oui</td><td>Non public</td><td>Oui</td></tr>
+            <tr><td>Forces</td><td>Multimodal, écosystème, agents</td><td>Long contexte, rédaction</td><td>Compréhension repo, édition</td><td>Recherche web citée</td></tr>
+            <tr><td>Limites</td><td>Contrôle source selon usage</td><td>Disponibilité variable</td><td>Confidentialité code</td><td>Moins créatif</td></tr>
+            <tr><td>Score AIFinder</td><td class="score">9.6</td><td class="score">9.3</td><td class="score">9.4</td><td class="score">9.1</td></tr>
+            <tr><td>Statut</td><td><span class="badge ok">Vérifié</span></td><td><span class="badge ok">Vérifié</span></td><td><span class="badge ok">Publié</span></td><td><span class="badge warn">À revalider</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <main id="user" class="screen">
+    <div class="app-shell" data-dash="user">
+      <aside class="sidebar">
+        <div class="profile-card">
+          <div class="avatar-row"><div class="avatar">AM</div><div><h3>Amine Maker</h3><p class="mini">Utilisateur expert · profil 86%</p></div></div>
+          <div class="progress" style="--value:86%;margin-top:10px"><i></i></div>
+        </div>
+        <div class="nav-title">Espace personnel</div>
+        <div class="side-nav">
+          <button class="active" data-user-view="u-overview"><span>⌘ Vue globale</span><span class="badge ok">live</span></button>
+          <button data-user-view="u-submit"><span>＋ Proposer outil</span><span class="badge ok">principal</span></button>
+          <button data-user-view="u-proposals"><span>▣ Mes propositions</span><span class="badge" id="uNavProps">0</span></button>
+          <button data-user-view="u-favorites"><span>★ Favoris</span><span class="badge" id="uNavFav">0</span></button>
+          <button data-user-view="u-reports"><span>⚠ Signalements</span><span class="badge danger" id="uNavReports">0</span></button>
+          <button data-user-view="u-comments"><span>✎ Commentaires</span><span class="badge" id="uNavComments">0</span></button>
+          <button data-user-view="u-history"><span>↺ Historique</span><span class="badge">44</span></button>
+          <button data-user-view="u-settings"><span>⚙ Paramètres</span></button>
+        </div>
+      </aside>
+      <section class="main">
+        <header class="dash-topbar">
+          <div class="dash-search"><span>⌕</span><input id="uSearch" placeholder="Rechercher propositions, favoris, tickets, commentaires..."><kbd class="kbd">Ctrl K</kbd></div>
+          <div class="actions"><button class="btn" id="uRefresh">Actualiser</button><button class="btn" data-drawer="uDrawer">Activité</button><button class="btn primary" data-user-view="u-submit">+ Proposer</button></div>
+        </header>
+
+        <section id="u-overview" class="dash-section active">
+          <div class="dash-hero">
+            <article class="card hero-card">
+              <span class="pill"><span class="dot"></span> Dashboard utilisateur AIFinder</span>
+              <h1>Contribuer au catalogue IA, suivre les refus et construire ses collections.</h1>
+              <p class="lead">Même logique que le dashboard PowerAMC : navigation interne, recherche globale, cartes dynamiques, formulaires, favoris, signalements, commentaires, historique et journal live.</p>
+              <div class="actions"><button class="btn primary" data-user-view="u-submit">Proposer un outil</button><button class="btn" data-user-view="u-proposals">Voir mes propositions</button><button class="btn" data-user-view="u-reports">Suivre mes tickets</button></div>
+            </article>
+            <div class="side-stack">
+              <article class="card kpi"><p>Score contribution</p><strong id="uScore">94</strong><div class="progress" style="--value:94%"><i></i></div></article>
+              <article class="card kpi"><p>Prochain badge</p><strong>Curateur</strong><span class="delta">3 validations restantes</span></article>
+            </div>
+          </div>
+          <div class="grid-kpi">
+            <article class="card kpi"><p>Fiches proposées</p><strong id="uKpiProps">0</strong><span class="delta">publiées et en validation</span></article>
+            <article class="card kpi"><p>Favoris actifs</p><strong id="uKpiFav">0</strong><span class="delta">collections IA, Dev, Data</span></article>
+            <article class="card kpi"><p>Signalements ouverts</p><strong id="uKpiReports">0</strong><span class="delta">suivi simulé temps réel</span></article>
+            <article class="card kpi"><p>Commentaires utiles</p><strong id="uKpiComments">0</strong><span class="delta">likes communautaires</span></article>
+          </div>
+          <div class="layout-2">
+            <div class="card"><div class="card-head"><h2>Recommandés pour vous</h2><div class="tabs" id="uFilters"></div></div><div class="card-body"><div class="tools-grid" id="uRecommended"></div></div></div>
+            <aside class="card"><div class="card-head"><h2>Activité récente</h2></div><div class="card-body list" id="uActivity"></div></aside>
+          </div>
+        </section>
+
+        <section id="u-submit" class="dash-section">
+          <div class="card">
+            <div class="card-head"><div><h2>Proposer un outil IA</h2><p class="muted">Soumission complète : outil, catégorie, modèle, caractéristiques, tags et preuves.</p></div><span class="badge info">Workflow admin</span></div>
+            <form class="card-body form-grid" id="uProposalForm">
+              <div class="field"><label>Nom</label><input name="name" required placeholder="Ex : Synthesia"></div>
+              <div class="field"><label>Catégorie</label><select name="category"><option>Vidéo</option><option>Code & DevOps</option><option>Rédaction & SEO</option><option>Données</option><option>Audio & Voix</option></select></div>
+              <div class="field"><label>Pricing</label><select name="pricing"><option>Freemium</option><option>Gratuit</option><option>Payant</option><option>Open source</option></select></div>
+              <div class="field"><label>URL officielle</label><input name="url" required placeholder="https://..."></div>
+              <div class="field full"><label>Description neutre</label><textarea name="desc" required placeholder="Cas d'usage, limites, public cible, intégrations, modèle économique."></textarea></div>
+              <div class="field"><label>Tags</label><input name="tags" placeholder="video, avatar, marketing"></div>
+              <div class="field"><label>Caractéristiques</label><input name="features" placeholder="API, workspace, RGPD, export"></div>
+              <div class="upload-box full">Logo, capture écran, preuve pricing, documentation officielle</div>
+              <button class="btn primary full">Envoyer à la modération</button>
+            </form>
+          </div>
+        </section>
+
+        <section id="u-proposals" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Mes propositions</h2><p class="muted">Statuts, motifs de refus, score de complétion et actions.</p></div><select id="uSort"><option value="score">Trier par complétion</option><option value="rating">Trier par score</option><option value="date">Trier par date</option></select></div><div class="card-body"><div class="chips" id="uCategoryChips"></div><div class="tools-grid" id="uProposalCards" style="margin-top:12px"></div></div><div class="table-wrap"><table><thead><tr><th>Outil</th><th>Catégorie</th><th>Statut</th><th>Score</th><th>Motif admin</th><th>Action</th></tr></thead><tbody id="uProposalRows"></tbody></table></div></div>
+        </section>
+
+        <section id="u-favorites" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Mes favoris</h2><p class="muted">Collections organisées automatiquement par catégorie.</p></div><button class="btn" id="uClearFav">Vider</button></div><div class="card-body tools-grid" id="uFavorites"></div></div>
+        </section>
+
+        <section id="u-reports" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Mes signalements</h2><p class="muted">Créer un ticket, simuler la réponse admin et fermer un incident.</p></div><button class="btn primary" id="uNewReport">Nouveau ticket</button></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Outil</th><th>Problème</th><th>Priorité</th><th>Statut</th><th>Action</th></tr></thead><tbody id="uReportRows"></tbody></table></div></div>
+        </section>
+
+        <section id="u-comments" class="dash-section">
+          <div class="layout-2">
+            <div class="card"><div class="card-head"><h2>Ajouter un commentaire</h2></div><form class="card-body form-grid" id="uCommentForm"><div class="field"><label>Outil</label><select name="tool" id="uCommentTool"></select></div><div class="field"><label>Note</label><select name="rating"><option>5</option><option>4</option><option>3</option></select></div><div class="field full"><label>Commentaire</label><textarea name="text" required placeholder="Avis utile, limites, contexte d'utilisation."></textarea></div><button class="btn primary full">Publier</button></form></div>
+            <div class="card"><div class="card-head"><h2>Commentaires</h2></div><div class="card-body list" id="uCommentList"></div></div>
+          </div>
+        </section>
+
+        <section id="u-history" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Historique</h2><p class="muted">Recherches et actions enregistrées localement pendant la session.</p></div><button class="btn" id="uExportHistory">Exporter JSON</button></div><div class="card-body list" id="uHistory"></div></div>
+        </section>
+
+        <section id="u-settings" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Paramètres</h2><p class="muted">Préférences utilisateur simulées.</p></div><button class="btn primary" id="uSaveSettings">Enregistrer</button></div><div class="card-body form-grid"><div class="field"><label>Nom public</label><input value="Amine Maker"></div><div class="field"><label>Email</label><input value="amine@aifinder.dev"></div><div class="field full"><label>Bio</label><textarea>Curateur IA spécialisé outils dev, data et automatisation.</textarea></div></div></div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <main id="admin" class="screen">
+    <div class="app-shell" data-dash="admin">
+      <aside class="sidebar">
+        <div class="profile-card admin-profile">
+          <div class="avatar-row"><div class="avatar" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">AD</div><div><h3>Admin Principal</h3><p class="mini">Accès total · audit actif</p></div></div>
+        </div>
+        <div class="nav-title">Pilotage</div>
+        <div class="side-nav">
+          <button class="active" data-admin-view="a-overview"><span>⌘ Vue globale</span><span class="badge ok">live</span></button>
+          <button data-admin-view="a-validation"><span>✓ Validation outils</span><span class="badge warn" id="aNavPending">0</span></button>
+          <button data-admin-view="a-tools"><span>▦ Gestion outils</span><span class="badge" id="aNavTools">0</span></button>
+          <button data-admin-view="a-reports"><span>⚠ Signalements</span><span class="badge danger" id="aNavReports">0</span></button>
+          <button data-admin-view="a-users"><span>◉ Utilisateurs</span><span class="badge" id="aNavUsers">0</span></button>
+          <button data-admin-view="a-comments"><span>✎ Commentaires</span><span class="badge warn" id="aNavComments">0</span></button>
+          <button data-admin-view="a-taxonomy"><span># Catégories & tags</span></button>
+          <button data-admin-view="a-analytics"><span>↗ Analytics</span></button>
+          <button data-admin-view="a-settings"><span>⚙ Paramètres</span></button>
+        </div>
+      </aside>
+      <section class="main">
+        <header class="dash-topbar">
+          <div class="dash-search"><span>⌕</span><input id="aSearch" placeholder="Rechercher outil, utilisateur, signalement, commentaire..."><kbd class="kbd">Ctrl K</kbd></div>
+          <div class="actions"><button class="btn" id="aRefresh">Actualiser</button><button class="btn" data-drawer="aDrawer">Audit</button><button class="btn primary" id="aSimulate">Simuler trafic</button></div>
+        </header>
+
+        <section id="a-overview" class="dash-section active">
+          <div class="dash-hero">
+            <article class="card hero-card admin">
+              <span class="pill admin"><span class="dot"></span> Console de modération AIFinder</span>
+              <h1>Contrôler la qualité du catalogue, accepter ou refuser avec motif.</h1>
+              <p class="lead">Dashboard aligné avec PowerAMC Admin : file de validation, gestion outils, signalements, utilisateurs, commentaires, catégories, analytics et journal d'audit interactif.</p>
+              <div class="actions"><button class="btn primary" data-admin-view="a-validation">Traiter la file</button><button class="btn" data-admin-view="a-reports">Voir incidents</button><button class="btn" id="aAutoModerate">Auto-modération</button></div>
+            </article>
+            <div class="side-stack">
+              <article class="card kpi"><p>Santé plateforme</p><strong id="aHealth">96%</strong><div class="progress" style="--value:96%"><i></i></div></article>
+              <article class="card kpi"><p>Temps traitement</p><strong>38m</strong><span class="delta">moyenne validation</span></article>
+            </div>
+          </div>
+          <div class="grid-kpi">
+            <article class="card kpi"><p>Outils publiés</p><strong id="aKpiTools">0</strong><span class="delta">catalogue actif</span></article>
+            <article class="card kpi"><p>En validation</p><strong id="aKpiPending">0</strong><span class="delta">actions requises</span></article>
+            <article class="card kpi"><p>Signalements ouverts</p><strong id="aKpiReports">0</strong><span class="delta">priorisation auto</span></article>
+            <article class="card kpi"><p>Utilisateurs actifs</p><strong id="aKpiUsers">0</strong><span class="delta">+12% / 30 jours</span></article>
+          </div>
+          <div class="layout-2">
+            <div class="card"><div class="card-head"><h2>Priorités</h2><button class="btn" data-admin-view="a-validation">Ouvrir</button></div><div class="card-body queue" id="aPriority"></div></div>
+            <aside class="card"><div class="card-head"><h2>Audit récent</h2></div><div class="card-body list" id="aAuditShort"></div></aside>
+          </div>
+        </section>
+
+        <section id="a-validation" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Validation des propositions</h2><p class="muted">Approuver publie l'outil, rejeter exige un motif envoyé à l'utilisateur.</p></div><button class="btn" id="aAddProposal">Ajouter proposition test</button></div><div class="card-body queue" id="aProposalQueue"></div></div>
+        </section>
+
+        <section id="a-tools" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Gestion des outils</h2><p class="muted">Modifier statut, mettre en avant ou archiver.</p></div><button class="btn primary" id="aCreateTool">Créer fiche admin</button></div><div class="table-wrap"><table><thead><tr><th>Outil</th><th>Catégorie</th><th>Statut</th><th>Score</th><th>Actions</th></tr></thead><tbody id="aToolRows"></tbody></table></div></div>
+        </section>
+
+        <section id="a-reports" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Signalements utilisateurs</h2><p class="muted">Assigner, résoudre ou escalader les incidents.</p></div><button class="btn" id="aNewIncident">Simuler incident</button></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Outil</th><th>Problème</th><th>Priorité</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="aReportRows"></tbody></table></div></div>
+        </section>
+
+        <section id="a-users" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Utilisateurs</h2><p class="muted">Changer rôle, suspendre, réactiver et consulter le score de contribution.</p></div><button class="btn" id="aAddUser">Ajouter utilisateur test</button></div><div class="table-wrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Score</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="aUserRows"></tbody></table></div></div>
+        </section>
+
+        <section id="a-comments" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Modération commentaires</h2><p class="muted">Publier, masquer ou marquer à suivre.</p></div><button class="btn" id="aAddComment">Ajouter commentaire test</button></div><div class="card-body queue" id="aCommentQueue"></div></div>
+        </section>
+
+        <section id="a-taxonomy" class="dash-section">
+          <div class="layout-2">
+            <div class="card"><div class="card-head"><h2>Catégories</h2></div><form class="card-body form-grid" id="aCategoryForm"><div class="field"><label>Nom</label><input id="aCatName" value="Agents IA"></div><div class="field"><label>Icône</label><input id="aCatIcon" value="⚙"></div><div class="field full"><label>Description</label><textarea id="aCatDesc">Outils capables d'exécuter des tâches multi-étapes.</textarea></div><button class="btn primary full">Ajouter catégorie</button></form><div class="card-body chips" id="aCategoryChips"></div></div>
+            <div class="card"><div class="card-head"><h2>Fusion tags</h2></div><div class="card-body form-grid"><div class="field"><label>Tag source</label><input id="aTagSource" value="text-ai"></div><div class="field"><label>Tag cible</label><input id="aTagTarget" value="rédaction"></div><button class="btn full" id="aMergeTags">Fusionner tags</button></div></div>
+          </div>
+        </section>
+
+        <section id="a-analytics" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Analytics plateforme</h2><p class="muted">Données simulées : vues, validation, signalements, utilisateurs.</p></div><button class="btn" id="aRefreshChart">Rafraîchir</button></div><div class="card-body"><div class="grid-kpi"><article class="card kpi"><p>Vues catalogue</p><strong id="aViews">18.4k</strong><span class="delta">+8.2%</span></article><article class="card kpi"><p>Taux validation</p><strong id="aRate">71%</strong><span class="delta">cette semaine</span></article><article class="card kpi"><p>Temps traitement</p><strong id="aTime">38m</strong><span class="delta">moyenne</span></article><article class="card kpi"><p>Commentaires masqués</p><strong id="aHidden">3</strong><span class="delta">risque faible</span></article></div><div class="chart" id="aChart"></div></div></div>
+        </section>
+
+        <section id="a-settings" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Paramètres admin</h2><p class="muted">Règles de modération et préférences opérationnelles.</p></div><button class="btn primary" id="aSaveSettings">Enregistrer</button></div><div class="card-body form-grid"><div class="field"><label>Seuil auto-refus</label><input value="40"></div><div class="field"><label>Seuil validation rapide</label><input value="92"></div><div class="field full"><label>Règles</label><textarea>Refuser spam, doublons, URL invalides, descriptions promotionnelles et fiches sans preuve officielle.</textarea></div></div></div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <span>AI<em style="color:var(--accent);font-style:normal">Finder</em> · maquettes complètes</span>
+      <span>Basé sur les entités : utilisateurs, outils, catégories, commentaires, favoris, recherches, signalements, tags, modèles.</span>
+    </div>
+  </footer>
+
+  <aside class="drawer" id="uDrawer">
+    <div class="card-head"><h2>Journal live utilisateur</h2><button class="btn" data-close-drawer="uDrawer">Fermer</button></div>
+    <div class="list" id="uDrawerList"></div>
+  </aside>
+
+  <aside class="drawer" id="aDrawer">
+    <div class="card-head"><h2>Journal d'audit admin</h2><button class="btn" data-close-drawer="aDrawer">Fermer</button></div>
+    <div class="list" id="aAuditFull"></div>
+  </aside>
+
+  <div class="modal" id="loginModal">
+    <div class="modal-card">
+      <div class="card-head"><h2>Connexion</h2><button class="btn ghost" onclick="closeModal('loginModal')">Fermer</button></div>
+      <div class="card-body form-grid">
+        <div class="field full"><label>Email</label><input placeholder="alex@aifinder.dev"></div>
+        <div class="field full"><label>Mot de passe</label><input type="password" placeholder="••••••••"></div>
+        <button class="btn primary full" onclick="closeModal('loginModal');showScreen('user')">Se connecter</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="submitModal">
+    <div class="modal-card">
+      <div class="card-head"><h2>Proposer un outil IA</h2><button class="btn ghost" onclick="closeModal('submitModal')">Fermer</button></div>
+      <div class="card-body form-grid">
+        <div class="field"><label>Nom outil</label><input placeholder="Ex : PromptLayer"></div>
+        <div class="field"><label>Catégorie</label><select><option>Code & DevOps</option><option>Image & Design</option><option>Automatisation</option></select></div>
+        <div class="field full"><label>URL officielle</label><input placeholder="https://..."></div>
+        <div class="field"><label>Pricing</label><select><option>Freemium</option><option>Gratuit</option><option>Payant</option><option>Open source</option></select></div>
+        <div class="field"><label>Tags</label><input placeholder="llmops, prompt, monitoring"></div>
+        <div class="field full"><label>Description neutre</label><textarea placeholder="Expliquez le cas d'usage réel, sans texte marketing."></textarea></div>
+        <div class="upload-box full">Ajouter logo ou capture écran<br><span class="mini">PNG, JPG, WebP · utilisé par admin pour vérification visuelle</span></div>
+        <button class="btn primary full" onclick="closeModal('submitModal');toast('Proposition envoyée à la modération')">Envoyer à la vérification</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="rejectModal">
+    <div class="modal-card">
+      <div class="card-head"><h2>Refuser avec motif</h2><button class="btn ghost" onclick="closeModal('rejectModal')">Fermer</button></div>
+      <div class="card-body form-grid">
+        <div class="field full"><label>Motif principal</label><select><option>Métadonnées insuffisantes</option><option>URL invalide</option><option>Doublon</option><option>Spam / promotionnel</option><option>Catégorie incorrecte</option></select></div>
+        <div class="field full"><label>Message envoyé à l'utilisateur</label><textarea>Votre proposition ne peut pas être publiée pour le moment : le pricing et la politique de confidentialité ne sont pas vérifiables. Merci d'ajouter une URL officielle et une description plus neutre.</textarea></div>
+        <button class="btn danger full" onclick="closeModal('rejectModal');toast('Refus enregistré avec motif')">Confirmer le refus</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="reportModal">
+    <div class="modal-card">
+      <div class="card-head"><h2>Signaler une fiche</h2><button class="btn ghost" onclick="closeModal('reportModal')">Fermer</button></div>
+      <div class="card-body form-grid">
+        <div class="field full"><label>Type de signalement</label><select><option>Lien cassé</option><option>Prix incorrect</option><option>Description trompeuse</option><option>Outil indisponible</option></select></div>
+        <div class="field full"><label>Détail</label><textarea placeholder="Ajoutez une preuve ou un commentaire utile à l'admin."></textarea></div>
+        <button class="btn primary full" onclick="closeModal('reportModal');toast('Signalement envoyé')">Envoyer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const $$ = s => [...document.querySelectorAll(s)];
+    const now = () => new Date().toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"});
+    const tools = [
+      {id:1,name:"ChatGPT", icon:"C", cat:"Assistant général", desc:"Assistant multimodal pour rédaction, analyse, code, image, voix et automatisation légère.", pricing:"Freemium", score:96, status:"Vérifié", tags:["chatbot","multimodal","API"], api:"Oui", users:"5.6k avis", fav:true, featured:true},
+      {id:2,name:"Claude", icon:"Cl", cat:"Texte & Code", desc:"Assistant IA fort sur raisonnement, rédaction longue, synthèse documentaire et code.", pricing:"Freemium", score:93, status:"Vérifié", tags:["long context","docs","code"], api:"Oui", users:"3.1k avis", fav:false, featured:true},
+      {id:3,name:"Cursor", icon:"Cu", cat:"Code & DevOps", desc:"IDE assisté par IA pour comprendre une codebase et modifier plusieurs fichiers.", pricing:"Freemium", score:94, status:"Publié", tags:["IDE","agent","tests"], api:"Non", users:"2.8k avis", fav:true, featured:true},
+      {id:4,name:"Perplexity", icon:"P", cat:"Recherche", desc:"Moteur de réponse IA avec citations, recherche web et collections de sources.", pricing:"Freemium", score:91, status:"À revalider", tags:["search","citations","veille"], api:"Oui", users:"1.9k avis", fav:false, featured:false},
+      {id:5,name:"Runway", icon:"R", cat:"Vidéo", desc:"Génération et édition vidéo assistées par IA pour équipes créatives.", pricing:"Freemium", score:89, status:"Signalé", tags:["video","editing","creative"], api:"Oui", users:"1.2k avis", fav:false, featured:false},
+      {id:6,name:"ElevenLabs", icon:"E", cat:"Audio & Voix", desc:"Voix synthétiques, doublage, clonage vocal et génération audio professionnelle.", pricing:"Freemium", score:90, status:"Vérifié", tags:["TTS","voice","dubbing"], api:"Oui", users:"980 avis", fav:true, featured:false},
+      {id:7,name:"Make AI Agents", icon:"M", cat:"Automatisation", desc:"Scénarios automatisés avec agents IA, connecteurs no-code et déclencheurs métier.", pricing:"Payant", score:84, status:"Publié", tags:["workflow","agent","no-code"], api:"Oui", users:"640 avis", fav:false, featured:false}
+    ];
+    let userProposals = [
+      {id:101,name:"PromptLayer",category:"LLMOps",pricing:"Freemium",score:71,status:"En attente",admin:"Vérification pricing et politique privacy.",desc:"Observabilité de prompts et versions LLM.",tags:["llmops","prompt"],fav:false},
+      {id:102,name:"MagicBrief",category:"Marketing",pricing:"Payant",score:92,status:"Accepté",admin:"Publié dans Marketing & Ads.",desc:"Analyse de créatifs publicitaires et briefs.",tags:["ads","brief"],fav:false},
+      {id:103,name:"CopyForge",category:"Rédaction & SEO",pricing:"Freemium",score:43,status:"Refusé",admin:"Description trop promotionnelle, absence URL officielle.",desc:"Génération de textes marketing.",tags:["seo","copywriting"],fav:false},
+      {id:104,name:"DataPilot",category:"Données",pricing:"Payant",score:38,status:"Refusé",admin:"Outil dupliqué, déjà présent sous un autre slug.",desc:"Assistant analyse de données.",tags:["data","BI"],fav:false}
+    ];
+    let reports = [
+      {id:"SIG-2401",tool:"Runway",issue:"Lien pricing cassé",priority:"Haute",status:"Ouvert"},
+      {id:"SIG-2402",tool:"Perplexity",issue:"Modèle API à actualiser",priority:"Moyenne",status:"Assigné"},
+      {id:"SIG-2403",tool:"ImageFlow",issue:"Catégorie incorrecte",priority:"Basse",status:"Résolu"}
+    ];
+    let comments = [
+      {id:1,tool:"Cursor",author:"Amine",text:"Très utile pour refactor, mais il faut relire les modifications sensibles.",rating:5,likes:18,status:"Publié"},
+      {id:2,tool:"Claude",author:"Sara",text:"Excellent pour synthèse longue et rédaction structurée.",rating:5,likes:12,status:"Publié"},
+      {id:3,tool:"Runway",author:"Yanis",text:"Bon résultat vidéo, pricing difficile à suivre.",rating:4,likes:7,status:"À vérifier"}
+    ];
+    let adminProposals = [
+      {id:201,name:"PromptLayer",category:"LLMOps",author:"Amine",score:71,desc:"Observabilité de prompts, logs, versions et évaluation de sorties LLM.",flags:["pricing incomplet","privacy à vérifier"]},
+      {id:202,name:"DataPilot",category:"Données",author:"Sara",score:38,desc:"Assistant analyse de datasets avec tableaux de bord générés automatiquement.",flags:["doublon probable","slug similaire"]},
+      {id:203,name:"VoiceClone Pro",category:"Audio & Voix",author:"Nora",score:66,desc:"Clonage vocal et doublage pour contenus éducatifs.",flags:["risque légal","preuve consentement manquante"]}
+    ];
+    let users = [
+      {id:1,name:"Amine Maker",email:"amine@aifinder.dev",role:"Utilisateur",score:94,status:"Actif"},
+      {id:2,name:"Sara Data",email:"sara@aifinder.dev",role:"Curateur",score:88,status:"Actif"},
+      {id:3,name:"Yanis Studio",email:"yanis@aifinder.dev",role:"Utilisateur",score:61,status:"Suspendu"}
+    ];
+    let categories = ["Assistant général","Code & DevOps","Rédaction & SEO","Vidéo","Audio & Voix","Données","Automatisation","Recherche"];
+    let history = ["Recherche: agent IA pour tests Laravel","Favori ajouté: Cursor","Commentaire publié sur Claude","Signalement envoyé: Runway"];
+    let audit = ["Admin a ouvert la file de validation","PromptLayer nécessite vérification pricing","Runway escaladé priorité haute","Catégorie Agents IA créée"];
+
+    function toolCard(t, mode = "public") {
+      const statusClass = t.status === "Vérifié" || t.status === "Publié" ? "ok" : t.status === "Signalé" ? "danger" : "warn";
+      return `
+        <article class="tool-card" data-search="${(t.name+" "+t.cat+" "+t.desc+" "+t.tags.join(" ")).toLowerCase()}">
+          <div class="tool-top">
+            <div class="tool-icon">${t.icon}</div>
+            <div><h3>${t.name}</h3><p class="mini">${t.cat} · ${t.users || "outil proposé"}</p></div>
+            <span class="badge ${statusClass}">${t.status}</span>
+          </div>
+          <p class="tool-desc">${t.desc}</p>
+          <div class="meta-grid">
+            <div class="meta">Pricing<b>${t.pricing}</b></div>
+            <div class="meta">API<b>${t.api}</b></div>
+            <div class="meta">Score<b>${t.score > 10 ? t.score + "%" : t.score + "/10"}</b></div>
+            <div class="meta">Tags<b>${t.tags.slice(0,2).join(", ")}</b></div>
+          </div>
+          <div class="tool-actions">
+            <div class="chips">${t.tags.map(tag => `<span class="badge">${tag}</span>`).join("")}</div>
+            ${mode === "user" ? `<button class="btn ${t.fav ? "primary" : ""}" data-u-action="fav" data-id="${t.id}">${t.fav ? "Favori ✓" : "Favori"}</button><button class="btn" data-u-action="report" data-id="${t.id}">Signaler</button>` : `<button class="btn" onclick="showScreen('detail')">Détails</button>`}
+          </div>
+        </article>`;
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+      document.querySelectorAll("[data-nav]").forEach(b => b.classList.toggle("active", b.dataset.nav === id));
+      window.scrollTo({top: 0, behavior: "smooth"});
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add("show"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("show"); }
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 2600);
+    }
+    function logUser(msg) { history.unshift(`${now()} · ${msg}`); renderUser(); }
+    function logAdmin(msg) { audit.unshift(`${now()} · ${msg}`); renderAdmin(); }
+    function badge(status) {
+      if (["Vérifié","Publié","Accepté","Actif","Résolu"].includes(status)) return "ok";
+      if (["Refusé","Suspendu","Escaladé","Signalé"].includes(status)) return "danger";
+      return "warn";
+    }
+    function showDash(prefix, id) {
+      $$(`[id^="${prefix}-"]`).forEach(s => s.classList.toggle("active", s.id === id));
+      $$(`[data-${prefix === "u" ? "user" : "admin"}-view]`).forEach(b => {
+        b.classList.toggle("active", b.dataset[prefix === "u" ? "userView" : "adminView"] === id);
+      });
+    }
+    function applyDashSearch(inputId, scopeId) {
+      const q = ($(inputId)?.value || "").toLowerCase();
+      $$("#" + scopeId + " [data-search]").forEach(el => el.style.display = el.dataset.search.includes(q) ? "" : "none");
+    }
+
+    function renderUser() {
+      const favs = tools.filter(t => t.fav);
+      $("#uNavProps").textContent = userProposals.length;
+      $("#uNavFav").textContent = favs.length;
+      $("#uNavReports").textContent = reports.filter(r => r.status !== "Résolu").length;
+      $("#uNavComments").textContent = comments.length;
+      $("#uKpiProps").textContent = userProposals.length;
+      $("#uKpiFav").textContent = favs.length;
+      $("#uKpiReports").textContent = reports.filter(r => r.status !== "Résolu").length;
+      $("#uKpiComments").textContent = comments.reduce((n,c) => n + c.likes, 0);
+      $("#uRecommended").innerHTML = tools.slice(0,6).map(t => toolCard(t, "user")).join("");
+      $("#uFavorites").innerHTML = favs.length ? favs.map(t => toolCard(t, "user")).join("") : `<p class="muted">Aucun favori actif.</p>`;
+      $("#uActivity").innerHTML = history.slice(0,5).map(h => `<div class="item"><strong>${h.split(" · ")[0] || "Maintenant"}</strong><small>${h}</small></div>`).join("");
+      $("#uDrawerList").innerHTML = history.map(h => `<div class="item"><strong>Session</strong><small>${h}</small></div>`).join("");
+      $("#uCategoryChips").innerHTML = ["Tous",...new Set(userProposals.map(p => p.category))].map((c,i) => `<button class="chip ${i===0?"active":""}">${c}</button>`).join("");
+      $("#uProposalCards").innerHTML = userProposals.map(p => toolCard({id:p.id,name:p.name,icon:p.name[0],cat:p.category,desc:p.desc,pricing:p.pricing,score:p.score,status:p.status,tags:p.tags,api:"À vérifier",fav:p.fav}, "user")).join("");
+      $("#uProposalRows").innerHTML = userProposals.map(p => `<tr data-search="${(p.name+" "+p.category+" "+p.status+" "+p.admin).toLowerCase()}"><td>${p.name}</td><td>${p.category}</td><td><span class="badge ${badge(p.status)}">${p.status}</span></td><td>${p.score}%</td><td>${p.admin}</td><td><button class="btn" data-user-view="u-submit">Enrichir</button></td></tr>`).join("");
+      $("#uReportRows").innerHTML = reports.map(r => `<tr data-search="${(r.id+" "+r.tool+" "+r.issue+" "+r.status).toLowerCase()}"><td>${r.id}</td><td>${r.tool}</td><td>${r.issue}</td><td>${r.priority}</td><td><span class="badge ${badge(r.status)}">${r.status}</span></td><td><button class="btn" data-u-report="${r.id}">${r.status === "Résolu" ? "Archiver" : "Marquer résolu"}</button></td></tr>`).join("");
+      $("#uCommentTool").innerHTML = tools.map(t => `<option>${t.name}</option>`).join("");
+      $("#uCommentList").innerHTML = comments.map(c => `<div class="item" data-search="${(c.tool+" "+c.text).toLowerCase()}"><strong>${c.tool} · ${"★".repeat(c.rating)}</strong><small>${c.text}</small><div class="actions" style="margin-top:8px"><button class="btn" data-u-like="${c.id}">Utile (${c.likes})</button></div></div>`).join("");
+      $("#uHistory").innerHTML = history.map(h => `<div class="item"><strong>${h.includes("Recherche") ? "Recherche" : "Action"}</strong><small>${h}</small></div>`).join("");
+      $("#uFilters").innerHTML = categories.slice(0,5).map((c,i) => `<button class="tab ${i===0?"active":""}">${c}</button>`).join("");
+      applyDashSearch("#uSearch", "user");
+    }
+
+    function renderAdmin() {
+      const published = tools.filter(t => t.status !== "Signalé").length;
+      $("#aNavPending").textContent = adminProposals.length;
+      $("#aNavTools").textContent = tools.length;
+      $("#aNavReports").textContent = reports.filter(r => r.status !== "Résolu").length;
+      $("#aNavUsers").textContent = users.length;
+      $("#aNavComments").textContent = comments.filter(c => c.status !== "Publié").length;
+      $("#aKpiTools").textContent = published;
+      $("#aKpiPending").textContent = adminProposals.length;
+      $("#aKpiReports").textContent = reports.filter(r => r.status !== "Résolu").length;
+      $("#aKpiUsers").textContent = users.filter(u => u.status === "Actif").length;
+      $("#aPriority").innerHTML = [
+        {type:"Validation",title:`${adminProposals.length} propositions`,desc:"Fiches avec métadonnées incomplètes ou doublons probables.",badge:"urgent"},
+        {type:"Signalement",title:"Runway pricing",desc:"Lien cassé confirmé par plusieurs utilisateurs.",badge:"haute"},
+        {type:"Taxonomie",title:"Tags à fusionner",desc:"text-ai, writing-ai et rédaction pointent vers la même intention.",badge:"qualité"}
+      ].map(i => `<div class="queue-card"><div class="queue-head"><strong>${i.type}: ${i.title}</strong><span class="badge warn">${i.badge}</span></div><p>${i.desc}</p><button class="btn" data-admin-view="a-validation">Ouvrir</button></div>`).join("");
+      $("#aAuditShort").innerHTML = audit.slice(0,5).map(a => `<div class="item"><strong>Audit</strong><small>${a}</small></div>`).join("");
+      $("#aAuditFull").innerHTML = audit.map(a => `<div class="item"><strong>Journal</strong><small>${a}</small></div>`).join("");
+      $("#aProposalQueue").innerHTML = adminProposals.map(p => `<div class="queue-card" data-search="${(p.name+" "+p.category+" "+p.author+" "+p.desc).toLowerCase()}"><div class="queue-head"><strong>${p.name} · ${p.category}</strong><span class="badge warn">${p.score}% complet</span></div><p>${p.desc}</p><div class="chips">${p.flags.map(f => `<span class="badge danger">${f}</span>`).join("")}</div><div class="actions" style="margin-top:10px"><button class="btn success" data-a-proposal="approve" data-id="${p.id}">Approuver</button><button class="btn" data-a-proposal="revise" data-id="${p.id}">Demander correction</button><button class="btn danger" data-a-proposal="reject" data-id="${p.id}">Rejeter</button></div></div>`).join("") || `<p class="muted">Aucune proposition en attente.</p>`;
+      $("#aToolRows").innerHTML = tools.map(t => `<tr data-search="${(t.name+" "+t.cat+" "+t.status).toLowerCase()}"><td>${t.name}</td><td>${t.cat}</td><td><span class="badge ${badge(t.status)}">${t.status}</span></td><td>${t.score}%</td><td><div class="actions"><button class="btn" data-a-tool="feature" data-id="${t.id}">${t.featured ? "Retirer une" : "Mettre une"}</button><button class="btn" data-a-tool="archive" data-id="${t.id}">${t.status === "Archivé" ? "Publier" : "Archiver"}</button><button class="btn danger" data-a-tool="delete" data-id="${t.id}">Supprimer</button></div></td></tr>`).join("");
+      $("#aReportRows").innerHTML = reports.map(r => `<tr data-search="${(r.id+" "+r.tool+" "+r.issue+" "+r.status).toLowerCase()}"><td>${r.id}</td><td>${r.tool}</td><td>${r.issue}</td><td>${r.priority}</td><td><span class="badge ${badge(r.status)}">${r.status}</span></td><td><div class="actions"><button class="btn success" data-a-report="resolve" data-id="${r.id}">Résoudre</button><button class="btn" data-a-report="assign" data-id="${r.id}">Assigner</button><button class="btn danger" data-a-report="escalate" data-id="${r.id}">Escalader</button></div></td></tr>`).join("");
+      $("#aUserRows").innerHTML = users.map(u => `<tr data-search="${(u.name+" "+u.email+" "+u.role+" "+u.status).toLowerCase()}"><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td>${u.score}</td><td><span class="badge ${badge(u.status)}">${u.status}</span></td><td><button class="btn" data-a-user="role" data-id="${u.id}">Changer rôle</button> <button class="btn ${u.status === "Suspendu" ? "success" : "danger"}" data-a-user="suspend" data-id="${u.id}">${u.status === "Suspendu" ? "Réactiver" : "Suspendre"}</button></td></tr>`).join("");
+      $("#aCommentQueue").innerHTML = comments.map(c => `<div class="queue-card" data-search="${(c.tool+" "+c.author+" "+c.text+" "+c.status).toLowerCase()}"><div class="queue-head"><strong>${c.tool} · ${c.author}</strong><span class="badge ${badge(c.status)}">${c.status}</span></div><p>${c.text}</p><div class="actions"><button class="btn success" data-a-comment="publish" data-id="${c.id}">Publier</button><button class="btn danger" data-a-comment="hide" data-id="${c.id}">Masquer</button><button class="btn" data-a-comment="flag" data-id="${c.id}">À suivre</button></div></div>`).join("");
+      $("#aCategoryChips").innerHTML = categories.map(c => `<span class="chip active">${c}</span>`).join("");
+      renderChart();
+      applyDashSearch("#aSearch", "admin");
+    }
+
+    function renderChart() {
+      const days = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+      $("#aChart").innerHTML = days.map(d => `<div class="chart-bar" style="height:${40 + Math.round(Math.random()*105)}px"><span>${d}</span></div>`).join("");
+    }
+    function renderPublic() {
+      document.getElementById("homeTools").innerHTML = tools.slice(0,3).map(toolCard).join("");
+      document.getElementById("catalogTools").innerHTML = tools.map(toolCard).join("");
+    }
+
+    document.addEventListener("click", e => {
+      const uv = e.target.closest("[data-user-view]");
+      if (uv) showDash("u", uv.dataset.userView);
+      const av = e.target.closest("[data-admin-view]");
+      if (av) showDash("a", av.dataset.adminView);
+      const drawer = e.target.closest("[data-drawer]");
+      if (drawer) $("#" + drawer.dataset.drawer).classList.add("open");
+      const closeDrawer = e.target.closest("[data-close-drawer]");
+      if (closeDrawer) $("#" + closeDrawer.dataset.closeDrawer).classList.remove("open");
+      const uAction = e.target.closest("[data-u-action]");
+      if (uAction) {
+        const id = Number(uAction.dataset.id);
+        const t = tools.find(x => x.id === id) || userProposals.find(x => x.id === id);
+        if (uAction.dataset.uAction === "fav" && t) { t.fav = !t.fav; toast(t.fav ? "Ajouté aux favoris" : "Retiré des favoris"); logUser(`Favori modifié: ${t.name}`); }
+        if (uAction.dataset.uAction === "report" && t) { reports.unshift({id:"SIG-" + Math.floor(2400 + Math.random()*200), tool:t.name, issue:"Signalement utilisateur", priority:"Moyenne", status:"Ouvert"}); toast("Signalement créé"); logUser(`Signalement envoyé: ${t.name}`); }
+      }
+      const ur = e.target.closest("[data-u-report]");
+      if (ur) { const r = reports.find(x => x.id === ur.dataset.uReport); if (r) r.status = "Résolu"; toast("Ticket marqué résolu"); logUser(`Ticket ${ur.dataset.uReport} résolu`); }
+      const like = e.target.closest("[data-u-like]");
+      if (like) { const c = comments.find(x => x.id === Number(like.dataset.uLike)); if (c) c.likes++; toast("Vote utile ajouté"); logUser("Vote utile ajouté"); }
+      const prop = e.target.closest("[data-a-proposal]");
+      if (prop) {
+        const p = adminProposals.find(x => x.id === Number(prop.dataset.id));
+        if (p && prop.dataset.aProposal === "approve") { tools.push({id:Date.now(),name:p.name,icon:p.name[0],cat:p.category,desc:p.desc,pricing:"Freemium",score:p.score,status:"Publié",tags:["community","verified"],api:"À vérifier",users:"nouveau",fav:false,featured:false}); adminProposals = adminProposals.filter(x => x.id !== p.id); toast("Outil accepté et publié"); logAdmin(`${p.name} approuvé`); }
+        if (p && prop.dataset.aProposal === "revise") { p.flags.push("correction demandée"); toast("Correction demandée"); logAdmin(`Correction demandée pour ${p.name}`); }
+        if (p && prop.dataset.aProposal === "reject") { openModal("rejectModal"); adminProposals = adminProposals.filter(x => x.id !== p.id); logAdmin(`${p.name} rejeté avec motif`); }
+        renderAdmin(); renderUser();
+      }
+      const atool = e.target.closest("[data-a-tool]");
+      if (atool) {
+        const t = tools.find(x => x.id === Number(atool.dataset.id));
+        if (t && atool.dataset.aTool === "feature") t.featured = !t.featured;
+        if (t && atool.dataset.aTool === "archive") t.status = t.status === "Archivé" ? "Publié" : "Archivé";
+        if (t && atool.dataset.aTool === "delete") tools.splice(tools.indexOf(t), 1);
+        toast("Outil mis à jour"); logAdmin("Gestion outil modifiée");
+      }
+      const ar = e.target.closest("[data-a-report]");
+      if (ar) { const r = reports.find(x => x.id === ar.dataset.id); if (r) r.status = ar.dataset.aReport === "resolve" ? "Résolu" : ar.dataset.aReport === "assign" ? "Assigné" : "Escaladé"; toast("Signalement mis à jour"); logAdmin(`Signalement ${ar.dataset.id} mis à jour`); }
+      const au = e.target.closest("[data-a-user]");
+      if (au) { const u = users.find(x => x.id === Number(au.dataset.id)); if (u && au.dataset.aUser === "role") u.role = u.role === "Admin" ? "Utilisateur" : "Curateur"; if (u && au.dataset.aUser === "suspend") u.status = u.status === "Suspendu" ? "Actif" : "Suspendu"; toast("Utilisateur mis à jour"); logAdmin("Utilisateur modifié"); }
+      const ac = e.target.closest("[data-a-comment]");
+      if (ac) { const c = comments.find(x => x.id === Number(ac.dataset.id)); if (c) c.status = ac.dataset.aComment === "publish" ? "Publié" : ac.dataset.aComment === "hide" ? "Masqué" : "À suivre"; toast("Commentaire modéré"); logAdmin("Commentaire modéré"); }
+      renderAdmin(); renderUser(); renderPublic();
+    });
+
+    $("#uProposalForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.currentTarget));
+      userProposals.unshift({id:Date.now(),name:data.name,category:data.category,pricing:data.pricing,score:64,status:"En attente",admin:"Nouvelle proposition à vérifier par admin.",desc:data.desc,tags:(data.tags || "ai,tool").split(",").map(t => t.trim()),fav:false});
+      adminProposals.unshift({id:Date.now()+1,name:data.name,category:data.category,author:"Amine",score:64,desc:data.desc,flags:["nouvelle soumission","à vérifier"]});
+      e.currentTarget.reset();
+      toast("Proposition envoyée à la modération");
+      logUser(`Proposition envoyée: ${data.name}`);
+      logAdmin(`Nouvelle proposition: ${data.name}`);
+      showDash("u", "u-proposals");
+    });
+    $("#uCommentForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.currentTarget));
+      comments.unshift({id:Date.now(),tool:data.tool,author:"Amine",text:data.text,rating:Number(data.rating),likes:0,status:"Publié"});
+      e.currentTarget.reset();
+      toast("Commentaire publié");
+      logUser(`Commentaire publié sur ${data.tool}`);
+    });
+    $("#uNewReport").addEventListener("click", () => { reports.unshift({id:"SIG-" + Math.floor(2500 + Math.random()*300),tool:"ChatGPT",issue:"Métadonnée à vérifier",priority:"Basse",status:"Ouvert"}); toast("Ticket créé"); logUser("Nouveau ticket créé"); });
+    $("#uClearFav").addEventListener("click", () => { tools.forEach(t => t.fav = false); toast("Favoris vidés"); logUser("Favoris réinitialisés"); });
+    $("#uExportHistory").addEventListener("click", () => alert(JSON.stringify(history, null, 2)));
+    $("#uSaveSettings").addEventListener("click", () => { toast("Paramètres enregistrés"); logUser("Paramètres utilisateur enregistrés"); });
+    $("#uRefresh").addEventListener("click", () => { toast("Dashboard utilisateur actualisé"); logUser("Actualisation utilisateur"); });
+    $("#uSearch").addEventListener("input", () => applyDashSearch("#uSearch", "user"));
+    $("#aSearch").addEventListener("input", () => applyDashSearch("#aSearch", "admin"));
+    $("#aSimulate").addEventListener("click", () => { $("#aViews").textContent = (18 + Math.random()*4).toFixed(1) + "k"; renderChart(); toast("Trafic simulé"); logAdmin("Simulation trafic"); });
+    $("#aAutoModerate").addEventListener("click", () => { adminProposals.forEach(p => p.flags.push("auto-check OK")); toast("Auto-modération lancée"); logAdmin("Auto-modération exécutée"); });
+    $("#aAddProposal").addEventListener("click", () => { adminProposals.unshift({id:Date.now(),name:"AgentFlow "+Math.floor(Math.random()*90),category:"Automatisation",author:"Test",score:58,desc:"Agent IA multi-étapes avec connecteurs SaaS.",flags:["données aléatoires"]}); toast("Proposition test ajoutée"); logAdmin("Proposition test ajoutée"); });
+    $("#aCreateTool").addEventListener("click", () => { tools.push({id:Date.now(),name:"AdminTool "+Math.floor(Math.random()*90),icon:"A",cat:"Automatisation",desc:"Fiche créée depuis la console admin.",pricing:"Freemium",score:80,status:"Publié",tags:["admin","demo"],api:"Oui",users:"0 avis",fav:false,featured:false}); toast("Fiche créée"); logAdmin("Fiche admin créée"); });
+    $("#aNewIncident").addEventListener("click", () => { reports.unshift({id:"SIG-" + Math.floor(2800 + Math.random()*500),tool:"Claude",issue:"Donnée modèle obsolète",priority:"Moyenne",status:"Ouvert"}); toast("Incident simulé"); logAdmin("Incident simulé"); });
+    $("#aAddUser").addEventListener("click", () => { users.push({id:Date.now(),name:"User Demo",email:"demo"+Math.floor(Math.random()*99)+"@aifinder.dev",role:"Utilisateur",score:50,status:"Actif"}); toast("Utilisateur ajouté"); logAdmin("Utilisateur test ajouté"); });
+    $("#aAddComment").addEventListener("click", () => { comments.unshift({id:Date.now(),tool:"ChatGPT",author:"Demo",text:"Commentaire aléatoire à modérer.",rating:4,likes:0,status:"À vérifier"}); toast("Commentaire test ajouté"); logAdmin("Commentaire test ajouté"); });
+    $("#aCategoryForm").addEventListener("submit", e => { e.preventDefault(); categories.push($("#aCatName").value || "Nouvelle catégorie"); toast("Catégorie ajoutée"); logAdmin("Catégorie créée"); });
+    $("#aMergeTags").addEventListener("click", () => { toast("Tags fusionnés"); logAdmin(`Tags fusionnés: ${$("#aTagSource").value} -> ${$("#aTagTarget").value}`); });
+    $("#aRefreshChart").addEventListener("click", () => { renderChart(); toast("Analytics rafraîchis"); logAdmin("Analytics rafraîchis"); });
+    $("#aSaveSettings").addEventListener("click", () => { toast("Paramètres admin enregistrés"); logAdmin("Paramètres admin enregistrés"); });
+    $("#aRefresh").addEventListener("click", () => { toast("Dashboard admin actualisé"); logAdmin("Actualisation admin"); });
+    window.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); ($("#uSearch") || $("#aSearch")).focus(); } });
+
+    renderPublic();
+    document.querySelectorAll(".pill-btn").forEach(btn => btn.addEventListener("click", () => btn.classList.toggle("active")));
+    renderUser();
+    renderAdmin();
+  </script>
+</body>
+</html>
