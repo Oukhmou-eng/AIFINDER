@@ -150,6 +150,20 @@
       background: linear-gradient(135deg, var(--accent2), #ff8c8c);
     }
     .btn.ghost { background: transparent; box-shadow: none; }
+    .btn.small {
+      min-height: 34px;
+      padding: 0 11px;
+      border-radius: 9px;
+      font-size: .78rem;
+    }
+    .btn.fav-btn {
+      min-width: 108px;
+      border-color: rgba(255,107,107,.26);
+    }
+    .btn.fav-btn.primary {
+      background: linear-gradient(135deg, #ff5c8a, var(--accent2));
+      box-shadow: 0 10px 24px rgba(255,107,107,.20);
+    }
     .badge {
       display: inline-flex;
       align-items: center;
@@ -260,19 +274,25 @@
       margin-bottom: 18px;
     }
     .section-head h2 { font-size: 1.55rem; }
-    .grid { display: grid; gap: 14px; }
+    .grid { display: grid; gap: 18px; }
     .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-items: stretch;
+    }
     .cat-card, .tool-card, .workflow-card {
-      padding: 18px;
+      padding: 20px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       background: var(--surface);
       box-shadow: 0 10px 28px rgba(22,24,38,.05);
       transition: .2s;
     }
-    .cat-card:hover, .tool-card:hover { transform: translateY(-2px); border-color: rgba(108,99,255,.28); }
+    .cat-card:hover, .tool-card:hover { transform: translateY(-2px); border-color: rgba(108,99,255,.28); box-shadow: 0 18px 42px rgba(22,24,38,.11); }
     .cat-card {
       display: grid;
       grid-template-columns: 44px 1fr;
@@ -287,7 +307,7 @@
       place-items: center;
       background: rgba(108,99,255,.12);
     }
-    .tool-card { position: relative; overflow: hidden; display: grid; gap: 13px; }
+    .tool-card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 15px; min-height: 100%; }
     .tool-card::before {
       content: "";
       position: absolute;
@@ -298,14 +318,14 @@
     .tool-top {
       display: grid;
       grid-template-columns: 48px 1fr auto;
-      gap: 12px;
+      gap: 14px;
       align-items: start;
     }
     .tool-desc { color: var(--muted); font-size: .86rem; line-height: 1.6; min-height: 54px; }
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 7px;
+      gap: 9px;
     }
     .meta {
       padding: 8px;
@@ -315,8 +335,18 @@
       font-size: .76rem;
     }
     .meta b { display: block; color: var(--text); font-size: .82rem; margin-top: 2px; }
-    .tool-actions { display: flex; justify-content: space-between; gap: 9px; align-items: center; flex-wrap: wrap; }
+    .tool-actions { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: auto; padding-top: 3px; }
     .actions { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+    .tool-actions .btn { flex: 1 1 112px; }
+    .fav-heart {
+      display: inline-grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      color: currentColor;
+      font-size: 1rem;
+      line-height: 1;
+    }
     .progress {
       height: 8px;
       border-radius: 999px;
@@ -699,7 +729,10 @@
       border-bottom: 1px solid var(--border);
     }
     .card-body { padding: 16px; }
-    .table-wrap { overflow-x: auto; }
+    .table-wrap {
+      overflow-x: auto;
+      border-top: 1px solid var(--border);
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -717,6 +750,15 @@
       font-size: .73rem;
       text-transform: uppercase;
       letter-spacing: .06em;
+    }
+    th:last-child, td:last-child { text-align: right; }
+    .table-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+      min-width: 148px;
     }
     .timeline { display: grid; gap: 12px; }
     .timeline-item {
@@ -807,14 +849,14 @@
     @media (max-width: 980px) {
       .hero, .catalog-layout, .detail-layout, .app-shell, .dashboard-grid, .moderation-layout { grid-template-columns: 1fr; }
       .sidebar { position: relative; top: 0; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
-      .metrics, .kpis, .grid.cols-4, .grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metrics, .kpis, .grid.cols-4, .grid.cols-3, .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .navlinks { display: none; }
     }
     @media (max-width: 640px) {
       .topnav { padding: 0 12px; }
       .auth .btn.ghost { display: none; }
       .hero { padding-top: 44px; }
-      .metrics, .kpis, .grid.cols-2, .grid.cols-3, .grid.cols-4, .feature-list, .form-grid { grid-template-columns: 1fr; }
+      .metrics, .kpis, .grid.cols-2, .grid.cols-3, .grid.cols-4, .tools-grid, .feature-list, .form-grid { grid-template-columns: 1fr; }
       .catalog-toolbar, .dash-head, .detail-title { grid-template-columns: 1fr; }
     }
   </style>
@@ -1366,7 +1408,7 @@
           </div>
           <div class="tool-actions">
             <div class="chips">${t.tags.map(tag => `<span class="badge">${tag}</span>`).join("")}</div>
-            ${mode === "user" ? `<button class="btn ${t.fav ? "primary" : ""}" data-u-action="fav" data-id="${t.id}">${t.fav ? "Favori ✓" : "Favori"}</button><button class="btn" data-u-action="report" data-id="${t.id}">Signaler</button>` : `<button class="btn" onclick="showScreen('detail')">Détails</button>`}
+            ${mode === "user" ? `<button class="btn fav-btn ${t.fav ? "primary" : ""}" data-u-action="fav" data-id="${t.id}"><span class="fav-heart">${t.fav ? "♥" : "♡"}</span>${t.fav ? "Favori" : "Ajouter"}</button><button class="btn" data-u-action="report" data-id="${t.id}">Signaler</button>` : `<button class="btn" onclick="showScreen('detail')">Détails</button>`}
           </div>
         </article>`;
     }
@@ -1425,8 +1467,8 @@
       $("#uDrawerList").innerHTML = history.map(h => `<div class="item"><strong>Session</strong><small>${h}</small></div>`).join("");
       $("#uCategoryChips").innerHTML = ["Tous",...new Set(userProposals.map(p => p.category))].map((c,i) => `<button class="chip ${i===0?"active":""}">${c}</button>`).join("");
       $("#uProposalCards").innerHTML = userProposals.map(p => toolCard({id:p.id,name:p.name,icon:p.name[0],cat:p.category,desc:p.desc,pricing:p.pricing,score:p.score,status:p.status,tags:p.tags,api:"À vérifier",fav:p.fav}, "user")).join("");
-      $("#uProposalRows").innerHTML = userProposals.map(p => `<tr data-search="${(p.name+" "+p.category+" "+p.status+" "+p.admin).toLowerCase()}"><td>${p.name}</td><td>${p.category}</td><td><span class="badge ${badge(p.status)}">${p.status}</span></td><td>${p.score}%</td><td>${p.admin}</td><td><button class="btn" data-user-view="u-submit">Enrichir</button></td></tr>`).join("");
-      $("#uReportRows").innerHTML = reports.map(r => `<tr data-search="${(r.id+" "+r.tool+" "+r.issue+" "+r.status).toLowerCase()}"><td>${r.id}</td><td>${r.tool}</td><td>${r.issue}</td><td>${r.priority}</td><td><span class="badge ${badge(r.status)}">${r.status}</span></td><td><button class="btn" data-u-report="${r.id}">${r.status === "Résolu" ? "Archiver" : "Marquer résolu"}</button></td></tr>`).join("");
+      $("#uProposalRows").innerHTML = userProposals.map(p => `<tr data-search="${(p.name+" "+p.category+" "+p.status+" "+p.admin).toLowerCase()}"><td>${p.name}</td><td>${p.category}</td><td><span class="badge ${badge(p.status)}">${p.status}</span></td><td>${p.score}%</td><td>${p.admin}</td><td><div class="table-actions"><button class="btn small" data-user-view="u-submit">Enrichir</button></div></td></tr>`).join("");
+      $("#uReportRows").innerHTML = reports.map(r => `<tr data-search="${(r.id+" "+r.tool+" "+r.issue+" "+r.status).toLowerCase()}"><td>${r.id}</td><td>${r.tool}</td><td>${r.issue}</td><td>${r.priority}</td><td><span class="badge ${badge(r.status)}">${r.status}</span></td><td><div class="table-actions"><button class="btn small" data-u-report="${r.id}">${r.status === "Résolu" ? "Archiver" : "Marquer résolu"}</button></div></td></tr>`).join("");
       $("#uCommentTool").innerHTML = tools.map(t => `<option>${t.name}</option>`).join("");
       $("#uCommentList").innerHTML = comments.map(c => `<div class="item" data-search="${(c.tool+" "+c.text).toLowerCase()}"><strong>${c.tool} · ${"★".repeat(c.rating)}</strong><small>${c.text}</small><div class="actions" style="margin-top:8px"><button class="btn" data-u-like="${c.id}">Utile (${c.likes})</button></div></div>`).join("");
       $("#uHistory").innerHTML = history.map(h => `<div class="item"><strong>${h.includes("Recherche") ? "Recherche" : "Action"}</strong><small>${h}</small></div>`).join("");
@@ -1453,9 +1495,9 @@
       $("#aAuditShort").innerHTML = audit.slice(0,5).map(a => `<div class="item"><strong>Audit</strong><small>${a}</small></div>`).join("");
       $("#aAuditFull").innerHTML = audit.map(a => `<div class="item"><strong>Journal</strong><small>${a}</small></div>`).join("");
       $("#aProposalQueue").innerHTML = adminProposals.map(p => `<div class="queue-card" data-search="${(p.name+" "+p.category+" "+p.author+" "+p.desc).toLowerCase()}"><div class="queue-head"><strong>${p.name} · ${p.category}</strong><span class="badge warn">${p.score}% complet</span></div><p>${p.desc}</p><div class="chips">${p.flags.map(f => `<span class="badge danger">${f}</span>`).join("")}</div><div class="actions" style="margin-top:10px"><button class="btn success" data-a-proposal="approve" data-id="${p.id}">Approuver</button><button class="btn" data-a-proposal="revise" data-id="${p.id}">Demander correction</button><button class="btn danger" data-a-proposal="reject" data-id="${p.id}">Rejeter</button></div></div>`).join("") || `<p class="muted">Aucune proposition en attente.</p>`;
-      $("#aToolRows").innerHTML = tools.map(t => `<tr data-search="${(t.name+" "+t.cat+" "+t.status).toLowerCase()}"><td>${t.name}</td><td>${t.cat}</td><td><span class="badge ${badge(t.status)}">${t.status}</span></td><td>${t.score}%</td><td><div class="actions"><button class="btn" data-a-tool="feature" data-id="${t.id}">${t.featured ? "Retirer une" : "Mettre une"}</button><button class="btn" data-a-tool="archive" data-id="${t.id}">${t.status === "Archivé" ? "Publier" : "Archiver"}</button><button class="btn danger" data-a-tool="delete" data-id="${t.id}">Supprimer</button></div></td></tr>`).join("");
-      $("#aReportRows").innerHTML = reports.map(r => `<tr data-search="${(r.id+" "+r.tool+" "+r.issue+" "+r.status).toLowerCase()}"><td>${r.id}</td><td>${r.tool}</td><td>${r.issue}</td><td>${r.priority}</td><td><span class="badge ${badge(r.status)}">${r.status}</span></td><td><div class="actions"><button class="btn success" data-a-report="resolve" data-id="${r.id}">Résoudre</button><button class="btn" data-a-report="assign" data-id="${r.id}">En analyse</button><button class="btn danger" data-a-report="escalate" data-id="${r.id}">Escalader</button></div></td></tr>`).join("");
-      $("#aUserRows").innerHTML = users.map(u => `<tr data-search="${(u.name+" "+u.email+" "+u.role+" "+u.status).toLowerCase()}"><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td><span class="badge ${badge(u.status)}">${u.status}</span></td><td>${u.derniere_connexion || "2026-05-04"}</td><td><button class="btn" data-a-user="role" data-id="${u.id}">Changer rôle</button> <button class="btn ${u.status === "Suspendu" ? "success" : "danger"}" data-a-user="suspend" data-id="${u.id}">${u.status === "Suspendu" ? "Réactiver" : "Suspendre"}</button></td></tr>`).join("");
+      $("#aToolRows").innerHTML = tools.map(t => `<tr data-search="${(t.name+" "+t.cat+" "+t.status).toLowerCase()}"><td>${t.name}</td><td>${t.cat}</td><td><span class="badge ${badge(t.status)}">${t.status}</span></td><td>${t.score}%</td><td><div class="table-actions"><button class="btn small" data-a-tool="feature" data-id="${t.id}">${t.featured ? "Retirer une" : "Mettre une"}</button><button class="btn small" data-a-tool="archive" data-id="${t.id}">${t.status === "Archivé" ? "Publier" : "Archiver"}</button><button class="btn small danger" data-a-tool="delete" data-id="${t.id}">Supprimer</button></div></td></tr>`).join("");
+      $("#aReportRows").innerHTML = reports.map(r => `<tr data-search="${(r.id+" "+r.tool+" "+r.issue+" "+r.status).toLowerCase()}"><td>${r.id}</td><td>${r.tool}</td><td>${r.issue}</td><td>${r.priority}</td><td><span class="badge ${badge(r.status)}">${r.status}</span></td><td><div class="table-actions"><button class="btn small success" data-a-report="resolve" data-id="${r.id}">Résoudre</button><button class="btn small" data-a-report="assign" data-id="${r.id}">En analyse</button><button class="btn small danger" data-a-report="escalate" data-id="${r.id}">Escalader</button></div></td></tr>`).join("");
+      $("#aUserRows").innerHTML = users.map(u => `<tr data-search="${(u.name+" "+u.email+" "+u.role+" "+u.status).toLowerCase()}"><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td><span class="badge ${badge(u.status)}">${u.status}</span></td><td>${u.derniere_connexion || "2026-05-04"}</td><td><div class="table-actions"><button class="btn small" data-a-user="role" data-id="${u.id}">Rôle</button><button class="btn small ${u.status === "Suspendu" ? "success" : "danger"}" data-a-user="suspend" data-id="${u.id}">${u.status === "Suspendu" ? "Réactiver" : "Suspendre"}</button></div></td></tr>`).join("");
       $("#aCategoryChips").innerHTML = categories.map(c => `<span class="chip active">${c}</span>`).join("");
       $("#aCategoryMeta").innerHTML = categories.map((c,i) => `<div class="item"><strong>${c}</strong><small>id_Cat ${i + 1} · slug ${c.toLowerCase().replaceAll(" ", "-")} · icone renseignée</small></div>`).join("");
       $("#aRequestQueue").innerHTML = demandes.map(d => `<div class="queue-card"><div class="queue-head"><strong>${d.titre}</strong><span class="badge ${badge(d.statut)}">${d.statut}</span></div><p>${d.message}</p><div class="actions"><button class="btn success" data-a-request="resolve" data-id="${d.id}">Résoudre</button><button class="btn" data-a-request="analysis" data-id="${d.id}">En analyse</button></div></div>`).join("");
