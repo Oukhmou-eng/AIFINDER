@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PowerAMC Hub - Dashboard Utilisateur</title>
+  <title>AIFinder - Dashboard Utilisateur</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -25,6 +25,7 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 110%; }
     body {
       min-height: 100vh;
       font-family: "DM Sans", system-ui, sans-serif;
@@ -607,8 +608,8 @@
   <div class="app" data-theme="light">
     <aside class="sidebar">
       <a class="brand" href="#">
-        <div class="logo">P</div>
-        <span><strong>PowerAMC Hub</strong><br><span class="muted">Dashboard utilisateur</span></span>
+        <div class="logo">AI</div>
+        <span><strong>AIFinder</strong><br><span class="muted">Dashboard utilisateur</span></span>
       </a>
       <div class="profile">
         <div class="profile-row">
@@ -622,9 +623,9 @@
         <button class="active" data-target="dashboard"><span class="left">⌘ <span class="text">Vue globale</span></span><span class="badge">live</span></button>
         <button data-target="proposer"><span class="left">＋ <span class="text">Proposer outil</span></span><span class="badge ok">principal</span></button>
         <button data-target="propositions"><span class="left">▣ <span class="text">Mes propositions</span></span><span class="badge" id="navTools">0</span></button>
-        <button data-target="modeles"><span class="left">◫ <span class="text">Modèles</span></span></button>
-        <button data-target="caracteristiques"><span class="left">✦ <span class="text">Caractéristiques</span></span></button>
         <button data-target="favoris"><span class="left">★ <span class="text">Favoris</span></span><span class="badge" id="navFav">3</span></button>
+        <button data-target="collections"><span class="left">▤ <span class="text">Collections</span></span><span class="badge" id="navCollections">0</span></button>
+        <button data-target="demandes"><span class="left">? <span class="text">Demandes</span></span><span class="badge" id="navRequests">0</span></button>
         <button data-target="signalements"><span class="left">⚠ <span class="text">Signalements</span></span><span class="badge warn" id="navReports">2</span></button>
         <button data-target="commentaires"><span class="left">✎ <span class="text">Commentaires</span></span></button>
         <button data-target="reactions"><span class="left">♡ <span class="text">Réactions</span></span></button>
@@ -638,7 +639,7 @@
       <header class="topbar">
         <div class="search">
           <span>⌕</span>
-          <input id="globalSearch" placeholder="Rechercher dans mes propositions, favoris, tickets, commentaires...">
+          <input id="globalSearch" placeholder="Rechercher outils, propositions, favoris, demandes, signalements...">
           <kbd class="kbd">Ctrl K</kbd>
         </div>
         <div class="actions">
@@ -651,9 +652,9 @@
       <section id="dashboard" class="section active">
         <div class="hero">
           <article class="card hero-card">
-            <span class="pill"><span class="dot"></span> Interface riche basée sur le diagramme PowerAMC</span>
+            <span class="pill"><span class="dot"></span> Dashboard utilisateur AIFinder</span>
             <h1>Proposer et suivre vos <em>contributions</em> d'outils IA.</h1>
-            <p class="lead">Après connexion, l'utilisateur arrive depuis la home/catalogue vers ce dashboard. Ici, il ne parcourt pas tout le catalogue : il propose des outils, complète modèle et caractéristiques, suit la validation, gère favoris, signalements, commentaires, réactions et historique.</p>
+            <p class="lead">Après connexion, l'utilisateur peut proposer un outil IA avec ses métadonnées MCDD, gérer favoris et collections, noter/commenter, signaler un problème, faire une demande, suivre ses notifications et modifier son profil.</p>
             <div class="actions">
               <button class="btn primary" data-target="proposer">Proposer un outil</button>
               <button class="btn" data-target="propositions">Voir mes propositions</button>
@@ -661,28 +662,28 @@
             </div>
           </article>
           <div class="hero-side">
-            <article class="card mini-card"><div class="mini-head"><span class="muted">Score contribution</span><span class="badge ok">excellent</span></div><strong id="score">94</strong><div class="progress" style="--value:94%"><i></i></div></article>
-            <article class="card mini-card"><div class="mini-head"><span class="muted">Objectif hebdo</span><span class="badge">4/5</span></div><strong>Compléter 5 fiches</strong><p class="muted">Un modèle ou une caractéristique à enrichir.</p></article>
+            <article class="card mini-card"><div class="mini-head"><span class="muted">Soumissions</span><span class="badge ok">actif</span></div><strong id="score">4</strong><p class="muted">nombre_soum selon soumission_outil.</p></article>
+            <article class="card mini-card"><div class="mini-head"><span class="muted">Limite</span><span class="badge">10</span></div><strong>Soumissions/mois</strong><p class="muted">limite_soum dans le workflow de proposition.</p></article>
           </div>
         </div>
 
         <div class="grid-kpi">
-          <article class="card kpi"><p>Fiches proposées</p><strong id="kpiViews">4</strong><span class="delta">2 publiées, 2 en validation</span></article>
-          <article class="card kpi"><p>Favoris actifs</p><strong id="kpiFav">3</strong><span class="delta">Collections IA, Dev, Data</span></article>
-          <article class="card kpi"><p>Signalements ouverts</p><strong id="kpiReports">2</strong><span class="delta">Suivi en temps réel simulé</span></article>
-          <article class="card kpi"><p>Commentaires utiles</p><strong id="kpiComments">18</strong><span class="delta">+3 cette semaine</span></article>
+          <article class="card kpi"><p>Soumissions</p><strong id="kpiViews">4</strong><span class="delta">statut et note_admin</span></article>
+          <article class="card kpi"><p>Favoris actifs</p><strong id="kpiFav">3</strong><span class="delta">date_ajouter enregistrée</span></article>
+          <article class="card kpi"><p>Signalements ouverts</p><strong id="kpiReports">2</strong><span class="delta">motif, statut, date</span></article>
+          <article class="card kpi"><p>Avis & commentaires</p><strong id="kpiComments">18</strong><span class="delta">note, contenu, réactions</span></article>
         </div>
 
         <div class="layout-2">
           <article class="panel">
             <div class="panel-head">
-              <div><h2>Mes outils suivis</h2><p class="muted">Outils consultés depuis la home, favoris, proposés ou à compléter.</p></div>
+              <div><h2>Outils suivis</h2><p class="muted">Affichage limité aux champs outils, catégories, tags, Models, plateforme et fournisseur.</p></div>
               <div class="tabs" id="quickFilters"></div>
             </div>
             <div class="tools-grid" id="recommendedGrid"></div>
           </article>
           <aside class="panel">
-            <div class="panel-head"><h2>Activité récente</h2><span class="badge ok">simulée</span></div>
+            <div class="panel-head"><h2>Activité récente</h2><span class="badge ok">session</span></div>
             <div class="list" id="activityList"></div>
           </aside>
         </div>
@@ -707,43 +708,33 @@
 
       <section id="proposer" class="section">
         <article class="panel">
-          <div class="panel-head"><div><h2>Proposer un outil</h2><p class="muted">Formulaire principal basé sur les entités outils, Models, caractéristiques, catégories et tags du diagramme.</p></div><span class="badge warn">workflow principal</span></div>
+          <div class="panel-head"><div><h2>Proposer un outil</h2><p class="muted">Formulaire limité aux entités outils, catégories, tags, Models, caractéristique, plateforme, fournisseur et soumission_outil.</p></div><span class="badge warn">workflow principal</span></div>
           <form class="form-grid" id="proposalForm">
-            <div class="field"><label>Nom outil</label><input name="name" required maxlength="40" placeholder="Ex: UMLPilot"></div>
+            <div class="field"><label>nom</label><input name="name" required maxlength="40" placeholder="Ex: UMLPilot"></div>
             <div class="field"><label>Catégorie</label><select name="category"><option>IA</option><option>Texte & Rédaction</option><option>Image</option><option>Code & Dev</option><option>Data</option><option>Audio</option><option>Vidéo</option><option>Productivité</option></select></div>
-            <div class="field"><label>Lien officiel</label><input name="url" required placeholder="https://site-officiel.com"></div>
-            <div class="field"><label>Logo URL</label><input name="logoUrl" placeholder="https://.../logo.png"></div>
-            <div class="field full"><label>Description outil</label><textarea name="description" required placeholder="Décrivez le problème résolu, les cas d'usage, le public cible, les limites connues et pourquoi cet outil mérite d'être ajouté."></textarea></div>
+            <div class="field"><label>site_url</label><input name="url" required placeholder="https://site-officiel.com"></div>
+            <div class="field"><label>logo_url</label><input name="logoUrl" placeholder="https://.../logo.png"></div>
+            <div class="field"><label>slug</label><input name="slug" required placeholder="umlpilot"></div>
+            <div class="field"><label>plateforme</label><select name="platform"><option>Web</option><option>API</option><option>Desktop</option><option>Mobile</option><option>Extension</option></select></div>
+            <div class="field full"><label>description_longue</label><textarea name="description" required placeholder="Description neutre de l'outil selon le champ description_longue."></textarea></div>
 
-            <div class="field"><label>Nom du modèle</label><input name="modelName" required placeholder="Ex: Freemium SaaS, Open source local, API Pay-as-you-go"></div>
-            <div class="field"><label>Type de modèle</label><select name="pricing"><option>Freemium</option><option>Gratuit</option><option>Payant</option><option>Open source</option><option>Entreprise</option><option>API usage-based</option></select></div>
-            <div class="field"><label>Statut modèle</label><select name="modelStatus"><option>Actif</option><option>Beta</option><option>Nouveau</option><option>À vérifier</option></select></div>
-            <div class="field"><label>Date découverte</label><input name="dateFound" type="date"></div>
-            <div class="field full"><label>Description du modèle</label><textarea name="modelDesc" placeholder="Prix, limites gratuites, licence, mode d'accès, API, conditions d'utilisation, disponibilité."></textarea></div>
+            <div class="field"><label>Models.nom</label><input name="modelName" required placeholder="Ex: GPT-4o, Claude 3.5, Stable Diffusion"></div>
+            <div class="field"><label>Models.type</label><select name="pricing"><option>Freemium</option><option>Gratuit</option><option>Payant</option><option>Open source</option><option>Entreprise</option><option>API</option></select></div>
+            <div class="field"><label>licence</label><input name="licence" placeholder="Propriétaire, MIT, Apache-2.0"></div>
+            <div class="field"><label>release_date</label><input name="releaseDate" type="date"></div>
+            <div class="field"><label>api_url</label><input name="apiUrl" placeholder="https://.../api"></div>
+            <div class="field"><label>est_open_source</label><select name="openSource"><option>false</option><option>true</option></select></div>
+            <div class="field full"><label>Models.description</label><textarea name="modelDesc" placeholder="Description du modèle associé."></textarea></div>
 
-            <div class="field"><label>Caractéristique 1</label><input name="feature1" required placeholder="Ex: Génération UML depuis prompt"></div>
-            <div class="field"><label>Type</label><select name="featureType1"><option>Fonctionnalité</option><option>Intégration</option><option>Export</option><option>Sécurité</option><option>Collaboration</option><option>Performance</option></select></div>
-            <div class="field"><label>Caractéristique 2</label><input name="feature2" placeholder="Ex: Export SQL / PNG / PDF"></div>
-            <div class="field"><label>Statut caractéristique</label><select name="featureStatus"><option>Vérifiée</option><option>À tester</option><option>Limitation connue</option></select></div>
-            <div class="field full"><label>Tags</label><input name="tags" placeholder="uml, diagramme, code, productivité, api"></div>
-            <div class="field"><label>Votre avis initial</label><select name="rating"><option>5</option><option>4</option><option>3</option><option>2</option></select></div>
-            <div class="field"><label>Niveau de confiance</label><select name="confidence"><option>Source officielle vérifiée</option><option>Testé personnellement</option><option>À confirmer par admin</option></select></div>
+            <div class="field"><label>caracteristique.cle</label><input name="feature1" required placeholder="Ex: export"></div>
+            <div class="field"><label>caracteristique.valeur</label><input name="feature2" placeholder="Ex: PNG/PDF"></div>
+            <div class="field"><label>type_valeur</label><select name="featureType1"><option>String</option><option>Booléen</option><option>Entier</option><option>Date</option></select></div>
+            <div class="field"><label>fournisseur.nom</label><input name="provider" placeholder="Nom fournisseur"></div>
+            <div class="field full"><label>tags.nom</label><input name="tags" placeholder="uml, diagramme, code, api"></div>
+            <div class="field"><label>avis.note</label><select name="rating"><option>5</option><option>4</option><option>3</option><option>2</option></select></div>
+            <div class="field"><label>soumission_outil.limite_soum</label><input name="limit" type="number" min="1" value="10"></div>
             <div class="field full"><button class="btn primary" type="submit">Envoyer la proposition</button></div>
           </form>
-        </article>
-      </section>
-
-      <section id="modeles" class="section">
-        <article class="panel">
-          <div class="panel-head"><div><h2>Modèles associés</h2><p class="muted">Suivi des modèles économiques et techniques liés aux outils que vous proposez.</p></div><button class="btn" data-target="proposer">Ajouter via proposition</button></div>
-          <div class="table-wrap"><table><thead><tr><th>Modèle</th><th>Outil</th><th>Description</th><th>Statut</th></tr></thead><tbody id="modelRows"></tbody></table></div>
-        </article>
-      </section>
-
-      <section id="caracteristiques" class="section">
-        <article class="panel">
-          <div class="panel-head"><div><h2>Caractéristiques proposées</h2><p class="muted">Fonctions, exports, intégrations et limites que vous avez déclarés.</p></div><span class="badge ok">lié aux outils</span></div>
-          <div class="table-wrap"><table><thead><tr><th>Caractéristique</th><th>Outil</th><th>Type</th><th>Statut</th></tr></thead><tbody id="featureRows"></tbody></table></div>
         </article>
       </section>
 
@@ -754,9 +745,23 @@
         </article>
       </section>
 
+      <section id="collections" class="section">
+        <article class="panel">
+          <div class="panel-head"><div><h2>Collections d'outils</h2><p class="muted">Créer une collection et y associer des outils favoris.</p></div><button class="btn primary" id="newCollectionBtn">Nouvelle collection</button></div>
+          <div class="tools-grid" id="collectionGrid"></div>
+        </article>
+      </section>
+
+      <section id="demandes" class="section">
+        <article class="panel">
+          <div class="panel-head"><div><h2>Mes demandes</h2><p class="muted">Faire une demande liée à un outil ou une soumission.</p></div><button class="btn primary" id="newRequestBtn">Nouvelle demande</button></div>
+          <div class="list" id="requestList"></div>
+        </article>
+      </section>
+
       <section id="signalements" class="section">
         <article class="panel">
-          <div class="panel-head"><div><h2>Mes signalements</h2><p class="muted">Créer un ticket, changer son statut et simuler la réponse admin.</p></div><button class="btn primary" id="newReportBtn">Nouveau ticket</button></div>
+          <div class="panel-head"><div><h2>Mes signalements</h2><p class="muted">Créer un signalement et suivre motif, statut, date et description.</p></div><button class="btn primary" id="newReportBtn">Nouveau signalement</button></div>
           <div class="table-wrap">
             <table>
               <thead><tr><th>Réf</th><th>Objet</th><th>Outil</th><th>Priorité</th><th>Statut</th><th>Action</th></tr></thead>
@@ -768,7 +773,7 @@
 
       <section id="commentaires" class="section">
         <article class="panel">
-          <div class="panel-head"><div><h2>Commentaires & réactions</h2><p class="muted">Les likes et publications sont simulés instantanément.</p></div></div>
+          <div class="panel-head"><div><h2>Commentaires & réactions</h2><p class="muted">Publier un commentaire et réagir aux commentaires existants.</p></div></div>
           <form class="form-grid" id="commentForm">
             <div class="field"><label>Outil</label><select name="tool" id="commentTool"></select></div>
             <div class="field"><label>Note</label><select name="rating"><option>5</option><option>4</option><option>3</option><option>2</option></select></div>
@@ -781,7 +786,7 @@
 
       <section id="reactions" class="section">
         <article class="panel">
-          <div class="panel-head"><div><h2>Réactions reçues</h2><p class="muted">Notes et retours reçus sur vos commentaires et propositions.</p></div><button class="btn" id="simulateDay">Simuler activité</button></div>
+          <div class="panel-head"><div><h2>Réactions reçues</h2><p class="muted">Réactions liées aux commentaires et outils.</p></div><button class="btn" id="simulateDay">Actualiser réactions</button></div>
           <div class="grid-kpi">
             <article class="card kpi"><p>Votes utiles</p><strong>42</strong><span class="delta">+6 cette semaine</span></article>
             <article class="card kpi"><p>Notes données</p><strong>17</strong><span class="delta">Moyenne 4.4/5</span></article>
@@ -799,7 +804,7 @@
             <div class="item"><strong>DiagramPilot est passé en validation admin.</strong><small>Le modèle Freemium SaaS doit encore être confirmé.</small></div>
             <div class="item"><strong>Votre signalement SIG-1024 est en analyse.</strong><small>Un administrateur vérifie le lien officiel.</small></div>
             <div class="item"><strong>Votre commentaire sur DataForge a reçu 6 votes utiles.</strong><small>Impact positif sur le score contribution.</small></div>
-            <div class="item"><strong>Une caractéristique manque de preuve.</strong><small>Ajoutez capture, lien documentation ou note de test.</small></div>
+            <div class="item"><strong>Une caractéristique manque de valeur.</strong><small>Complétez cle, valeur ou type_valeur.</small></div>
           </div>
         </article>
       </section>
@@ -813,13 +818,14 @@
 
       <section id="parametres" class="section">
         <article class="panel">
-          <div class="panel-head"><div><h2>Paramètres</h2><p class="muted">Préférences utilisateur simulées.</p></div><button class="btn primary" id="saveSettings">Enregistrer</button></div>
+          <div class="panel-head"><div><h2>Modifier son profil</h2><p class="muted">Champs de l'entité Utilsateur uniquement.</p></div><button class="btn primary" id="saveSettings">Enregistrer</button></div>
           <div class="form-grid">
-            <div class="field"><label>Nom</label><input value="Amine Modeler"></div>
-            <div class="field"><label>Email</label><input value="amine@example.com"></div>
-            <div class="field"><label>Langue</label><select><option>Français</option><option>Anglais</option></select></div>
-            <div class="field"><label>Notifications</label><select><option>Temps réel</option><option>Résumé quotidien</option><option>Désactivées</option></select></div>
-            <div class="field full"><label>Centres d'intérêt</label><textarea>IA, UML, modélisation de données, développement, outils productivité.</textarea></div>
+            <div class="field"><label>nom</label><input value="Amine"></div>
+            <div class="field"><label>Prenom</label><input value="Modeler"></div>
+            <div class="field"><label>email</label><input value="amine@example.com"></div>
+            <div class="field"><label>mot de passe</label><input type="password" value="password-demo"></div>
+            <div class="field"><label>avatar_url</label><input value="https://example.com/avatar.png"></div>
+            <div class="field"><label>statut</label><select><option>Actif</option><option>Suspendu</option></select></div>
           </div>
         </article>
       </section>
@@ -834,9 +840,9 @@
 
   <script>
     const tools = [
-      {id:1,name:'DiagramPilot',icon:'🧩',category:'IA',pricing:'Freemium',score:88,rating:4.5,reviews:8,status:'En validation',fav:false,desc:'Génération de diagrammes UML et suggestions de classes.',modelName:'Freemium SaaS',modelDesc:'Plan gratuit limité, export avancé en Pro.',feature1:'Génération UML depuis prompt',feature2:'Export PNG/PDF',featureType1:'Fonctionnalité',featureStatus:'À tester'},
+      {id:1,name:'DiagramPilot',icon:'🧩',category:'IA',pricing:'Freemium',score:88,rating:4.5,reviews:8,status:'En validation',fav:false,desc:'Génération de diagrammes UML et suggestions de classes.',modelName:'Freemium SaaS',modelDesc:'Plan gratuit limité, export avancé en Pro.',feature1:'Génération UML depuis prompt',feature2:'Export PNG/PDF',featureType1:'Fonctionnalité',featureStatus:'À vérifier'},
       {id:2,name:'DataForge',icon:'📊',category:'Data',pricing:'Open source',score:84,rating:4.3,reviews:12,status:'Publié',fav:true,desc:'Modélisation de données, schémas SQL et documentation API.',modelName:'Open source local',modelDesc:'Auto-hébergeable, licence permissive.',feature1:'Génération SQL',feature2:'Documentation API',featureType1:'Export',featureStatus:'Vérifiée'},
-      {id:3,name:'PromptAtlas',icon:'📝',category:'Productivité',pricing:'Freemium',score:79,rating:4.1,reviews:4,status:'Brouillon',fav:false,desc:'Organisation de prompts, historiques et cas d’usage par équipe.',modelName:'Freemium équipe',modelDesc:'Espace personnel gratuit, collaboration payante.',feature1:'Collections de prompts',feature2:'Historique versionné',featureType1:'Collaboration',featureStatus:'À tester'},
+      {id:3,name:'PromptAtlas',icon:'📝',category:'Productivité',pricing:'Freemium',score:79,rating:4.1,reviews:4,status:'Brouillon',fav:false,desc:'Organisation de prompts, historiques et cas d’usage par équipe.',modelName:'Freemium équipe',modelDesc:'Espace personnel gratuit, collaboration payante.',feature1:'Collections de prompts',feature2:'Historique versionné',featureType1:'Collaboration',featureStatus:'À vérifier'},
       {id:4,name:'CodeMapper',icon:'💻',category:'Code & Dev',pricing:'Payant',score:91,rating:4.6,reviews:6,status:'Publié',fav:true,desc:'Analyse un repo et produit une carte architecture.',modelName:'Abonnement Pro',modelDesc:'Tarif mensuel par développeur.',feature1:'Cartographie architecture',feature2:'Analyse dépendances',featureType1:'Fonctionnalité',featureStatus:'Vérifiée'}
     ];
     let reports = [
@@ -846,6 +852,14 @@
     let comments = [
       {tool:'ChatGPT', text:'Très utile pour générer une première documentation technique.', rating:5, likes:12},
       {tool:'DataForge', text:'Bon outil open source pour préparer un modèle relationnel.', rating:4, likes:6}
+    ];
+    let collections = [
+      {id:1, nom:'Outils de modélisation', decription:'Collection créée pour les outils UML et data.', created_at:'2026-05-04', outil:'DiagramPilot'},
+      {id:2, nom:'Favoris productivité', decription:'Outils suivis pour usage quotidien.', created_at:'2026-05-04', outil:'CodeMapper'}
+    ];
+    let demandes = [
+      {id:1, titre:'Demande de correction catégorie', message:'Vérifier la catégorie de DiagramPilot.', created_at:'2026-05-04', statut:'Ouvert'},
+      {id:2, titre:'Demande de suppression outil', message:'Supprimer un brouillon devenu doublon.', created_at:'2026-05-04', statut:'En analyse'}
     ];
     let history = ['Connexion dashboard', 'Arrivée depuis la home/catalogue', 'Consultation de mes contributions'];
     let filter = 'Tous';
@@ -908,8 +922,6 @@
       $('#kpiFav').textContent = tools.filter(t => t.fav).length;
       $('#kpiViews').textContent = tools.length;
       renderProposalRows();
-      renderModels();
-      renderFeatures();
       renderCommentToolSelect();
     }
     function renderFilters() {
@@ -926,14 +938,17 @@
         <td><button class="btn" data-target="proposer">Enrichir</button></td>
       </tr>`).join('');
     }
-    function renderModels() {
-      $('#modelRows').innerHTML = tools.map(t => `<tr><td>${t.modelName || t.pricing}</td><td>${t.name}</td><td>${t.modelDesc || 'Description à compléter'}</td><td><span class="badge ${t.status === 'Publié' ? 'ok' : 'warn'}">${t.status}</span></td></tr>`).join('');
+    function renderCollections() {
+      $('#collectionGrid').innerHTML = collections.map(c => `<article class="card tool-card">
+        <div class="tool-head"><div class="tool-logo">▤</div><div><h3>${c.nom}</h3><span class="muted">created_at ${c.created_at}</span></div><span class="badge ok">collection</span></div>
+        <p>${c.decription}</p>
+        <div class="chips"><span class="chip active">${c.outil}</span><span class="chip">added_at ${c.created_at}</span></div>
+      </article>`).join('');
+      $('#navCollections').textContent = collections.length;
     }
-    function renderFeatures() {
-      $('#featureRows').innerHTML = tools.flatMap(t => [
-        {name:t.feature1, type:t.featureType1 || 'Fonctionnalité', status:t.featureStatus || 'À tester', tool:t.name},
-        {name:t.feature2, type:'Complément', status:t.featureStatus || 'À tester', tool:t.name}
-      ].filter(f => f.name)).map(f => `<tr><td>${f.name}</td><td>${f.tool}</td><td>${f.type}</td><td><span class="badge ${f.status === 'Vérifiée' ? 'ok' : 'warn'}">${f.status}</span></td></tr>`).join('');
+    function renderDemandes() {
+      $('#requestList').innerHTML = demandes.map(d => `<div class="item"><strong>${d.titre}</strong><small>${d.message}<br>created_at ${d.created_at} · statut ${d.statut}</small></div>`).join('');
+      $('#navRequests').textContent = demandes.filter(d => d.statut !== 'Résolu').length;
     }
     function renderReports() {
       $('#reportRows').innerHTML = reports.map(r => `<tr>
@@ -955,14 +970,14 @@
       $('#drawerList').innerHTML = $('#historyList').innerHTML;
     }
     function renderActivity() {
-      $('#activityList').innerHTML = history.slice(0,5).map(h => `<div class="item"><strong>${h}</strong><small>Action simulée côté navigateur.</small></div>`).join('');
+      $('#activityList').innerHTML = history.slice(0,5).map(h => `<div class="item"><strong>${h}</strong><small>Action de session utilisateur.</small></div>`).join('');
       $('#drawerList').innerHTML = history.slice(0,10).map(h => `<div class="item"><strong>${h}</strong><small>Journal live utilisateur.</small></div>`).join('');
     }
     function renderCommentToolSelect() {
       $('#commentTool').innerHTML = tools.map(t => `<option>${t.name}</option>`).join('');
     }
     function refresh() {
-      renderFilters(); renderTools(); renderReports(); renderComments(); renderReactions(); renderHistory(); renderActivity();
+      renderFilters(); renderTools(); renderReports(); renderComments(); renderReactions(); renderCollections(); renderDemandes(); renderHistory(); renderActivity();
     }
 
     document.addEventListener('click', e => {
@@ -1001,11 +1016,13 @@
       const data = Object.fromEntries(new FormData(e.target));
       tools.unshift({
         id:Date.now(), name:data.name, icon:'🆕', category:data.category, pricing:data.pricing,
-        score:data.confidence === 'Source officielle vérifiée' ? 82 : 72,
+        score:data.openSource === 'true' ? 82 : 72,
         rating:Number(data.rating), reviews:1, status:'En validation', fav:false, desc:data.description,
         modelName:data.modelName, modelDesc:data.modelDesc, modelStatus:data.modelStatus,
         feature1:data.feature1, feature2:data.feature2, featureType1:data.featureType1,
-        featureStatus:data.featureStatus, tags:data.tags, url:data.url, logoUrl:data.logoUrl
+        featureStatus:'À vérifier', tags:data.tags, url:data.url, logoUrl:data.logoUrl,
+        slug:data.slug, licence:data.licence, apiUrl:data.apiUrl, releaseDate:data.releaseDate,
+        platform:data.platform, provider:data.provider, limite_soum:Number(data.limit || 10)
       });
       toast('Proposition envoyée et ajoutée en validation');
       log('Nouvelle proposition: ' + data.name);
@@ -1028,16 +1045,27 @@
       log('Nouveau ticket générique');
       refresh();
     });
+    $('#newCollectionBtn').addEventListener('click', () => {
+      const firstFav = tools.find(t => t.fav) || tools[0];
+      collections.unshift({id:Date.now(), nom:'Collection ' + (collections.length + 1), decription:'Collection créée depuis le dashboard utilisateur.', created_at:new Date().toISOString().slice(0,10), outil:firstFav.name});
+      toast('Collection créée');
+      log('Collection créée');
+      refresh();
+    });
+    $('#newRequestBtn').addEventListener('click', () => {
+      demandes.unshift({id:Date.now(), titre:'Demande utilisateur', message:'Demande liée aux outils IA ou à une soumission.', created_at:new Date().toISOString().slice(0,10), statut:'Ouvert'});
+      toast('Demande créée');
+      log('Demande créée');
+      refresh();
+    });
     $('#clearFav').addEventListener('click', () => { tools.forEach(t => t.fav = false); toast('Favoris vidés'); log('Favoris réinitialisés'); refresh(); });
     $('#exportHistory').addEventListener('click', () => { alert(JSON.stringify(history, null, 2)); log('Export historique JSON'); });
     $('#saveSettings').addEventListener('click', () => { toast('Paramètres enregistrés localement'); log('Paramètres utilisateur enregistrés'); });
     $('#simulateDay').addEventListener('click', () => {
-      $('#kpiViews').textContent = Number($('#kpiViews').textContent) + 12;
-      $('#score').textContent = Math.min(100, Number($('#score').textContent) + 1);
       comments[0].likes += 2;
       reports[0].status = 'En analyse';
-      toast('Journée simulée: vues, likes et tickets mis à jour');
-      log('Simulation journée utilisateur');
+      toast('Réactions et signalements actualisés');
+      log('Réactions actualisées');
       refresh();
     });
     $('#openDrawer').addEventListener('click', () => $('#drawer').classList.add('open'));
