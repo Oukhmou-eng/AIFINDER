@@ -26,7 +26,7 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; font-size: 110%; }
     body {
       min-height: 100vh;
       font-family: "DM Sans", system-ui, sans-serif;
@@ -762,7 +762,6 @@
       gap: 12px;
     }
     .review-top { display: grid; grid-template-columns: 48px 1fr auto; gap: 12px; align-items: start; }
-    .compare-table td:first-child, .compare-table th:first-child { color: var(--muted); font-weight: 700; }
     .toast {
       position: fixed;
       right: 18px;
@@ -834,6 +833,7 @@
     </div>
     <div class="auth">
       <button class="btn ghost" onclick="openModal('loginModal')">Se connecter</button>
+      <button class="btn" onclick="openModal('signupModal')">S'inscrire</button>
       <button class="btn primary" onclick="showScreen('user')">Proposer un outil</button>
     </div>
   </nav>
@@ -841,9 +841,9 @@
   <main id="home" class="screen active">
     <section class="container hero">
       <div>
-        <span class="badge info">Catalogue vérifié basé sur catégories, tags, avis et signalements</span>
+        <span class="badge info">Catalogue basé sur outils, catégories, tags, avis et signalements</span>
         <h1>Trouvez <span>l'outil IA</span> fiable pour votre prochain workflow.</h1>
-        <p>AIFinder organise les outils IA avec des métadonnées utiles : prix, modèle économique, API, conformité, cas d'usage, alternatives, avis, historique de recherche et statut de vérification.</p>
+        <p>AIFinder organise les outils IA selon le MCDD fourni : outils, catégories, tags, modèles, caractéristiques, plateformes, fournisseurs, avis et signalements.</p>
         <div class="search-hero">
           <span>⌕</span>
           <input id="heroSearch" placeholder="Ex : transcription réunion, agent code, générateur vidéo, API OCR">
@@ -862,19 +862,19 @@
         <div class="panel-head">
           <div>
             <h3>Outils à vérifier aujourd'hui</h3>
-            <p class="mini">Extrait de la file admin et du workflow de modération.</p>
+            <p class="mini">Extrait de soumission_outil et signalements.</p>
           </div>
-          <span class="badge warn">7 en attente</span>
+            <span class="badge warn">3 en attente</span>
         </div>
         <div class="live-list">
           <div class="live-item">
             <div class="tool-icon">P</div>
-            <div><h4>PromptLayer</h4><p class="mini">LLMOps · données prix manquantes</p></div>
-            <span class="badge warn">Review</span>
+            <div><h4>PromptLayer</h4><p class="mini">LLMOps · note_admin à compléter</p></div>
+            <span class="badge warn">En attente</span>
           </div>
           <div class="live-item">
             <div class="tool-icon">R</div>
-            <div><h4>Runway</h4><p class="mini">Vidéo · 12 signalements de lien cassé</p></div>
+            <div><h4>Runway</h4><p class="mini">Vidéo · signalement ouvert</p></div>
             <span class="badge danger">Signalé</span>
           </div>
           <div class="live-item">
@@ -887,21 +887,21 @@
     </section>
 
     <section class="container metrics">
-      <div class="metric"><strong>1 286</strong><span class="muted">outils publiés</span></div>
-      <div class="metric"><strong>31</strong><span class="muted">catégories métier</span></div>
-      <div class="metric"><strong>8 940</strong><span class="muted">avis vérifiés</span></div>
-      <div class="metric"><strong>98.2%</strong><span class="muted">liens contrôlés</span></div>
+      <div class="metric"><strong>7</strong><span class="muted">outils publiés</span></div>
+      <div class="metric"><strong>8</strong><span class="muted">catégories</span></div>
+      <div class="metric"><strong>3</strong><span class="muted">avis</span></div>
+      <div class="metric"><strong>3</strong><span class="muted">signalements</span></div>
     </section>
 
     <section class="container section">
       <div class="section-head">
-        <div><h2>Catégories principales</h2><p class="muted">Inspiré des directories actuels : pricing, collections, tags, API, comparaison et alternatives.</p></div>
+        <div><h2>Catégories principales</h2><p class="muted">Catégories d'outils présentes dans le MCDD.</p></div>
         <button class="btn" onclick="showScreen('catalog')">Voir tout</button>
       </div>
       <div class="grid cols-4">
         <div class="cat-card"><div class="cat-ico">✍</div><div><h3>Rédaction & SEO</h3><p class="mini">154 outils · briefs, blogs, ads, emails</p></div></div>
         <div class="cat-card"><div class="cat-ico">🎨</div><div><h3>Image & Design</h3><p class="mini">138 outils · génération, retouche, brand kits</p></div></div>
-        <div class="cat-card"><div class="cat-ico">💻</div><div><h3>Code & DevOps</h3><p class="mini">96 outils · IDE, tests, review, agents</p></div></div>
+        <div class="cat-card"><div class="cat-ico">💻</div><div><h3>Code & DevOps</h3><p class="mini">96 outils · code, API, automatisation</p></div></div>
         <div class="cat-card"><div class="cat-ico">⚙</div><div><h3>Automatisation</h3><p class="mini">121 outils · workflows, RPA, intégrations</p></div></div>
         <div class="cat-card"><div class="cat-ico">🎬</div><div><h3>Vidéo</h3><p class="mini">72 outils · avatars, montage, text-to-video</p></div></div>
         <div class="cat-card"><div class="cat-ico">🎙</div><div><h3>Audio & Voix</h3><p class="mini">64 outils · TTS, clonage, musique</p></div></div>
@@ -912,8 +912,8 @@
 
     <section class="container section">
       <div class="section-head">
-        <div><h2>Tendances vérifiées</h2><p class="muted">Chaque carte montre plus qu'un nom : prix, API, tags, modèle, statut et score.</p></div>
-        <button class="btn" onclick="showScreen('compare')">Comparer</button>
+        <div><h2>Outils publiés</h2><p class="muted">Chaque carte affiche uniquement des métadonnées du schéma fourni.</p></div>
+        <button class="btn" onclick="showScreen('catalog')">Voir catalogue</button>
       </div>
       <div class="grid cols-3" id="homeTools"></div>
     </section>
@@ -922,15 +922,15 @@
       <div class="grid cols-3">
         <div class="workflow-card">
           <h3>Visiteur</h3>
-          <p class="mini">Accès au catalogue, recherche, filtres, fiche détail, comparaison publique limitée et lecture des avis.</p>
+          <p class="mini">Recherche, détail d'un outil, avis, catégories, classement, inscription et connexion.</p>
         </div>
         <div class="workflow-card">
           <h3>Utilisateur connecté</h3>
-          <p class="mini">Dashboard, favoris, historique de recherches, commentaires, réactions, proposition d'outil, suivi des refus.</p>
+          <p class="mini">Profil, favoris, collections, demandes, notifications, commentaires, avis, signalements et proposition d'outil.</p>
         </div>
         <div class="workflow-card">
           <h3>Admin</h3>
-          <p class="mini">Validation, refus avec motif, gestion catégories/tags/modèles, signalements, audit qualité et métriques.</p>
+          <p class="mini">Utilisateurs, outils IA, catégories, dashboard global, statistiques, signalements, demandes, notifications et validation.</p>
         </div>
       </div>
     </section>
@@ -942,26 +942,24 @@
         <h3>Filtres avancés</h3>
         <p class="mini" style="margin:6px 0 14px">Accessible aux visiteurs sans connexion.</p>
         <div class="field"><label>Catégorie</label><select><option>Toutes</option><option>Code & DevOps</option><option>Image & Design</option><option>Automatisation</option></select></div>
-        <div class="field"><label>Pricing</label><select><option>Tous</option><option>Gratuit</option><option>Freemium</option><option>Payant</option><option>Open source</option></select></div>
+        <div class="field"><label>Models.type</label><select><option>Tous</option><option>Gratuit</option><option>Freemium</option><option>Payant</option><option>Open source</option></select></div>
         <div class="field"><label>Plateforme</label><select><option>Web app</option><option>API</option><option>Extension navigateur</option><option>Desktop</option><option>Mobile</option></select></div>
         <label>Caractéristiques</label>
-        <div class="check-row"><span>API disponible</span><input type="checkbox" checked></div>
-        <div class="check-row"><span>Essai gratuit</span><input type="checkbox" checked></div>
-        <div class="check-row"><span>Open source</span><input type="checkbox"></div>
-        <div class="check-row"><span>RGPD / privacy</span><input type="checkbox"></div>
-        <div class="check-row"><span>Team workspace</span><input type="checkbox"></div>
-        <div class="field" style="margin-top:13px"><label>Score minimum</label><input type="range" min="0" max="100" value="82"></div>
+        <div class="check-row"><span>api_url renseigné</span><input type="checkbox" checked></div>
+        <div class="check-row"><span>est_open_source</span><input type="checkbox"></div>
+        <div class="check-row"><span>logo_url renseigné</span><input type="checkbox" checked></div>
+        <div class="field" style="margin-top:13px"><label>avis.note minimum</label><input type="range" min="0" max="5" value="4"></div>
         <button class="btn primary" style="width:100%">Appliquer les filtres</button>
       </aside>
       <section>
         <div class="section-head">
-          <div><h1>Catalogue IA</h1><p class="muted">Résultats enrichis par tags, note, statut, pricing, date d'ajout et qualité des métadonnées.</p></div>
-          <span class="badge info">1 286 résultats</span>
+          <div><h1>Catalogue IA</h1><p class="muted">Résultats affichés selon outils, catégories, tags, Models, plateforme, favori, avis et signalements.</p></div>
+          <span class="badge info">7 résultats</span>
         </div>
         <div class="catalog-toolbar">
           <div class="wide-search"><span>⌕</span><input id="catalogSearch" placeholder="Rechercher par nom, tag, cas d'usage ou modèle"></div>
-          <select><option>Trier : meilleur score</option><option>Nouveautés</option><option>Plus commentés</option><option>Prix croissant</option></select>
-          <button class="btn" onclick="showScreen('compare')">Comparer 3</button>
+          <select><option>Classement : mieux notés</option><option>Plus aimés</option><option>Plus commentés</option><option>created_at récent</option></select>
+          <button class="btn" onclick="showScreen('detail')">Voir détail</button>
         </div>
         <div class="grid cols-3" id="catalogTools"></div>
       </section>
@@ -974,76 +972,53 @@
         <div class="detail-title">
           <div class="big-icon">C</div>
           <div>
-            <div class="chips"><span class="badge ok">Publié</span><span class="badge info">Code & DevOps</span><span class="badge">API</span><span class="badge">Team</span></div>
+            <div class="chips"><span class="badge ok">Publié</span><span class="badge info">Code & DevOps</span><span class="badge">api_url</span><span class="badge">plateforme</span></div>
             <h1 style="margin:12px 0 8px">Cursor</h1>
             <p class="muted">IDE assisté par IA pour compréhension de codebase, refactoring, génération de tests et édition multi-fichiers.</p>
           </div>
           <button class="btn primary">Visiter le site</button>
         </div>
         <div class="tabs">
-          <button class="active">Vue d'ensemble</button><button>Métadonnées</button><button>Avis</button><button>Alternatives</button><button>Historique</button>
+          <button class="active">Vue d'ensemble</button><button>Métadonnées</button><button>Avis</button><button>Commentaires</button><button>Signalements</button>
         </div>
         <div class="grid cols-2" style="margin-bottom:16px">
-          <div class="feature"><h3>Cas d'usage</h3><p class="mini">Autocomplétion, édition agentique, onboarding codebase, génération de tests, migration framework.</p></div>
-          <div class="feature"><h3>Public cible</h3><p class="mini">Développeurs, équipes produit, freelances, startups, équipes QA.</p></div>
-          <div class="feature"><h3>Intégrations</h3><p class="mini">GitHub, GitLab, VS Code keybindings, terminal, docs internes.</p></div>
-          <div class="feature"><h3>Risques à afficher</h3><p class="mini">Confidentialité du code, hallucinations, coût par siège, gouvernance entreprise.</p></div>
+          <div class="feature"><h3>description_courte</h3><p class="mini">IDE assisté par IA pour comprendre une codebase.</p></div>
+          <div class="feature"><h3>Models</h3><p class="mini">nom, type, licence, api_url, est_open_source, release_date.</p></div>
+          <div class="feature"><h3>caracteristique</h3><p class="mini">cle, valeur et type_valeur associés à l'outil.</p></div>
+          <div class="feature"><h3>plateforme / fournisseur</h3><p class="mini">Plateforme disponible et fournisseur de l'outil.</p></div>
         </div>
-        <h2 style="margin-bottom:10px">Matrice de qualité</h2>
+        <h2 style="margin-bottom:10px">Notes et avis</h2>
         <div class="rating-bars">
-          <div class="bar-row"><span>Utilité</span><div class="bar"><i style="--w:94%"></i></div><b>94</b></div>
-          <div class="bar-row"><span>Prix</span><div class="bar"><i style="--w:78%"></i></div><b>78</b></div>
-          <div class="bar-row"><span>Docs</span><div class="bar"><i style="--w:88%"></i></div><b>88</b></div>
-          <div class="bar-row"><span>Privacy</span><div class="bar"><i style="--w:72%"></i></div><b>72</b></div>
+          <div class="bar-row"><span>note</span><div class="bar"><i style="--w:90%"></i></div><b>5</b></div>
+          <div class="bar-row"><span>avis</span><div class="bar"><i style="--w:72%"></i></div><b>3</b></div>
+          <div class="bar-row"><span>favori</span><div class="bar"><i style="--w:64%"></i></div><b>2</b></div>
+          <div class="bar-row"><span>comment.</span><div class="bar"><i style="--w:60%"></i></div><b>3</b></div>
         </div>
       </article>
       <aside class="side-stack">
         <div class="card side-card">
           <h3>Résumé décisionnel</h3>
           <div class="price">9.4<span class="mini"> / 10</span></div>
-          <p class="mini">Score calculé avec avis, fraîcheur, pricing, tags, signalements et vérification admin.</p>
+          <p class="mini">Résumé basé sur avis.note, commentaires, favoris et signalements.</p>
         </div>
         <div class="card side-card">
-          <h3>Pricing & accès</h3>
+          <h3>Models & accès</h3>
           <div class="meta-grid" style="margin-top:10px">
-            <div class="meta">Modèle<b>Freemium</b></div>
-            <div class="meta">Essai<b>Oui</b></div>
-            <div class="meta">API<b>Non public</b></div>
-            <div class="meta">Ajout<b>2026-04-18</b></div>
+            <div class="meta">type<b>Freemium</b></div>
+            <div class="meta">licence<b>Propriétaire</b></div>
+            <div class="meta">api_url<b>Non public</b></div>
+            <div class="meta">created_at<b>2026-04-18</b></div>
           </div>
         </div>
         <div class="card side-card">
           <h3>Tags</h3>
-          <div class="chips" style="margin-top:10px"><span class="badge">coding</span><span class="badge">agent</span><span class="badge">refactor</span><span class="badge">IDE</span><span class="badge">tests</span></div>
+          <div class="chips" style="margin-top:10px"><span class="badge">coding</span><span class="badge">api</span><span class="badge">refactor</span><span class="badge">IDE</span></div>
         </div>
         <div class="card side-card">
           <h3>Actions user</h3>
           <div class="grid" style="margin-top:10px"><button class="btn">Ajouter aux favoris</button><button class="btn">Commenter</button><button class="btn danger" onclick="openModal('reportModal')">Signaler</button></div>
         </div>
       </aside>
-    </section>
-  </main>
-
-  <main id="compare" class="screen">
-    <section class="container section">
-      <div class="section-head">
-        <div><h1>Comparaison d'outils</h1><p class="muted">Maquette inspirée des directories modernes : comparer prix, API, modèles, cas d'usage, privacy et adoption.</p></div>
-        <button class="btn primary">Exporter PDF</button>
-      </div>
-      <div class="card table-wrap">
-        <table class="compare-table">
-          <thead><tr><th>Critère</th><th>ChatGPT</th><th>Claude</th><th>Cursor</th><th>Perplexity</th></tr></thead>
-          <tbody>
-            <tr><td>Catégorie</td><td>Assistant général</td><td>Assistant rédaction/code</td><td>Code & DevOps</td><td>Recherche</td></tr>
-            <tr><td>Pricing</td><td><span class="badge info">Freemium</span></td><td><span class="badge info">Freemium</span></td><td><span class="badge info">Freemium</span></td><td><span class="badge info">Freemium</span></td></tr>
-            <tr><td>API</td><td>Oui</td><td>Oui</td><td>Non public</td><td>Oui</td></tr>
-            <tr><td>Forces</td><td>Multimodal, écosystème, agents</td><td>Long contexte, rédaction</td><td>Compréhension repo, édition</td><td>Recherche web citée</td></tr>
-            <tr><td>Limites</td><td>Contrôle source selon usage</td><td>Disponibilité variable</td><td>Confidentialité code</td><td>Moins créatif</td></tr>
-            <tr><td>Score AIFinder</td><td class="score">9.6</td><td class="score">9.3</td><td class="score">9.4</td><td class="score">9.1</td></tr>
-            <tr><td>Statut</td><td><span class="badge ok">Vérifié</span></td><td><span class="badge ok">Vérifié</span></td><td><span class="badge ok">Publié</span></td><td><span class="badge warn">À revalider</span></td></tr>
-          </tbody>
-        </table>
-      </div>
     </section>
   </main>
 
@@ -1060,10 +1035,13 @@
           <button data-user-view="u-submit"><span>＋ Proposer outil</span><span class="badge ok">principal</span></button>
           <button data-user-view="u-proposals"><span>▣ Mes propositions</span><span class="badge" id="uNavProps">0</span></button>
           <button data-user-view="u-favorites"><span>★ Favoris</span><span class="badge" id="uNavFav">0</span></button>
+          <button data-user-view="u-collections"><span>▤ Collections</span><span class="badge" id="uNavCollections">0</span></button>
+          <button data-user-view="u-requests"><span>? Demandes</span><span class="badge" id="uNavRequests">0</span></button>
           <button data-user-view="u-reports"><span>⚠ Signalements</span><span class="badge danger" id="uNavReports">0</span></button>
           <button data-user-view="u-comments"><span>✎ Commentaires</span><span class="badge" id="uNavComments">0</span></button>
+          <button data-user-view="u-notifications"><span>● Notifications</span><span class="badge warn" id="uNavNotifications">0</span></button>
           <button data-user-view="u-history"><span>↺ Historique</span><span class="badge">44</span></button>
-          <button data-user-view="u-settings"><span>⚙ Paramètres</span></button>
+          <button data-user-view="u-settings"><span>◉ Profil</span></button>
         </div>
       </aside>
       <section class="main">
@@ -1077,19 +1055,19 @@
             <article class="card hero-card">
               <span class="pill"><span class="dot"></span> Dashboard utilisateur AIFinder</span>
               <h1>Contribuer au catalogue IA, suivre les refus et construire ses collections.</h1>
-              <p class="lead">Même logique que le dashboard PowerAMC : navigation interne, recherche globale, cartes dynamiques, formulaires, favoris, signalements, commentaires, historique et journal live.</p>
+              <p class="lead">Espace connecté limité aux cas d'utilisation : profil, avis/commentaires, favoris, collections, demandes, notifications, signalements, historique de recherche et proposition d'outil.</p>
               <div class="actions"><button class="btn primary" data-user-view="u-submit">Proposer un outil</button><button class="btn" data-user-view="u-proposals">Voir mes propositions</button><button class="btn" data-user-view="u-reports">Suivre mes tickets</button></div>
             </article>
             <div class="side-stack">
-              <article class="card kpi"><p>Score contribution</p><strong id="uScore">94</strong><div class="progress" style="--value:94%"><i></i></div></article>
-              <article class="card kpi"><p>Prochain badge</p><strong>Curateur</strong><span class="delta">3 validations restantes</span></article>
+              <article class="card kpi"><p>nombre_soum</p><strong id="uScore">4</strong><div class="progress" style="--value:40%"><i></i></div></article>
+              <article class="card kpi"><p>limite_soum</p><strong>10</strong><span class="delta">soumission_outil</span></article>
             </div>
           </div>
           <div class="grid-kpi">
             <article class="card kpi"><p>Fiches proposées</p><strong id="uKpiProps">0</strong><span class="delta">publiées et en validation</span></article>
             <article class="card kpi"><p>Favoris actifs</p><strong id="uKpiFav">0</strong><span class="delta">collections IA, Dev, Data</span></article>
-            <article class="card kpi"><p>Signalements ouverts</p><strong id="uKpiReports">0</strong><span class="delta">suivi simulé temps réel</span></article>
-            <article class="card kpi"><p>Commentaires utiles</p><strong id="uKpiComments">0</strong><span class="delta">likes communautaires</span></article>
+            <article class="card kpi"><p>Signalements ouverts</p><strong id="uKpiReports">0</strong><span class="delta">suivi statut/date</span></article>
+            <article class="card kpi"><p>Avis & commentaires</p><strong id="uKpiComments">0</strong><span class="delta">note, contenu, created_at</span></article>
           </div>
           <div class="layout-2">
             <div class="card"><div class="card-head"><h2>Recommandés pour vous</h2><div class="tabs" id="uFilters"></div></div><div class="card-body"><div class="tools-grid" id="uRecommended"></div></div></div>
@@ -1099,31 +1077,44 @@
 
         <section id="u-submit" class="dash-section">
           <div class="card">
-            <div class="card-head"><div><h2>Proposer un outil IA</h2><p class="muted">Soumission complète : outil, catégorie, modèle, caractéristiques, tags et preuves.</p></div><span class="badge info">Workflow admin</span></div>
+            <div class="card-head"><div><h2>Proposer un outil IA</h2><p class="muted">Soumission complète selon outils, catégories, tags, Models, caractéristique, plateforme, fournisseur et soumission_outil.</p></div><span class="badge info">Workflow admin</span></div>
             <form class="card-body form-grid" id="uProposalForm">
-              <div class="field"><label>Nom</label><input name="name" required placeholder="Ex : Synthesia"></div>
+              <div class="field"><label>outils.nom</label><input name="name" required placeholder="Ex : Synthesia"></div>
+              <div class="field"><label>outils.slug</label><input name="slug" required placeholder="synthesia"></div>
               <div class="field"><label>Catégorie</label><select name="category"><option>Vidéo</option><option>Code & DevOps</option><option>Rédaction & SEO</option><option>Données</option><option>Audio & Voix</option></select></div>
-              <div class="field"><label>Pricing</label><select name="pricing"><option>Freemium</option><option>Gratuit</option><option>Payant</option><option>Open source</option></select></div>
-              <div class="field"><label>URL officielle</label><input name="url" required placeholder="https://..."></div>
-              <div class="field full"><label>Description neutre</label><textarea name="desc" required placeholder="Cas d'usage, limites, public cible, intégrations, modèle économique."></textarea></div>
-              <div class="field"><label>Tags</label><input name="tags" placeholder="video, avatar, marketing"></div>
-              <div class="field"><label>Caractéristiques</label><input name="features" placeholder="API, workspace, RGPD, export"></div>
-              <div class="upload-box full">Logo, capture écran, preuve pricing, documentation officielle</div>
+              <div class="field"><label>Models.type</label><select name="pricing"><option>Freemium</option><option>Gratuit</option><option>Payant</option><option>Open source</option><option>API</option></select></div>
+              <div class="field"><label>site_url</label><input name="url" required placeholder="https://..."></div>
+              <div class="field"><label>logo_url</label><input name="logoUrl" placeholder="https://.../logo.png"></div>
+              <div class="field full"><label>description_longue</label><textarea name="desc" required placeholder="Description neutre selon le champ description_longue."></textarea></div>
+              <div class="field"><label>tags.nom</label><input name="tags" placeholder="video, avatar, marketing"></div>
+              <div class="field"><label>caracteristique.cle</label><input name="featureKey" placeholder="api_url"></div>
+              <div class="field"><label>caracteristique.valeur</label><input name="featureValue" placeholder="https://.../api"></div>
+              <div class="field"><label>type_valeur</label><select name="featureType"><option>String</option><option>Booléen</option><option>Entier</option><option>Date</option></select></div>
+              <div class="field"><label>fournisseur.nom</label><input name="provider" placeholder="Fournisseur"></div>
+              <div class="field"><label>plateforme.nom</label><input name="platform" placeholder="Web, API, Desktop"></div>
               <button class="btn primary full">Envoyer à la modération</button>
             </form>
           </div>
         </section>
 
         <section id="u-proposals" class="dash-section">
-          <div class="card"><div class="card-head"><div><h2>Mes propositions</h2><p class="muted">Statuts, motifs de refus, score de complétion et actions.</p></div><select id="uSort"><option value="score">Trier par complétion</option><option value="rating">Trier par score</option><option value="date">Trier par date</option></select></div><div class="card-body"><div class="chips" id="uCategoryChips"></div><div class="tools-grid" id="uProposalCards" style="margin-top:12px"></div></div><div class="table-wrap"><table><thead><tr><th>Outil</th><th>Catégorie</th><th>Statut</th><th>Score</th><th>Motif admin</th><th>Action</th></tr></thead><tbody id="uProposalRows"></tbody></table></div></div>
+          <div class="card"><div class="card-head"><div><h2>Mes propositions</h2><p class="muted">Statut, note_admin, nombre_soum, limite_soum et actions.</p></div><select id="uSort"><option value="score">Trier par complétion</option><option value="rating">Trier par avis.note</option><option value="date">Trier par created_at</option></select></div><div class="card-body"><div class="chips" id="uCategoryChips"></div><div class="tools-grid" id="uProposalCards" style="margin-top:12px"></div></div><div class="table-wrap"><table><thead><tr><th>Outil</th><th>Catégorie</th><th>Statut</th><th>nombre_soum</th><th>note_admin</th><th>Action</th></tr></thead><tbody id="uProposalRows"></tbody></table></div></div>
         </section>
 
         <section id="u-favorites" class="dash-section">
           <div class="card"><div class="card-head"><div><h2>Mes favoris</h2><p class="muted">Collections organisées automatiquement par catégorie.</p></div><button class="btn" id="uClearFav">Vider</button></div><div class="card-body tools-grid" id="uFavorites"></div></div>
         </section>
 
+        <section id="u-collections" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Collections d'outils</h2><p class="muted">Créer une collections des outils.</p></div><button class="btn primary" id="uNewCollection">Nouvelle collection</button></div><div class="card-body tools-grid" id="uCollections"></div></div>
+        </section>
+
+        <section id="u-requests" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Mes demandes</h2><p class="muted">Faire une demande et suivre son statut.</p></div><button class="btn primary" id="uNewRequest">Nouvelle demande</button></div><div class="card-body list" id="uRequests"></div></div>
+        </section>
+
         <section id="u-reports" class="dash-section">
-          <div class="card"><div class="card-head"><div><h2>Mes signalements</h2><p class="muted">Créer un ticket, simuler la réponse admin et fermer un incident.</p></div><button class="btn primary" id="uNewReport">Nouveau ticket</button></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Outil</th><th>Problème</th><th>Priorité</th><th>Statut</th><th>Action</th></tr></thead><tbody id="uReportRows"></tbody></table></div></div>
+          <div class="card"><div class="card-head"><div><h2>Mes signalements</h2><p class="muted">Créer un signalement et suivre motif, statut, date et description.</p></div><button class="btn primary" id="uNewReport">Nouveau signalement</button></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Outil</th><th>Motif</th><th>Description</th><th>Statut</th><th>Action</th></tr></thead><tbody id="uReportRows"></tbody></table></div></div>
         </section>
 
         <section id="u-comments" class="dash-section">
@@ -1137,8 +1128,12 @@
           <div class="card"><div class="card-head"><div><h2>Historique</h2><p class="muted">Recherches et actions enregistrées localement pendant la session.</p></div><button class="btn" id="uExportHistory">Exporter JSON</button></div><div class="card-body list" id="uHistory"></div></div>
         </section>
 
+        <section id="u-notifications" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Notifications</h2><p class="muted">Consulter les notifications reçues.</p></div><button class="btn" id="uReadNotifications">Tout marquer lu</button></div><div class="card-body list" id="uNotifications"></div></div>
+        </section>
+
         <section id="u-settings" class="dash-section">
-          <div class="card"><div class="card-head"><div><h2>Paramètres</h2><p class="muted">Préférences utilisateur simulées.</p></div><button class="btn primary" id="uSaveSettings">Enregistrer</button></div><div class="card-body form-grid"><div class="field"><label>Nom public</label><input value="Amine Maker"></div><div class="field"><label>Email</label><input value="amine@aifinder.dev"></div><div class="field full"><label>Bio</label><textarea>Curateur IA spécialisé outils dev, data et automatisation.</textarea></div></div></div>
+          <div class="card"><div class="card-head"><div><h2>Modifier son profil</h2><p class="muted">Champs de l'entité Utilsateur.</p></div><button class="btn primary" id="uSaveSettings">Enregistrer</button></div><div class="card-body form-grid"><div class="field"><label>nom</label><input value="Amine"></div><div class="field"><label>Prenom</label><input value="Maker"></div><div class="field"><label>email</label><input value="amine@aifinder.dev"></div><div class="field"><label>mot de passe</label><input type="password" value="password-demo"></div><div class="field"><label>avatar_url</label><input value="https://example.com/avatar.png"></div><div class="field"><label>statut</label><select><option>Actif</option><option>Suspendu</option></select></div></div></div>
         </section>
       </section>
     </div>
@@ -1157,16 +1152,16 @@
           <button data-admin-view="a-tools"><span>▦ Gestion outils</span><span class="badge" id="aNavTools">0</span></button>
           <button data-admin-view="a-reports"><span>⚠ Signalements</span><span class="badge danger" id="aNavReports">0</span></button>
           <button data-admin-view="a-users"><span>◉ Utilisateurs</span><span class="badge" id="aNavUsers">0</span></button>
-          <button data-admin-view="a-comments"><span>✎ Commentaires</span><span class="badge warn" id="aNavComments">0</span></button>
-          <button data-admin-view="a-taxonomy"><span># Catégories & tags</span></button>
+          <button data-admin-view="a-taxonomy"><span># Catégories</span></button>
+          <button data-admin-view="a-requests"><span>? Demandes</span><span class="badge warn" id="aNavRequests">0</span></button>
+          <button data-admin-view="a-notifications"><span>● Notifications</span></button>
           <button data-admin-view="a-analytics"><span>↗ Analytics</span></button>
-          <button data-admin-view="a-settings"><span>⚙ Paramètres</span></button>
         </div>
       </aside>
       <section class="main">
         <header class="dash-topbar">
           <div class="dash-search"><span>⌕</span><input id="aSearch" placeholder="Rechercher outil, utilisateur, signalement, commentaire..."><kbd class="kbd">Ctrl K</kbd></div>
-          <div class="actions"><button class="btn" id="aRefresh">Actualiser</button><button class="btn" data-drawer="aDrawer">Audit</button><button class="btn primary" id="aSimulate">Simuler trafic</button></div>
+          <div class="actions"><button class="btn" id="aRefresh">Actualiser</button><button class="btn" data-drawer="aDrawer">Audit</button><button class="btn primary" data-admin-view="a-notifications">Envoyer notification</button></div>
         </header>
 
         <section id="a-overview" class="dash-section active">
@@ -1174,8 +1169,8 @@
             <article class="card hero-card admin">
               <span class="pill admin"><span class="dot"></span> Console de modération AIFinder</span>
               <h1>Contrôler la qualité du catalogue, accepter ou refuser avec motif.</h1>
-              <p class="lead">Dashboard aligné avec PowerAMC Admin : file de validation, gestion outils, signalements, utilisateurs, commentaires, catégories, analytics et journal d'audit interactif.</p>
-              <div class="actions"><button class="btn primary" data-admin-view="a-validation">Traiter la file</button><button class="btn" data-admin-view="a-reports">Voir incidents</button><button class="btn" id="aAutoModerate">Auto-modération</button></div>
+              <p class="lead">Dashboard aligné avec les cas admin : utilisateurs, outils IA, catégories, tableau de bord global, statistiques, signalements, demandes, notifications et validation des outils proposés.</p>
+              <div class="actions"><button class="btn primary" data-admin-view="a-validation">Traiter la file</button><button class="btn" data-admin-view="a-reports">Voir signalements</button><button class="btn" data-admin-view="a-requests">Voir demandes</button></div>
             </article>
             <div class="side-stack">
               <article class="card kpi"><p>Santé plateforme</p><strong id="aHealth">96%</strong><div class="progress" style="--value:96%"><i></i></div></article>
@@ -1195,47 +1190,48 @@
         </section>
 
         <section id="a-validation" class="dash-section">
-          <div class="card"><div class="card-head"><div><h2>Validation des propositions</h2><p class="muted">Approuver publie l'outil, rejeter exige un motif envoyé à l'utilisateur.</p></div><button class="btn" id="aAddProposal">Ajouter proposition test</button></div><div class="card-body queue" id="aProposalQueue"></div></div>
+          <div class="card"><div class="card-head"><div><h2>Validation des propositions</h2><p class="muted">Approuver publie l'outil, rejeter exige une note_admin envoyée à l'utilisateur.</p></div><button class="btn" id="aAddProposal">Nouvelle soumission</button></div><div class="card-body queue" id="aProposalQueue"></div></div>
         </section>
 
         <section id="a-tools" class="dash-section">
-          <div class="card"><div class="card-head"><div><h2>Gestion des outils</h2><p class="muted">Modifier statut, mettre en avant ou archiver.</p></div><button class="btn primary" id="aCreateTool">Créer fiche admin</button></div><div class="table-wrap"><table><thead><tr><th>Outil</th><th>Catégorie</th><th>Statut</th><th>Score</th><th>Actions</th></tr></thead><tbody id="aToolRows"></tbody></table></div></div>
+          <div class="card"><div class="card-head"><div><h2>Gestion des outils</h2><p class="muted">Modifier nom, catégorie, statut et dates de l'entité outils.</p></div><button class="btn primary" id="aCreateTool">Créer fiche outil</button></div><div class="table-wrap"><table><thead><tr><th>Outil</th><th>Catégorie</th><th>Statut</th><th>avis.note</th><th>Actions</th></tr></thead><tbody id="aToolRows"></tbody></table></div></div>
         </section>
 
         <section id="a-reports" class="dash-section">
-          <div class="card"><div class="card-head"><div><h2>Signalements utilisateurs</h2><p class="muted">Assigner, résoudre ou escalader les incidents.</p></div><button class="btn" id="aNewIncident">Simuler incident</button></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Outil</th><th>Problème</th><th>Priorité</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="aReportRows"></tbody></table></div></div>
+          <div class="card"><div class="card-head"><div><h2>Signalements utilisateurs</h2><p class="muted">Gérer motif, description, statut et date.</p></div><button class="btn" id="aNewIncident">Nouveau signalement</button></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Outil</th><th>Motif</th><th>Description</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="aReportRows"></tbody></table></div></div>
         </section>
 
         <section id="a-users" class="dash-section">
-          <div class="card"><div class="card-head"><div><h2>Utilisateurs</h2><p class="muted">Changer rôle, suspendre, réactiver et consulter le score de contribution.</p></div><button class="btn" id="aAddUser">Ajouter utilisateur test</button></div><div class="table-wrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Score</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="aUserRows"></tbody></table></div></div>
-        </section>
-
-        <section id="a-comments" class="dash-section">
-          <div class="card"><div class="card-head"><div><h2>Modération commentaires</h2><p class="muted">Publier, masquer ou marquer à suivre.</p></div><button class="btn" id="aAddComment">Ajouter commentaire test</button></div><div class="card-body queue" id="aCommentQueue"></div></div>
+          <div class="card"><div class="card-head"><div><h2>Utilisateurs</h2><p class="muted">Gérer nom, Prenom, email, rôle et statut.</p></div><button class="btn" id="aAddUser">Ajouter utilisateur</button></div><div class="table-wrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Dernière connexion</th><th>Actions</th></tr></thead><tbody id="aUserRows"></tbody></table></div></div>
         </section>
 
         <section id="a-taxonomy" class="dash-section">
           <div class="layout-2">
-            <div class="card"><div class="card-head"><h2>Catégories</h2></div><form class="card-body form-grid" id="aCategoryForm"><div class="field"><label>Nom</label><input id="aCatName" value="Agents IA"></div><div class="field"><label>Icône</label><input id="aCatIcon" value="⚙"></div><div class="field full"><label>Description</label><textarea id="aCatDesc">Outils capables d'exécuter des tâches multi-étapes.</textarea></div><button class="btn primary full">Ajouter catégorie</button></form><div class="card-body chips" id="aCategoryChips"></div></div>
-            <div class="card"><div class="card-head"><h2>Fusion tags</h2></div><div class="card-body form-grid"><div class="field"><label>Tag source</label><input id="aTagSource" value="text-ai"></div><div class="field"><label>Tag cible</label><input id="aTagTarget" value="rédaction"></div><button class="btn full" id="aMergeTags">Fusionner tags</button></div></div>
+            <div class="card"><div class="card-head"><h2>Catégories d'outils</h2></div><form class="card-body form-grid" id="aCategoryForm"><div class="field"><label>nom_Cat</label><input id="aCatName" value="Agents IA"></div><div class="field"><label>slug</label><input id="aCatSlug" value="agents-ia"></div><div class="field"><label>icone</label><input id="aCatIcon" value="⚙"></div><div class="field full"><label>description</label><textarea id="aCatDesc">Outils capables d'exécuter des tâches multi-étapes.</textarea></div><button class="btn primary full">Ajouter catégorie</button></form><div class="card-body chips" id="aCategoryChips"></div></div>
+            <div class="card"><div class="card-head"><h2>Métadonnées catégorie</h2></div><div class="card-body list" id="aCategoryMeta"></div></div>
           </div>
         </section>
 
-        <section id="a-analytics" class="dash-section">
-          <div class="card"><div class="card-head"><div><h2>Analytics plateforme</h2><p class="muted">Données simulées : vues, validation, signalements, utilisateurs.</p></div><button class="btn" id="aRefreshChart">Rafraîchir</button></div><div class="card-body"><div class="grid-kpi"><article class="card kpi"><p>Vues catalogue</p><strong id="aViews">18.4k</strong><span class="delta">+8.2%</span></article><article class="card kpi"><p>Taux validation</p><strong id="aRate">71%</strong><span class="delta">cette semaine</span></article><article class="card kpi"><p>Temps traitement</p><strong id="aTime">38m</strong><span class="delta">moyenne</span></article><article class="card kpi"><p>Commentaires masqués</p><strong id="aHidden">3</strong><span class="delta">risque faible</span></article></div><div class="chart" id="aChart"></div></div></div>
+        <section id="a-requests" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Gestion des demandes</h2><p class="muted">Traiter les demandes envoyées par les utilisateurs.</p></div><button class="btn" id="aNewRequest">Nouvelle demande</button></div><div class="card-body queue" id="aRequestQueue"></div></div>
         </section>
 
-        <section id="a-settings" class="dash-section">
-          <div class="card"><div class="card-head"><div><h2>Paramètres admin</h2><p class="muted">Règles de modération et préférences opérationnelles.</p></div><button class="btn primary" id="aSaveSettings">Enregistrer</button></div><div class="card-body form-grid"><div class="field"><label>Seuil auto-refus</label><input value="40"></div><div class="field"><label>Seuil validation rapide</label><input value="92"></div><div class="field full"><label>Règles</label><textarea>Refuser spam, doublons, URL invalides, descriptions promotionnelles et fiches sans preuve officielle.</textarea></div></div></div>
+        <section id="a-notifications" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Envoyer notification</h2><p class="muted">Créer une notification selon cible, type, titre, message et created_at.</p></div><button class="btn primary" id="aSendNotification">Envoyer</button></div><div class="card-body form-grid"><div class="field"><label>cible</label><select id="aNotifTarget"><option>utilisateur</option><option>admin</option><option>tous</option></select></div><div class="field"><label>type</label><select id="aNotifType"><option>soumission</option><option>signalement</option><option>demande</option><option>systeme</option></select></div><div class="field full"><label>titre</label><input id="aNotifTitle" value="Mise à jour AIFinder"></div><div class="field full"><label>message</label><textarea id="aNotifMessage">Votre demande a été traitée.</textarea></div></div><div class="card-body list" id="aNotifications"></div></div>
         </section>
+
+        <section id="a-analytics" class="dash-section">
+          <div class="card"><div class="card-head"><div><h2>Statistiques plateforme</h2><p class="muted">Statistiques issues des outils, soumissions, signalements, demandes et utilisateurs.</p></div><button class="btn" id="aRefreshChart">Rafraîchir</button></div><div class="card-body"><div class="grid-kpi"><article class="card kpi"><p>Recherches</p><strong id="aViews">18</strong><span class="delta">historique_recherches</span></article><article class="card kpi"><p>Taux validation</p><strong id="aRate">71%</strong><span class="delta">soumission_outil</span></article><article class="card kpi"><p>Signalements</p><strong id="aTime">3</strong><span class="delta">ouverts et résolus</span></article><article class="card kpi"><p>Notifications</p><strong id="aHidden">2</strong><span class="delta">envoyées</span></article></div><div class="chart" id="aChart"></div></div></div>
+        </section>
+
       </section>
     </div>
   </main>
 
   <footer>
     <div class="container" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <span>AI<em style="color:var(--accent);font-style:normal">Finder</em> · maquettes complètes</span>
-      <span>Basé sur les entités : utilisateurs, outils, catégories, commentaires, favoris, recherches, signalements, tags, modèles.</span>
+      <span>AI<em style="color:var(--accent);font-style:normal">Finder</em> · application interactive</span>
+      <span>Basé sur les entités du MCDD fourni et les deux diagrammes de cas d'utilisation.</span>
     </div>
   </footer>
 
@@ -1260,18 +1256,15 @@
     </div>
   </div>
 
-  <div class="modal" id="submitModal">
+  <div class="modal" id="signupModal">
     <div class="modal-card">
-      <div class="card-head"><h2>Proposer un outil IA</h2><button class="btn ghost" onclick="closeModal('submitModal')">Fermer</button></div>
+      <div class="card-head"><h2>Inscription</h2><button class="btn ghost" onclick="closeModal('signupModal')">Fermer</button></div>
       <div class="card-body form-grid">
-        <div class="field"><label>Nom outil</label><input placeholder="Ex : PromptLayer"></div>
-        <div class="field"><label>Catégorie</label><select><option>Code & DevOps</option><option>Image & Design</option><option>Automatisation</option></select></div>
-        <div class="field full"><label>URL officielle</label><input placeholder="https://..."></div>
-        <div class="field"><label>Pricing</label><select><option>Freemium</option><option>Gratuit</option><option>Payant</option><option>Open source</option></select></div>
-        <div class="field"><label>Tags</label><input placeholder="llmops, prompt, monitoring"></div>
-        <div class="field full"><label>Description neutre</label><textarea placeholder="Expliquez le cas d'usage réel, sans texte marketing."></textarea></div>
-        <div class="upload-box full">Ajouter logo ou capture écran<br><span class="mini">PNG, JPG, WebP · utilisé par admin pour vérification visuelle</span></div>
-        <button class="btn primary full" onclick="closeModal('submitModal');toast('Proposition envoyée à la modération')">Envoyer à la vérification</button>
+        <div class="field"><label>nom</label><input placeholder="Amine"></div>
+        <div class="field"><label>Prenom</label><input placeholder="Maker"></div>
+        <div class="field full"><label>email</label><input placeholder="alex@aifinder.dev"></div>
+        <div class="field full"><label>mot de passe</label><input type="password" placeholder="mot de passe"></div>
+        <button class="btn primary full" onclick="closeModal('signupModal');showScreen('user');toast('Compte utilisateur créé')">S'inscrire</button>
       </div>
     </div>
   </div>
@@ -1307,14 +1300,14 @@
     const tools = [
       {id:1,name:"ChatGPT", icon:"C", cat:"Assistant général", desc:"Assistant multimodal pour rédaction, analyse, code, image, voix et automatisation légère.", pricing:"Freemium", score:96, status:"Vérifié", tags:["chatbot","multimodal","API"], api:"Oui", users:"5.6k avis", fav:true, featured:true},
       {id:2,name:"Claude", icon:"Cl", cat:"Texte & Code", desc:"Assistant IA fort sur raisonnement, rédaction longue, synthèse documentaire et code.", pricing:"Freemium", score:93, status:"Vérifié", tags:["long context","docs","code"], api:"Oui", users:"3.1k avis", fav:false, featured:true},
-      {id:3,name:"Cursor", icon:"Cu", cat:"Code & DevOps", desc:"IDE assisté par IA pour comprendre une codebase et modifier plusieurs fichiers.", pricing:"Freemium", score:94, status:"Publié", tags:["IDE","agent","tests"], api:"Non", users:"2.8k avis", fav:true, featured:true},
+      {id:3,name:"Cursor", icon:"Cu", cat:"Code & DevOps", desc:"IDE assisté par IA pour comprendre une codebase et modifier plusieurs fichiers.", pricing:"Freemium", score:94, status:"Publié", tags:["IDE","agent","code"], api:"Non", users:"2.8k avis", fav:true, featured:true},
       {id:4,name:"Perplexity", icon:"P", cat:"Recherche", desc:"Moteur de réponse IA avec citations, recherche web et collections de sources.", pricing:"Freemium", score:91, status:"À revalider", tags:["search","citations","veille"], api:"Oui", users:"1.9k avis", fav:false, featured:false},
       {id:5,name:"Runway", icon:"R", cat:"Vidéo", desc:"Génération et édition vidéo assistées par IA pour équipes créatives.", pricing:"Freemium", score:89, status:"Signalé", tags:["video","editing","creative"], api:"Oui", users:"1.2k avis", fav:false, featured:false},
       {id:6,name:"ElevenLabs", icon:"E", cat:"Audio & Voix", desc:"Voix synthétiques, doublage, clonage vocal et génération audio professionnelle.", pricing:"Freemium", score:90, status:"Vérifié", tags:["TTS","voice","dubbing"], api:"Oui", users:"980 avis", fav:true, featured:false},
       {id:7,name:"Make AI Agents", icon:"M", cat:"Automatisation", desc:"Scénarios automatisés avec agents IA, connecteurs no-code et déclencheurs métier.", pricing:"Payant", score:84, status:"Publié", tags:["workflow","agent","no-code"], api:"Oui", users:"640 avis", fav:false, featured:false}
     ];
     let userProposals = [
-      {id:101,name:"PromptLayer",category:"LLMOps",pricing:"Freemium",score:71,status:"En attente",admin:"Vérification pricing et politique privacy.",desc:"Observabilité de prompts et versions LLM.",tags:["llmops","prompt"],fav:false},
+      {id:101,name:"PromptLayer",category:"LLMOps",pricing:"Freemium",score:71,status:"En attente",admin:"Vérification Models.type et api_url.",desc:"Observabilité de prompts et versions LLM.",tags:["llmops","prompt"],fav:false},
       {id:102,name:"MagicBrief",category:"Marketing",pricing:"Payant",score:92,status:"Accepté",admin:"Publié dans Marketing & Ads.",desc:"Analyse de créatifs publicitaires et briefs.",tags:["ads","brief"],fav:false},
       {id:103,name:"CopyForge",category:"Rédaction & SEO",pricing:"Freemium",score:43,status:"Refusé",admin:"Description trop promotionnelle, absence URL officielle.",desc:"Génération de textes marketing.",tags:["seo","copywriting"],fav:false},
       {id:104,name:"DataPilot",category:"Données",pricing:"Payant",score:38,status:"Refusé",admin:"Outil dupliqué, déjà présent sous un autre slug.",desc:"Assistant analyse de données.",tags:["data","BI"],fav:false}
@@ -1330,16 +1323,28 @@
       {id:3,tool:"Runway",author:"Yanis",text:"Bon résultat vidéo, pricing difficile à suivre.",rating:4,likes:7,status:"À vérifier"}
     ];
     let adminProposals = [
-      {id:201,name:"PromptLayer",category:"LLMOps",author:"Amine",score:71,desc:"Observabilité de prompts, logs, versions et évaluation de sorties LLM.",flags:["pricing incomplet","privacy à vérifier"]},
+      {id:201,name:"PromptLayer",category:"LLMOps",author:"Amine",score:71,desc:"Observabilité de prompts, logs, versions et évaluation de sorties LLM.",flags:["Models.type incomplet","api_url à vérifier"]},
       {id:202,name:"DataPilot",category:"Données",author:"Sara",score:38,desc:"Assistant analyse de datasets avec tableaux de bord générés automatiquement.",flags:["doublon probable","slug similaire"]},
       {id:203,name:"VoiceClone Pro",category:"Audio & Voix",author:"Nora",score:66,desc:"Clonage vocal et doublage pour contenus éducatifs.",flags:["risque légal","preuve consentement manquante"]}
     ];
     let users = [
-      {id:1,name:"Amine Maker",email:"amine@aifinder.dev",role:"Utilisateur",score:94,status:"Actif"},
-      {id:2,name:"Sara Data",email:"sara@aifinder.dev",role:"Curateur",score:88,status:"Actif"},
-      {id:3,name:"Yanis Studio",email:"yanis@aifinder.dev",role:"Utilisateur",score:61,status:"Suspendu"}
+      {id:1,name:"Amine Maker",email:"amine@aifinder.dev",role:"Utilisateur",score:94,status:"Actif",derniere_connexion:"2026-05-04"},
+      {id:2,name:"Sara Data",email:"sara@aifinder.dev",role:"Curateur",score:88,status:"Actif",derniere_connexion:"2026-05-04"},
+      {id:3,name:"Yanis Studio",email:"yanis@aifinder.dev",role:"Utilisateur",score:61,status:"Suspendu",derniere_connexion:"2026-05-01"}
     ];
     let categories = ["Assistant général","Code & DevOps","Rédaction & SEO","Vidéo","Audio & Voix","Données","Automatisation","Recherche"];
+    let collections = [
+      {id:1, nom:"Outils code", decription:"Collection d'outils de développement.", created_at:"2026-05-04", outil:"Cursor"},
+      {id:2, nom:"Recherche IA", decription:"Collection pour recherche et synthèse.", created_at:"2026-05-04", outil:"Perplexity"}
+    ];
+    let demandes = [
+      {id:1, titre:"Correction catégorie", message:"Déplacer Cursor vers Code & DevOps.", statut:"Ouvert", created_at:"2026-05-04"},
+      {id:2, titre:"Suppression doublon", message:"Vérifier une fiche dupliquée.", statut:"En analyse", created_at:"2026-05-04"}
+    ];
+    let notifications = [
+      {id:1, cible:"utilisateur", type:"soumission", titre:"Soumission reçue", message:"PromptLayer est en attente de validation.", created_at:"2026-05-04"},
+      {id:2, cible:"utilisateur", type:"signalement", titre:"Signalement ouvert", message:"Runway est en analyse.", created_at:"2026-05-04"}
+    ];
     let history = ["Recherche: agent IA pour tests Laravel","Favori ajouté: Cursor","Commentaire publié sur Claude","Signalement envoyé: Runway"];
     let audit = ["Admin a ouvert la file de validation","PromptLayer nécessite vérification pricing","Runway escaladé priorité haute","Catégorie Agents IA créée"];
 
@@ -1354,10 +1359,10 @@
           </div>
           <p class="tool-desc">${t.desc}</p>
           <div class="meta-grid">
-            <div class="meta">Pricing<b>${t.pricing}</b></div>
-            <div class="meta">API<b>${t.api}</b></div>
-            <div class="meta">Score<b>${t.score > 10 ? t.score + "%" : t.score + "/10"}</b></div>
-            <div class="meta">Tags<b>${t.tags.slice(0,2).join(", ")}</b></div>
+            <div class="meta">Models.type<b>${t.pricing}</b></div>
+            <div class="meta">api_url<b>${t.api}</b></div>
+            <div class="meta">avis.note<b>${t.score > 10 ? Math.round(t.score / 20) + "/5" : t.score + "/10"}</b></div>
+            <div class="meta">tags.nom<b>${t.tags.slice(0,2).join(", ")}</b></div>
           </div>
           <div class="tool-actions">
             <div class="chips">${t.tags.map(tag => `<span class="badge">${tag}</span>`).join("")}</div>
@@ -1404,12 +1409,18 @@
       $("#uNavFav").textContent = favs.length;
       $("#uNavReports").textContent = reports.filter(r => r.status !== "Résolu").length;
       $("#uNavComments").textContent = comments.length;
+      $("#uNavCollections").textContent = collections.length;
+      $("#uNavRequests").textContent = demandes.filter(d => d.statut !== "Résolu").length;
+      $("#uNavNotifications").textContent = notifications.filter(n => n.cible !== "admin").length;
       $("#uKpiProps").textContent = userProposals.length;
       $("#uKpiFav").textContent = favs.length;
       $("#uKpiReports").textContent = reports.filter(r => r.status !== "Résolu").length;
       $("#uKpiComments").textContent = comments.reduce((n,c) => n + c.likes, 0);
       $("#uRecommended").innerHTML = tools.slice(0,6).map(t => toolCard(t, "user")).join("");
       $("#uFavorites").innerHTML = favs.length ? favs.map(t => toolCard(t, "user")).join("") : `<p class="muted">Aucun favori actif.</p>`;
+      $("#uCollections").innerHTML = collections.map(c => `<article class="tool-card"><div class="tool-top"><div class="tool-icon">▤</div><div><h3>${c.nom}</h3><p class="mini">created_at ${c.created_at}</p></div><span class="badge ok">collection</span></div><p class="tool-desc">${c.decription}</p><div class="chips"><span class="badge">${c.outil}</span><span class="badge">added_at ${c.created_at}</span></div></article>`).join("");
+      $("#uRequests").innerHTML = demandes.map(d => `<div class="item"><strong>${d.titre}</strong><small>${d.message}<br>created_at ${d.created_at} · statut ${d.statut}</small></div>`).join("");
+      $("#uNotifications").innerHTML = notifications.filter(n => n.cible !== "admin").map(n => `<div class="item"><strong>${n.titre}</strong><small>${n.message}<br>type ${n.type} · created_at ${n.created_at}</small></div>`).join("");
       $("#uActivity").innerHTML = history.slice(0,5).map(h => `<div class="item"><strong>${h.split(" · ")[0] || "Maintenant"}</strong><small>${h}</small></div>`).join("");
       $("#uDrawerList").innerHTML = history.map(h => `<div class="item"><strong>Session</strong><small>${h}</small></div>`).join("");
       $("#uCategoryChips").innerHTML = ["Tous",...new Set(userProposals.map(p => p.category))].map((c,i) => `<button class="chip ${i===0?"active":""}">${c}</button>`).join("");
@@ -1429,24 +1440,26 @@
       $("#aNavTools").textContent = tools.length;
       $("#aNavReports").textContent = reports.filter(r => r.status !== "Résolu").length;
       $("#aNavUsers").textContent = users.length;
-      $("#aNavComments").textContent = comments.filter(c => c.status !== "Publié").length;
+      $("#aNavRequests").textContent = demandes.filter(d => d.statut !== "Résolu").length;
       $("#aKpiTools").textContent = published;
       $("#aKpiPending").textContent = adminProposals.length;
       $("#aKpiReports").textContent = reports.filter(r => r.status !== "Résolu").length;
       $("#aKpiUsers").textContent = users.filter(u => u.status === "Actif").length;
       $("#aPriority").innerHTML = [
-        {type:"Validation",title:`${adminProposals.length} propositions`,desc:"Fiches avec métadonnées incomplètes ou doublons probables.",badge:"urgent"},
-        {type:"Signalement",title:"Runway pricing",desc:"Lien cassé confirmé par plusieurs utilisateurs.",badge:"haute"},
-        {type:"Taxonomie",title:"Tags à fusionner",desc:"text-ai, writing-ai et rédaction pointent vers la même intention.",badge:"qualité"}
+        {type:"Validation",title:`${adminProposals.length} propositions`,desc:"Soumissions avec note_admin ou statut à traiter.",badge:"urgent"},
+        {type:"Signalement",title:"Runway",desc:"Signalement ouvert avec motif et description.",badge:"haute"},
+        {type:"Demande",title:`${demandes.length} demandes`,desc:"Demandes utilisateur en attente de traitement.",badge:"ouvert"}
       ].map(i => `<div class="queue-card"><div class="queue-head"><strong>${i.type}: ${i.title}</strong><span class="badge warn">${i.badge}</span></div><p>${i.desc}</p><button class="btn" data-admin-view="a-validation">Ouvrir</button></div>`).join("");
       $("#aAuditShort").innerHTML = audit.slice(0,5).map(a => `<div class="item"><strong>Audit</strong><small>${a}</small></div>`).join("");
       $("#aAuditFull").innerHTML = audit.map(a => `<div class="item"><strong>Journal</strong><small>${a}</small></div>`).join("");
       $("#aProposalQueue").innerHTML = adminProposals.map(p => `<div class="queue-card" data-search="${(p.name+" "+p.category+" "+p.author+" "+p.desc).toLowerCase()}"><div class="queue-head"><strong>${p.name} · ${p.category}</strong><span class="badge warn">${p.score}% complet</span></div><p>${p.desc}</p><div class="chips">${p.flags.map(f => `<span class="badge danger">${f}</span>`).join("")}</div><div class="actions" style="margin-top:10px"><button class="btn success" data-a-proposal="approve" data-id="${p.id}">Approuver</button><button class="btn" data-a-proposal="revise" data-id="${p.id}">Demander correction</button><button class="btn danger" data-a-proposal="reject" data-id="${p.id}">Rejeter</button></div></div>`).join("") || `<p class="muted">Aucune proposition en attente.</p>`;
       $("#aToolRows").innerHTML = tools.map(t => `<tr data-search="${(t.name+" "+t.cat+" "+t.status).toLowerCase()}"><td>${t.name}</td><td>${t.cat}</td><td><span class="badge ${badge(t.status)}">${t.status}</span></td><td>${t.score}%</td><td><div class="actions"><button class="btn" data-a-tool="feature" data-id="${t.id}">${t.featured ? "Retirer une" : "Mettre une"}</button><button class="btn" data-a-tool="archive" data-id="${t.id}">${t.status === "Archivé" ? "Publier" : "Archiver"}</button><button class="btn danger" data-a-tool="delete" data-id="${t.id}">Supprimer</button></div></td></tr>`).join("");
-      $("#aReportRows").innerHTML = reports.map(r => `<tr data-search="${(r.id+" "+r.tool+" "+r.issue+" "+r.status).toLowerCase()}"><td>${r.id}</td><td>${r.tool}</td><td>${r.issue}</td><td>${r.priority}</td><td><span class="badge ${badge(r.status)}">${r.status}</span></td><td><div class="actions"><button class="btn success" data-a-report="resolve" data-id="${r.id}">Résoudre</button><button class="btn" data-a-report="assign" data-id="${r.id}">Assigner</button><button class="btn danger" data-a-report="escalate" data-id="${r.id}">Escalader</button></div></td></tr>`).join("");
-      $("#aUserRows").innerHTML = users.map(u => `<tr data-search="${(u.name+" "+u.email+" "+u.role+" "+u.status).toLowerCase()}"><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td>${u.score}</td><td><span class="badge ${badge(u.status)}">${u.status}</span></td><td><button class="btn" data-a-user="role" data-id="${u.id}">Changer rôle</button> <button class="btn ${u.status === "Suspendu" ? "success" : "danger"}" data-a-user="suspend" data-id="${u.id}">${u.status === "Suspendu" ? "Réactiver" : "Suspendre"}</button></td></tr>`).join("");
-      $("#aCommentQueue").innerHTML = comments.map(c => `<div class="queue-card" data-search="${(c.tool+" "+c.author+" "+c.text+" "+c.status).toLowerCase()}"><div class="queue-head"><strong>${c.tool} · ${c.author}</strong><span class="badge ${badge(c.status)}">${c.status}</span></div><p>${c.text}</p><div class="actions"><button class="btn success" data-a-comment="publish" data-id="${c.id}">Publier</button><button class="btn danger" data-a-comment="hide" data-id="${c.id}">Masquer</button><button class="btn" data-a-comment="flag" data-id="${c.id}">À suivre</button></div></div>`).join("");
+      $("#aReportRows").innerHTML = reports.map(r => `<tr data-search="${(r.id+" "+r.tool+" "+r.issue+" "+r.status).toLowerCase()}"><td>${r.id}</td><td>${r.tool}</td><td>${r.issue}</td><td>${r.priority}</td><td><span class="badge ${badge(r.status)}">${r.status}</span></td><td><div class="actions"><button class="btn success" data-a-report="resolve" data-id="${r.id}">Résoudre</button><button class="btn" data-a-report="assign" data-id="${r.id}">En analyse</button><button class="btn danger" data-a-report="escalate" data-id="${r.id}">Escalader</button></div></td></tr>`).join("");
+      $("#aUserRows").innerHTML = users.map(u => `<tr data-search="${(u.name+" "+u.email+" "+u.role+" "+u.status).toLowerCase()}"><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td><span class="badge ${badge(u.status)}">${u.status}</span></td><td>${u.derniere_connexion || "2026-05-04"}</td><td><button class="btn" data-a-user="role" data-id="${u.id}">Changer rôle</button> <button class="btn ${u.status === "Suspendu" ? "success" : "danger"}" data-a-user="suspend" data-id="${u.id}">${u.status === "Suspendu" ? "Réactiver" : "Suspendre"}</button></td></tr>`).join("");
       $("#aCategoryChips").innerHTML = categories.map(c => `<span class="chip active">${c}</span>`).join("");
+      $("#aCategoryMeta").innerHTML = categories.map((c,i) => `<div class="item"><strong>${c}</strong><small>id_Cat ${i + 1} · slug ${c.toLowerCase().replaceAll(" ", "-")} · icone renseignée</small></div>`).join("");
+      $("#aRequestQueue").innerHTML = demandes.map(d => `<div class="queue-card"><div class="queue-head"><strong>${d.titre}</strong><span class="badge ${badge(d.statut)}">${d.statut}</span></div><p>${d.message}</p><div class="actions"><button class="btn success" data-a-request="resolve" data-id="${d.id}">Résoudre</button><button class="btn" data-a-request="analysis" data-id="${d.id}">En analyse</button></div></div>`).join("");
+      $("#aNotifications").innerHTML = notifications.map(n => `<div class="item"><strong>${n.titre}</strong><small>${n.message}<br>cible ${n.cible} · type ${n.type} · created_at ${n.created_at}</small></div>`).join("");
       renderChart();
       applyDashSearch("#aSearch", "admin");
     }
@@ -1500,15 +1513,15 @@
       if (ar) { const r = reports.find(x => x.id === ar.dataset.id); if (r) r.status = ar.dataset.aReport === "resolve" ? "Résolu" : ar.dataset.aReport === "assign" ? "Assigné" : "Escaladé"; toast("Signalement mis à jour"); logAdmin(`Signalement ${ar.dataset.id} mis à jour`); }
       const au = e.target.closest("[data-a-user]");
       if (au) { const u = users.find(x => x.id === Number(au.dataset.id)); if (u && au.dataset.aUser === "role") u.role = u.role === "Admin" ? "Utilisateur" : "Curateur"; if (u && au.dataset.aUser === "suspend") u.status = u.status === "Suspendu" ? "Actif" : "Suspendu"; toast("Utilisateur mis à jour"); logAdmin("Utilisateur modifié"); }
-      const ac = e.target.closest("[data-a-comment]");
-      if (ac) { const c = comments.find(x => x.id === Number(ac.dataset.id)); if (c) c.status = ac.dataset.aComment === "publish" ? "Publié" : ac.dataset.aComment === "hide" ? "Masqué" : "À suivre"; toast("Commentaire modéré"); logAdmin("Commentaire modéré"); }
+      const req = e.target.closest("[data-a-request]");
+      if (req) { const d = demandes.find(x => x.id === Number(req.dataset.id)); if (d) d.statut = req.dataset.aRequest === "resolve" ? "Résolu" : "En analyse"; toast("Demande mise à jour"); logAdmin("Demande traitée"); }
       renderAdmin(); renderUser(); renderPublic();
     });
 
     $("#uProposalForm").addEventListener("submit", e => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.currentTarget));
-      userProposals.unshift({id:Date.now(),name:data.name,category:data.category,pricing:data.pricing,score:64,status:"En attente",admin:"Nouvelle proposition à vérifier par admin.",desc:data.desc,tags:(data.tags || "ai,tool").split(",").map(t => t.trim()),fav:false});
+      userProposals.unshift({id:Date.now(),name:data.name,slug:data.slug,category:data.category,pricing:data.pricing,score:64,status:"En attente",admin:"Nouvelle proposition à vérifier par admin.",desc:data.desc,tags:(data.tags || "ai,tool").split(",").map(t => t.trim()),fav:false,site_url:data.url,logo_url:data.logoUrl,featureKey:data.featureKey,featureValue:data.featureValue,provider:data.provider,platform:data.platform});
       adminProposals.unshift({id:Date.now()+1,name:data.name,category:data.category,author:"Amine",score:64,desc:data.desc,flags:["nouvelle soumission","à vérifier"]});
       e.currentTarget.reset();
       toast("Proposition envoyée à la modération");
@@ -1525,23 +1538,23 @@
       logUser(`Commentaire publié sur ${data.tool}`);
     });
     $("#uNewReport").addEventListener("click", () => { reports.unshift({id:"SIG-" + Math.floor(2500 + Math.random()*300),tool:"ChatGPT",issue:"Métadonnée à vérifier",priority:"Basse",status:"Ouvert"}); toast("Ticket créé"); logUser("Nouveau ticket créé"); });
+    $("#uNewCollection").addEventListener("click", () => { collections.unshift({id:Date.now(),nom:"Collection " + (collections.length + 1),decription:"Collection créée par utilisateur.",created_at:"2026-05-04",outil:(tools.find(t => t.fav) || tools[0]).name}); toast("Collection créée"); logUser("Collection créée"); });
+    $("#uNewRequest").addEventListener("click", () => { demandes.unshift({id:Date.now(),titre:"Demande utilisateur",message:"Demande liée à une fiche outil IA.",statut:"Ouvert",created_at:"2026-05-04"}); toast("Demande créée"); logUser("Demande créée"); });
+    $("#uReadNotifications").addEventListener("click", () => { toast("Notifications consultées"); logUser("Notifications consultées"); });
     $("#uClearFav").addEventListener("click", () => { tools.forEach(t => t.fav = false); toast("Favoris vidés"); logUser("Favoris réinitialisés"); });
     $("#uExportHistory").addEventListener("click", () => alert(JSON.stringify(history, null, 2)));
     $("#uSaveSettings").addEventListener("click", () => { toast("Paramètres enregistrés"); logUser("Paramètres utilisateur enregistrés"); });
     $("#uRefresh").addEventListener("click", () => { toast("Dashboard utilisateur actualisé"); logUser("Actualisation utilisateur"); });
     $("#uSearch").addEventListener("input", () => applyDashSearch("#uSearch", "user"));
     $("#aSearch").addEventListener("input", () => applyDashSearch("#aSearch", "admin"));
-    $("#aSimulate").addEventListener("click", () => { $("#aViews").textContent = (18 + Math.random()*4).toFixed(1) + "k"; renderChart(); toast("Trafic simulé"); logAdmin("Simulation trafic"); });
-    $("#aAutoModerate").addEventListener("click", () => { adminProposals.forEach(p => p.flags.push("auto-check OK")); toast("Auto-modération lancée"); logAdmin("Auto-modération exécutée"); });
-    $("#aAddProposal").addEventListener("click", () => { adminProposals.unshift({id:Date.now(),name:"AgentFlow "+Math.floor(Math.random()*90),category:"Automatisation",author:"Test",score:58,desc:"Agent IA multi-étapes avec connecteurs SaaS.",flags:["données aléatoires"]}); toast("Proposition test ajoutée"); logAdmin("Proposition test ajoutée"); });
-    $("#aCreateTool").addEventListener("click", () => { tools.push({id:Date.now(),name:"AdminTool "+Math.floor(Math.random()*90),icon:"A",cat:"Automatisation",desc:"Fiche créée depuis la console admin.",pricing:"Freemium",score:80,status:"Publié",tags:["admin","demo"],api:"Oui",users:"0 avis",fav:false,featured:false}); toast("Fiche créée"); logAdmin("Fiche admin créée"); });
-    $("#aNewIncident").addEventListener("click", () => { reports.unshift({id:"SIG-" + Math.floor(2800 + Math.random()*500),tool:"Claude",issue:"Donnée modèle obsolète",priority:"Moyenne",status:"Ouvert"}); toast("Incident simulé"); logAdmin("Incident simulé"); });
-    $("#aAddUser").addEventListener("click", () => { users.push({id:Date.now(),name:"User Demo",email:"demo"+Math.floor(Math.random()*99)+"@aifinder.dev",role:"Utilisateur",score:50,status:"Actif"}); toast("Utilisateur ajouté"); logAdmin("Utilisateur test ajouté"); });
-    $("#aAddComment").addEventListener("click", () => { comments.unshift({id:Date.now(),tool:"ChatGPT",author:"Demo",text:"Commentaire aléatoire à modérer.",rating:4,likes:0,status:"À vérifier"}); toast("Commentaire test ajouté"); logAdmin("Commentaire test ajouté"); });
+    $("#aAddProposal").addEventListener("click", () => { adminProposals.unshift({id:Date.now(),name:"AgentFlow",category:"Automatisation",author:"Utilisateur",score:58,desc:"Agent IA multi-étapes avec connecteurs SaaS.",flags:["nouvelle soumission"]}); toast("Soumission ajoutée"); logAdmin("Soumission ajoutée"); });
+    $("#aCreateTool").addEventListener("click", () => { tools.push({id:Date.now(),name:"Nouvel outil",icon:"N",cat:"Automatisation",desc:"Fiche créée depuis la console admin.",pricing:"Freemium",score:80,status:"Publié",tags:["outil"],api:"Oui",users:"0 avis",fav:false,featured:false}); toast("Fiche créée"); logAdmin("Fiche outil créée"); });
+    $("#aNewIncident").addEventListener("click", () => { reports.unshift({id:"SIG-" + Math.floor(2800 + Math.random()*500),tool:"Claude",issue:"Métadonnée modèle à vérifier",priority:"Moyenne",status:"Ouvert"}); toast("Signalement ajouté"); logAdmin("Signalement ajouté"); });
+    $("#aAddUser").addEventListener("click", () => { users.push({id:Date.now(),name:"Nouvel utilisateur",email:"user"+Math.floor(Math.random()*99)+"@aifinder.dev",role:"Utilisateur",score:50,status:"Actif",derniere_connexion:"2026-05-04"}); toast("Utilisateur ajouté"); logAdmin("Utilisateur ajouté"); });
     $("#aCategoryForm").addEventListener("submit", e => { e.preventDefault(); categories.push($("#aCatName").value || "Nouvelle catégorie"); toast("Catégorie ajoutée"); logAdmin("Catégorie créée"); });
-    $("#aMergeTags").addEventListener("click", () => { toast("Tags fusionnés"); logAdmin(`Tags fusionnés: ${$("#aTagSource").value} -> ${$("#aTagTarget").value}`); });
+    $("#aNewRequest").addEventListener("click", () => { demandes.unshift({id:Date.now(),titre:"Demande admin",message:"Demande créée depuis gestion admin.",statut:"Ouvert",created_at:"2026-05-04"}); toast("Demande ajoutée"); logAdmin("Demande ajoutée"); });
+    $("#aSendNotification").addEventListener("click", () => { notifications.unshift({id:Date.now(),cible:$("#aNotifTarget").value,type:$("#aNotifType").value,titre:$("#aNotifTitle").value,message:$("#aNotifMessage").value,created_at:"2026-05-04"}); toast("Notification envoyée"); logAdmin("Notification envoyée"); renderAdmin(); renderUser(); });
     $("#aRefreshChart").addEventListener("click", () => { renderChart(); toast("Analytics rafraîchis"); logAdmin("Analytics rafraîchis"); });
-    $("#aSaveSettings").addEventListener("click", () => { toast("Paramètres admin enregistrés"); logAdmin("Paramètres admin enregistrés"); });
     $("#aRefresh").addEventListener("click", () => { toast("Dashboard admin actualisé"); logAdmin("Actualisation admin"); });
     window.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); ($("#uSearch") || $("#aSearch")).focus(); } });
 
