@@ -249,6 +249,20 @@
       background: rgba(255,107,107,.08);
       border-color: rgba(255,107,107,.24);
     }
+    .btn.small {
+      min-height: 34px;
+      padding: 0 11px;
+      border-radius: 9px;
+      font-size: .78rem;
+    }
+    .btn.fav-btn {
+      min-width: 108px;
+      border-color: rgba(255,107,107,.26);
+    }
+    .btn.fav-btn.primary {
+      background: linear-gradient(135deg, #ff5c8a, var(--accent2));
+      box-shadow: 0 10px 24px rgba(255,107,107,.20);
+    }
     .btn.icon {
       width: 40px;
       padding: 0;
@@ -392,12 +406,22 @@
     .tools-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 18px;
     }
     .tool-card {
       position: relative;
-      padding: 16px;
+      padding: 18px;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 100%;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+    }
+    .tool-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(108,99,255,.28);
+      box-shadow: 0 18px 42px rgba(22,24,38,.12);
     }
     .tool-card::before {
       content: "";
@@ -411,9 +435,9 @@
     .tool-head {
       display: grid;
       grid-template-columns: 46px 1fr auto;
-      gap: 11px;
+      gap: 14px;
       align-items: start;
-      margin-bottom: 12px;
+      margin-bottom: 0;
     }
     .tool-logo {
       width: 46px;
@@ -429,12 +453,35 @@
       color: var(--muted);
       font-size: .84rem;
       line-height: 1.52;
-      margin-bottom: 12px;
+      margin-bottom: 0;
     }
     .tool-actions {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 3px;
+    }
+    .tool-actions .btn {
+      flex: 1 1 112px;
+    }
+    .fav-heart {
+      display: inline-grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      color: currentColor;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .table-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+      min-width: 128px;
     }
     .list {
       display: grid;
@@ -472,6 +519,7 @@
       text-transform: uppercase;
       letter-spacing: .06em;
     }
+    th:last-child, td:last-child { text-align: right; }
     input, select, textarea {
       width: 100%;
       border: 1px solid var(--border);
@@ -565,11 +613,11 @@
     .layout-2 { grid-template-columns: minmax(0, 1.45fr) minmax(300px, .55fr); gap: 12px; }
     .tabs, .chips { gap: 6px; }
     .tab, .chip { padding: 6px 10px; }
-    .tools-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-    .tool-card { padding: 13px; }
-    .tool-head { grid-template-columns: 40px 1fr auto; gap: 9px; margin-bottom: 9px; }
+    .tools-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .tool-card { padding: 16px; }
+    .tool-head { grid-template-columns: 40px 1fr auto; gap: 12px; margin-bottom: 0; }
     .tool-logo { width: 40px; height: 40px; border-radius: 10px; }
-    .tool-card p { line-height: 1.42; margin-bottom: 9px; }
+    .tool-card p { line-height: 1.48; margin-bottom: 0; }
     .list { gap: 8px; }
     .item { padding: 10px; }
     th, td { padding: 10px 12px; }
@@ -901,7 +949,7 @@
         <p>${t.desc}</p>
         <div class="chips"><span class="chip active">${t.score}/100</span><span class="chip">★ ${t.rating}</span><span class="chip">${t.status}</span></div>
         <div class="tool-actions">
-          <button class="btn ${t.fav ? 'primary' : ''}" data-action="fav" data-id="${t.id}">${t.fav ? 'Favori ✓' : 'Favori'}</button>
+          <button class="btn fav-btn ${t.fav ? 'primary' : ''}" data-action="fav" data-id="${t.id}"><span class="fav-heart">${t.fav ? '♥' : '♡'}</span>${t.fav ? 'Favori' : 'Ajouter'}</button>
           <button class="btn" data-target="proposer">Compléter</button>
           <button class="btn" data-action="report" data-id="${t.id}">Signaler</button>
         </div>
@@ -935,7 +983,7 @@
         <td>${t.modelName || t.pricing}<br><span class="muted">${t.pricing}</span></td>
         <td>${[t.feature1, t.feature2].filter(Boolean).join(', ') || 'À compléter'}</td>
         <td><span class="badge ${t.status === 'Publié' ? 'ok' : t.status === 'Brouillon' ? '' : 'warn'}">${t.status}</span></td>
-        <td><button class="btn" data-target="proposer">Enrichir</button></td>
+        <td><div class="table-actions"><button class="btn small" data-target="proposer">Enrichir</button></div></td>
       </tr>`).join('');
     }
     function renderCollections() {
@@ -953,7 +1001,7 @@
     function renderReports() {
       $('#reportRows').innerHTML = reports.map(r => `<tr>
         <td>${r.id}</td><td>${r.object}</td><td>${r.tool}</td><td><span class="badge ${r.priority === 'Haute' ? 'danger' : r.priority === 'Moyenne' ? 'warn' : ''}">${r.priority}</span></td><td>${r.status}</td>
-        <td><button class="btn" data-close-report="${r.id}">${r.status === 'Résolu' ? 'Archiver' : 'Marquer résolu'}</button></td>
+        <td><div class="table-actions"><button class="btn small" data-close-report="${r.id}">${r.status === 'Résolu' ? 'Archiver' : 'Marquer résolu'}</button></div></td>
       </tr>`).join('');
       $('#navReports').textContent = reports.filter(r => r.status !== 'Résolu').length;
       $('#kpiReports').textContent = reports.filter(r => r.status !== 'Résolu').length;
