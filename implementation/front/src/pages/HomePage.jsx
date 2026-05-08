@@ -24,20 +24,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          <aside className="hero-panel">
-            <div className="panel-head">
-              <div>
-                <h2>Activite catalogue</h2>
-                <p className="mini">Extrait de soumission_outil et signalements.</p>
-              </div>
-              <span className="badge warn">3 en attente</span>
-            </div>
-            <div className="live-list">
-              <div className="live-item"><div className="tool-icon">P</div><div><h4>PromptLayer</h4><p className="mini">LLMOps - note_admin a completer</p></div><span className="badge warn">En attente</span></div>
-              <div className="live-item"><div className="tool-icon">R</div><div><h4>Runway</h4><p className="mini">Video - signalement ouvert</p></div><span className="badge danger">Signale</span></div>
-              <div className="live-item"><div className="tool-icon">C</div><div><h4>Cursor</h4><p className="mini">Code - fiche enrichie par la communaute</p></div><span className="badge ok">Publie</span></div>
-            </div>
-          </aside>
         </section>
 
         <section className="container metrics">
