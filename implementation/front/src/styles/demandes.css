@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #f5f4f0;
+  --card-bg: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #888;
+  --border: #e8e6e0;
+  --green: #22c55e;
+  --red: #ef4444;
+  --orange: #f97316;
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; }
+
+.demandes-page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  padding: 40px 48px;
+}
+
+.page-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.page-sub {
+  color: var(--text-muted);
+  font-size: 13.5px;
+  margin: 0 0 32px;
+}
+
+.demande-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.dem-stat,
+.demande-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.dem-stat {
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dem-stat-icon,
+.dem-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.dem-stat-icon.orange,
+.dem-icon.edit { background: #fff7ed; }
+.dem-stat-icon.green { background: #dcfce7; }
+.dem-stat-icon.red,
+.dem-icon.delete { background: #fee2e2; }
+
+.dem-stat-num {
+  font-family: 'Sora', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.dem-stat-num.orange { color: var(--orange); }
+.dem-stat-num.green { color: var(--green); }
+.dem-stat-num.red { color: var(--red); }
+.dem-stat-label { font-size: 12px; color: var(--text-muted); }
+
+.demande-card {
+  padding: 20px 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.dem-body { flex: 1; }
+.dem-title { font-weight: 700; font-size: 14.5px; margin-bottom: 2px; }
+.dem-date { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+.dem-desc { font-size: 13.5px; color: #555; }
+.dem-status { margin-left: auto; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.tag-green { background: #dcfce7; color: #16a34a; }
+.tag-yellow { background: #fef9c3; color: #a16207; }
+
+@media (max-width: 760px) {
+  .demandes-page { padding: 28px 20px; }
+  .demande-stats { grid-template-columns: 1fr; }
+  .demande-card { flex-wrap: wrap; }
+}

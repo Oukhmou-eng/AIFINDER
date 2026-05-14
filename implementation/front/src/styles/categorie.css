@@ -1,0 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #f5f3ee;
+  --white: #ffffff;
+  --dark: #1a1a1a;
+  --dark2: #2d2d2d;
+  --gray: #6b7280;
+  --gray-light: #9ca3af;
+  --gray-border: #e5e0d8;
+  --green: #10b981;
+  --badge-free: #ecfdf5;
+  --badge-free-text: #059669;
+  --badge-freemium: #fef3c7;
+  --badge-freemium-text: #d97706;
+  --badge-paid: #fff1f2;
+  --badge-paid-text: #e11d48;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; }
+
+.categorie-page {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--dark);
+  min-height: 100vh;
+}
+
+.categorie-page h1,
+.categorie-page h2 { font-family: 'Sora', sans-serif; }
+
+.home-nav {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-border);
+  padding: 0 40px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--dark);
+  text-decoration: none;
+}
+
+.nav-logo-icon {
+  width: 34px;
+  height: 34px;
+  background: var(--dark);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+}
+
+.nav-links { display: flex; gap: 32px; list-style: none; padding: 0; margin: 0; }
+.nav-links a { text-decoration: none; color: var(--gray); font-size: 14px; font-weight: 500; cursor: pointer; }
+.nav-actions { display: flex; gap: 12px; align-items: center; }
+
+.btn { cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; border: none; transition: all .2s; }
+.btn-outline { background: transparent; border: 1.5px solid var(--gray-border); color: var(--dark); padding: 8px 20px; border-radius: 10px; font-size: 14px; }
+.btn-dark { background: var(--dark); color: white; padding: 9px 20px; border-radius: 10px; font-size: 14px; }
+
+#page-categories {
+  display: flex;
+  gap: 48px;
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.categories-section { flex: 1.2; min-width: 0; }
+.categories-section h2,
+.ranking-section h2 {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+.categories-section > p { color: var(--gray); font-size: 14px; margin: 0 0 28px; }
+
+.cat-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.cat-card-lg {
+  background: white;
+  border: 1.5px solid var(--gray-border);
+  border-radius: var(--radius);
+  padding: 28px;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.cat-card-lg:hover {
+  border-color: var(--green);
+  box-shadow: var(--card-shadow);
+  transform: translateY(-3px);
+}
+
+.cat-card-lg .cat-icon { font-size: 42px; margin-bottom: 16px; display: block; }
+.cat-card-lg .cat-name { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.cat-card-lg .cat-count { font-size: 13px; color: var(--green); font-weight: 600; margin-bottom: 8px; }
+.cat-card-lg .cat-top { font-size: 12px; color: var(--gray); }
+
+.ranking-section { flex: 0.9; min-width: 320px; background: transparent; padding: 0; }
+.ranking-section h2 { margin-bottom: 20px; }
+
+.rank-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.filter-tab {
+  background: transparent;
+  border: 1.5px solid var(--gray-border);
+  border-radius: 50px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--dark);
+}
+
+.filter-tab.active { background: var(--dark); color: white; border-color: var(--dark); }
+
+.podium-mini {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.podium-mini-card {
+  background: white;
+  border: 1.5px solid var(--gray-border);
+  border-radius: 14px;
+  padding: 20px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.podium-mini-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow); }
+.podium-mini-card.first { border-color: var(--dark); box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(-6px); }
+.podium-medal { font-size: 24px; display: block; margin-bottom: 8px; }
+.podium-icon { font-size: 36px; }
+.podium-name { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700; margin: 8px 0 4px; }
+.podium-score { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800; color: var(--dark); }
+
+.rank-list-mini { display: flex; flex-direction: column; gap: 12px; }
+.rank-item-mini {
+  background: white;
+  border: 1px solid var(--gray-border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.rank-item-mini:hover { transform: translateX(4px); box-shadow: var(--card-shadow); }
+.rank-num { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: var(--gray-light); width: 32px; text-align: center; flex-shrink: 0; }
+.rank-icon { font-size: 28px; flex-shrink: 0; }
+.rank-info { flex: 1; }
+.rank-name { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.rank-name span { font-weight: 400; color: var(--gray); font-size: 12px; font-family: 'DM Sans', sans-serif; }
+.rank-score { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; flex-shrink: 0; }
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.badge-free, .badge-freeplus { background: var(--badge-free); color: var(--badge-free-text); }
+.badge-freemium { background: var(--badge-freemium); color: var(--badge-freemium-text); }
+.badge-paid { background: var(--badge-paid); color: var(--badge-paid-text); }
+
+@media (max-width: 1000px) {
+  #page-categories { flex-direction: column; padding: 30px 24px; }
+  .ranking-section { min-width: auto; }
+  .cat-grid-2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .home-nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  #page-categories { padding: 20px; }
+  .podium-mini { grid-template-columns: 1fr; }
+  .podium-mini-card.first { transform: translateY(0); order: -1; }
+  .rank-item-mini { flex-wrap: wrap; }
+}
