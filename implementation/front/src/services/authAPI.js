@@ -1,19 +1,29 @@
-// frontend/src/services/authAPI.js
-import { postForm } from '../api'; // si tu as une méthode postForm (x-www-form-urlencoded)
+import api, { setToken, getToken } from './api';
 
 export const AuthAPI = {
-  login: async (email, password) => {
-    const data = await postForm('/index.php', { action: 'login', email, password });
-    if (data.success) {
-      localStorage.setItem('token', data.token); // ← stocke le token
-    }
+  async login(email, password) {
+    const data = await api.post('login', { email, password });
+    setToken(data.token);
     return data;
   },
-  register: async (email, password, nom) => {
-    return postForm('/index.php', { action: 'register', email, password, nom });
+
+  async register(payload) {
+    return api.post('register', payload);
   },
-  logout: () => {
-    localStorage.removeItem('token');
+
+  async me() {
+    if (!getToken()) return null;
+    const data = await api.get('me');
+    return data.user;
   },
-  isLoggedIn: () => !!localStorage.getItem('token'),
+
+  logout() {
+    setToken(null);
+  },
+
+  isLoggedIn() {
+    return Boolean(getToken());
+  },
 };
+
+export default AuthAPI;

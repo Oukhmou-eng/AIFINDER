@@ -1,49 +1,60 @@
-// frontend/src/api.js
-const BASE_URL = 'http://localhost/mon-projet/backend';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/Application-Web_AIFinder/implementation/back/index.php';
 
-function getToken() {
-  return localStorage.getItem('token');
+export function getToken() {
+  return localStorage.getItem('aifinder_token');
 }
 
-async function request(endpoint, method, data = null) {
-  const url = `${BASE_URL}${endpoint}`;
-  const headers = {};
+export function setToken(token) {
+  if (token) {
+    localStorage.setItem('aifinder_token', token);
+  } else {
+    localStorage.removeItem('aifinder_token');
+  }
+}
+
+function buildUrl(params = {}) {
+  const url = new URL(API_URL);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      url.searchParams.set(key, value);
+    }
+  });
+  return url.toString();
+}
+
+async function request(action, { method = 'GET', data = null, params = {} } = {}) {
   const token = getToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
 
   const options = { method, headers };
-  if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
-    headers['Content-Type'] = 'application/json';
+  const query = { action, ...params };
+
+  if (method !== 'GET' && data) {
     options.body = JSON.stringify(data);
   }
 
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    let msg = `Erreur ${response.status}`;
-    try {
-      const err = await response.json();
-      msg = err.message || msg;
-    } catch (e) {}
-    throw new Error(msg);
+  const response = await fetch(buildUrl(query), options);
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok || payload.success === false) {
+    throw new Error(payload.message || `Erreur API ${response.status}`);
   }
-  if (response.status === 204) return null;
-  return response.json();
+
+  return payload;
 }
 
-export async function postForm(endpoint, data) {
-  const url = `${BASE_URL}${endpoint}`;
-  const body = new URLSearchParams(data).toString();
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-  });
-  if (!response.ok) throw new Error(`Erreur ${response.status}`);
-  return response.json();
-}
+export const api = {
+  get: (action, params) => request(action, { method: 'GET', params }),
+  post: (action, data, params) => request(action, { method: 'POST', data, params }),
+  put: (action, data, params) => request(action, { method: 'PUT', data, params }),
+  patch: (action, data, params) => request(action, { method: 'PATCH', data, params }),
+  delete: (action, data, params) => request(action, { method: 'DELETE', data, params }),
+};
 
-export const get = (endpoint) => request(endpoint, 'GET');
-export const post = (endpoint, data) => request(endpoint, 'POST', data);
-export const put = (endpoint, data) => request(endpoint, 'PUT', data);
-export const patch = (endpoint, data) => request(endpoint, 'PATCH', data);
-export const del = (endpoint) => request(endpoint, 'DELETE');
+export default api;
