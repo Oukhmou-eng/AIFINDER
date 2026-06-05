@@ -5,6 +5,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
 import { useAuth } from "../contexts/auth-context";
+import { GoogleLogin } from "@react-oauth/google";
 import { 
   Sparkles, 
   Eye, 
@@ -16,11 +17,10 @@ import {
   Globe,
   ArrowLeft
 } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -49,21 +49,35 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const success = await register(formData.name, formData.email, formData.password);
+      // Correction de l'ordre des paramètres : email, password, name (comme défini dans auth-context)
+      const success = await register(formData.email, formData.password, formData.name);
       if (success) {
         navigate("/dashboard");
       } else {
-        setError("Cet email est déjà utilisé");
+        setError("Impossible de créer le compte. Cet email est peut-être déjà utilisé.");
       }
-    } catch {
-      setError("Une erreur est survenue");
+    } catch (err) {
+      setError(err.message || "Une erreur est survenue lors de l'inscription");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignup = () => {
-    alert("Inscription avec Google à implémenter");
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError("");
+    setLoading(true);
+    try {
+      const success = await loginWithGoogle(credentialResponse.credential);
+      if (success) {
+        navigate("/dashboard");
+      } else {
+        setError("Échec de l'inscription avec Google");
+      }
+    } catch (err) {
+      setError(err.message || "Erreur lors de l'inscription Google");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const features = [
@@ -217,17 +231,20 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full flex items-center gap-2"
-                onClick={handleGoogleSignup}
-              >
-                <FcGoogle className="h-5 w-5" />
-                Continuer avec Google
-              </Button>
+              <div className="w-full flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError("Échec de l'authentification Google")}
+                  useOneTap
+                  theme="outline"
+                  size="large"
+                  width="100%"
+                  text="signup_with"
+                  shape="rectangular"
+                />
+              </div>
 
-              <div className="text-center text-sm text-muted-foreground">
+              <div className="text-center text-sm text-muted-foreground mt-4">
                 Déjà un compte ?{" "}
                 <Link to="/login" className="text-primary hover:underline">
                   Se connecter

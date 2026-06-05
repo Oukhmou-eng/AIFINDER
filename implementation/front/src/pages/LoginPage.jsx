@@ -4,6 +4,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useAuth } from "../contexts/auth-context";
+import { GoogleLogin } from "@react-oauth/google";
 import {
   Sparkles,
   Eye,
@@ -15,11 +16,10 @@ import {
   Globe,
   ArrowLeft
 } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const {  login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,8 +44,21 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    alert("Connexion avec Google à implémenter");
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError("");
+    setLoading(true);
+    try {
+      const success = await loginWithGoogle(credentialResponse.credential);
+      if (success) {
+        (success === "admin" ? navigate("/admin") : navigate("/dashboard"));
+      } else {
+        setError("Échec de la connexion avec Google");
+      }
+    } catch (err) {
+      setError(err.message || "Erreur lors de la connexion Google");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const features = [
@@ -158,17 +171,20 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full flex items-center gap-2"
-                onClick={handleGoogleLogin}
-              >
-                <FcGoogle className="h-5 w-5" />
-                Continuer avec Google
-              </Button>
+              <div className="w-full flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError("Échec de l'authentification Google")}
+                  useOneTap
+                  theme="outline"
+                  size="large"
+                  width="100%"
+                  text="continue_with"
+                  shape="rectangular"
+                />
+              </div>
 
-              <div className="text-center">
+              <div className="text-center mt-4">
                 <Link to="/forgot-password" className="text-sm text-primary hover:underline">
                   Mot de passe oublié ?
                 </Link>

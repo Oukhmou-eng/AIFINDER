@@ -43,7 +43,14 @@ export function AuthProvider({ children }) {
     return data.user?.role === 'admin' ? 'admin' : 'user';
   }, []);
 
-  const loginWithGoogle = useCallback(async () => {
+  const loginWithGoogle = useCallback(async (credential) => {
+    const data = await AuthAPI.googleAuth(credential);
+    if (data.user) {
+      setUser(data.user);
+      const items = await CatalogAPI.notifications().catch(() => []);
+      setNotifications(items);
+      return data.user?.role === 'admin' ? 'admin' : 'user';
+    }
     return false;
   }, []);
 
