@@ -6,7 +6,7 @@ $username = getenv('DB_USER') ?: 'root';
 $password = getenv('DB_PASSWORD');
 
 if ($password === false) {
-    $password = '1516';
+    $password = '';
 }
 
 try {

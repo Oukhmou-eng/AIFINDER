@@ -12,6 +12,15 @@ class HomeController
         $this->catalog = new Catalog();
     }
 
+
+
+    public function searchTools(array $data)
+    {
+        $result = $this->catalog->searchTools($data);
+        ok($result);
+    }
+    
+
     public function index(array $data)
     {
         ok([

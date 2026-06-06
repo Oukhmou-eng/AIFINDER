@@ -1,16 +1,13 @@
 <?php
+header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit(); }
+// ... le reste
 
 session_start();
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json; charset=utf-8');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
+// Le reste de ton code (require, routes, etc.)
 
 require_once __DIR__ . '/utils/validator.php';
 
@@ -35,8 +32,11 @@ $routes = [
     'create_review' => ['HomeController', 'createReview', ['POST']],
     'report' => ['HomeController', 'report', ['POST']],
     'stats' => ['HomeController', 'stats', ['GET']],
+    'searchTools' => ['HomeController', 'searchTools', ['GET']],
+    
     'resource' => ['ResourceController', 'list', ['GET']],
     'resource_item' => ['ResourceController', 'item', ['GET']],
+    
 
     'login' => ['AuthController', 'login', ['POST']],
     'register' => ['AuthController', 'register', ['POST']],
@@ -55,6 +55,7 @@ $routes = [
     'admin_dashboard' => ['AdminController', 'dashboard', ['GET']],
     'admin_users' => ['AdminController', 'users', ['GET']],
     'admin_tools' => ['AdminController', 'tools', ['GET']],
+    
 ];
 
 if (!isset($routes[$action])) {
