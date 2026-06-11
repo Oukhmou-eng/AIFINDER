@@ -4,8 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
-import { Textarea } from '../../components/ui/textarea';
-import { Label } from '../../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -35,11 +33,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
-import { Search, Wrench, Clock, CheckCircle, XCircle, Plus, Star, MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-react';
-import { tools as mockTools, categories, getCategoryById, getModelById } from '../../lib/mock-data';
+import { Search, Wrench, Clock, CheckCircle, XCircle, Plus, Star, MoreHorizontal, Eye, Trash2, Loader2 } from 'lucide-react';
+import { getModelById } from '../../lib/mock-data';
+import { toast } from 'sonner';
+import api from '../../services/api';
+import { ToolForm } from '../../components/tools/tool-form';
 
 // Composant StatCard local
-function StatCard({ title, value, icon: Icon, variant = 'primary' }) {
+function StatCard({ title, value, icon: Icon, variant = 'primary', loading = false }) {
   const variantClasses = {
     primary: 'bg-primary/10 text-primary',
     success: 'bg-success/10 text-success',
@@ -55,14 +56,27 @@ function StatCard({ title, value, icon: Icon, variant = 'primary' }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        {loading ? (
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        ) : (
+          <div className="text-2xl font-bold">{value}</div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 // Composant ToolsTable local
-function ToolsTable({ tools, onView, onApprove, onReject, onDelete }) {
+function ToolsTable({ tools, onView, onApprove, onReject, onDelete, loading = false }) {
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+        <p className="mt-2 text-sm text-muted-foreground">Chargement des outils...</p>
+      </div>
+    );
+  }
+
   if (tools.length === 0) {
     return (
       <div className="text-center py-8">
@@ -85,24 +99,24 @@ function ToolsTable({ tools, onView, onApprove, onReject, onDelete }) {
       </TableHeader>
       <TableBody>
         {tools.map((tool) => {
-          const category = getCategoryById(tool.categoryId);
+          const categoryNames = tool.categories?.map(c => c.name).join(', ') || 'N/A';
           return (
             <TableRow key={tool.id} id={`tool-row-${tool.id}`}>
               <TableCell className="font-medium">{tool.name}</TableCell>
-              <TableCell>{category?.name || 'N/A'}</TableCell>
+              <TableCell>{categoryNames}</TableCell>
               <TableCell>
                 <Badge
                   variant={
-                    tool.status === 'active'
+                    tool.status === 'active' || tool.status === 'actif'
                       ? 'default'
-                      : tool.status === 'pending'
+                      : tool.status === 'pending' || tool.status === 'en_attente'
                         ? 'secondary'
                         : 'destructive'
                   }
                 >
-                  {tool.status === 'active'
+                  {tool.status === 'active' || tool.status === 'actif'
                     ? 'Actif'
-                    : tool.status === 'pending'
+                    : tool.status === 'pending' || tool.status === 'en_attente'
                       ? 'En attente'
                       : 'Refusé'}
                 </Badge>
@@ -113,7 +127,7 @@ function ToolsTable({ tools, onView, onApprove, onReject, onDelete }) {
                   {tool.rating}/5
                 </div>
               </TableCell>
-              <TableCell>{tool.usageCount.toLocaleString()}</TableCell>
+              <TableCell>{(tool.usageCount || 0).toLocaleString()}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -126,7 +140,7 @@ function ToolsTable({ tools, onView, onApprove, onReject, onDelete }) {
                       <Eye className="mr-2 h-4 w-4" />
                       Voir détails
                     </DropdownMenuItem>
-                    {tool.status === 'pending' && (
+                    {(tool.status === 'pending' || tool.status === 'en_attente') && (
                       <>
                         <DropdownMenuItem onClick={() => onApprove(tool)}>
                           <CheckCircle className="mr-2 h-4 w-4" />
@@ -138,12 +152,10 @@ function ToolsTable({ tools, onView, onApprove, onReject, onDelete }) {
                         </DropdownMenuItem>
                       </>
                     )}
-                    {tool.status !== 'pending' && (
-                      <DropdownMenuItem className="text-destructive" onClick={() => onDelete(tool)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem className="text-destructive" onClick={() => onDelete(tool)}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Supprimer
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -160,28 +172,64 @@ export default function AdminTools() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedTool, setSelectedTool] = useState(null);
-  const [tools, setTools] = useState(mockTools);
+  const [tools, setTools] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const location = useLocation();
+
+  const fetchTools = async () => {
+    setLoading(true);
+    try {
+      const data = await api.get('tools');
+      setTools(data.tools || []);
+    } catch (err) {
+      toast.error("Erreur lors de la récupération des outils");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const data = await api.get('categories');
+      setCategories(data.categories || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTools();
+    fetchCategories();
+  }, []);
 
   const filteredTools = tools.filter((tool) => {
     const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tool.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || tool.status === statusFilter;
-    const matchesCategory = categoryFilter === 'all' || tool.categoryId === categoryFilter;
+    
+    let matchesStatus = statusFilter === 'all';
+    if (!matchesStatus) {
+      if (statusFilter === 'active') matchesStatus = (tool.status === 'active' || tool.status === 'actif');
+      if (statusFilter === 'pending') matchesStatus = (tool.status === 'pending' || tool.status === 'en_attente');
+      if (statusFilter === 'rejected') matchesStatus = (tool.status === 'rejected' || tool.status === 'refusé');
+    }
+
+    const matchesCategory = categoryFilter === 'all' || tool.categoryIds?.includes(categoryFilter);
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const pendingCount = tools.filter((t) => t.status === 'pending').length;
-  const approvedCount = tools.filter((t) => t.status === 'active').length;
-  const rejectedCount = tools.filter((t) => t.status === 'rejected').length;
+  const pendingCount = tools.filter((t) => t.status === 'pending' || t.status === 'en_attente').length;
+  const approvedCount = tools.filter((t) => (t.status === 'active' || t.status === 'actif')).length;
+  const rejectedCount = tools.filter((t) => (t.status === 'rejected' || t.status === 'refusé')).length;
 
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const editId = searchParams.get('edit');
-    if (editId) {
+    if (editId && tools.length > 0) {
       const tool = tools.find(t => t.id === editId);
       if (tool) {
         setSelectedTool(tool);
@@ -201,16 +249,57 @@ export default function AdminTools() {
     }
   }, [location.search, tools]);
 
-  const handleApprove = (tool) => {
-    setTools(tools.map(t => t.id === tool.id ? { ...t, status: 'active' } : t));
+  const handleAddToolSubmit = async (formData) => {
+    setIsSubmitting(true);
+    try {
+      // Simulation locale pour l'instant
+      const newTool = {
+        id: `new-${Date.now()}`,
+        ...formData,
+        status: 'active',
+        rating: 0,
+        usageCount: 0,
+        reviewCount: 0,
+        categories: categories.filter(c => c.id === formData.categoryId)
+      };
+      
+      setTools([newTool, ...tools]);
+      toast.success("Outil ajouté avec succès");
+      setIsAddDialogOpen(false);
+    } catch (err) {
+      toast.error("Erreur lors de l'ajout de l'outil");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleReject = (tool) => {
-    setTools(tools.map(t => t.id === tool.id ? { ...t, status: 'rejected' } : t));
+  const handleApprove = async (tool) => {
+    try {
+      toast.success(`Outil ${tool.name} approuvé`);
+      setTools(tools.map(t => t.id === tool.id ? { ...t, status: 'active' } : t));
+    } catch (err) {
+      toast.error("Erreur lors de l'approbation");
+    }
   };
 
-  const handleDelete = (tool) => {
-    setTools(tools.filter(t => t.id !== tool.id));
+  const handleReject = async (tool) => {
+    try {
+      toast.success(`Outil ${tool.name} refusé`);
+      setTools(tools.map(t => t.id === tool.id ? { ...t, status: 'rejected' } : t));
+    } catch (err) {
+      toast.error("Erreur lors du refus");
+    }
+  };
+
+  const handleDelete = async (tool) => {
+    if (window.confirm(`Voulez-vous vraiment supprimer l'outil ${tool.name} ?`)) {
+      try {
+        toast.success(`Outil ${tool.name} supprimé`);
+        setTools(tools.filter(t => t.id !== tool.id));
+      } catch (err) {
+        toast.error("Erreur lors de la suppression");
+      }
+    }
   };
 
   return (
@@ -229,10 +318,10 @@ export default function AdminTools() {
 
       {/* Cartes statistiques */}
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Total outils" value={tools.length} icon={Wrench} variant="primary" />
-        <StatCard title="En attente" value={pendingCount} icon={Clock} variant="warning" />
-        <StatCard title="Approuvés" value={approvedCount} icon={CheckCircle} variant="success" />
-        <StatCard title="Refusés" value={rejectedCount} icon={XCircle} variant="destructive" />
+        <StatCard title="Total outils" value={tools.length} icon={Wrench} variant="primary" loading={loading} />
+        <StatCard title="En attente" value={pendingCount} icon={Clock} variant="warning" loading={loading} />
+        <StatCard title="Approuvés" value={approvedCount} icon={CheckCircle} variant="success" loading={loading} />
+        <StatCard title="Refusés" value={rejectedCount} icon={XCircle} variant="destructive" loading={loading} />
       </div>
 
       {/* Filtres et tableau */}
@@ -240,7 +329,7 @@ export default function AdminTools() {
         <CardHeader>
           <CardTitle>Liste des outils</CardTitle>
           <CardDescription>
-            {filteredTools.length} outil{filteredTools.length > 1 ? 's' : ''} trouvé{filteredTools.length > 1 ? 's' : ''}
+            {loading ? "Chargement..." : `${filteredTools.length} outil${filteredTools.length > 1 ? 's' : ''} trouvé${filteredTools.length > 1 ? 's' : ''}`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -286,6 +375,7 @@ export default function AdminTools() {
             onApprove={handleApprove}
             onReject={handleReject}
             onDelete={handleDelete}
+            loading={loading}
           />
         </CardContent>
       </Card>
@@ -301,31 +391,37 @@ export default function AdminTools() {
             <div className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="h-16 w-16 rounded-lg bg-secondary flex items-center justify-center overflow-hidden shrink-0">
-                  <span className="text-2xl font-bold text-primary">{selectedTool.name.charAt(0)}</span>
+                  {selectedTool.logo ? (
+                    <img src={selectedTool.logo} alt={selectedTool.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-2xl font-bold text-primary">{selectedTool.name.charAt(0)}</span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-lg">{selectedTool.name}</h3>
                   <p className="text-muted-foreground">{selectedTool.description}</p>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <Badge variant="outline">{getCategoryById(selectedTool.categoryId)?.name || 'N/A'}</Badge>
+                    {selectedTool.categories?.map(cat => (
+                      <Badge key={cat.id} variant="outline">{cat.name}</Badge>
+                    ))}
                     <Badge
                       variant={
-                        selectedTool.status === 'active'
+                        selectedTool.status === 'active' || selectedTool.status === 'actif'
                           ? 'default'
-                          : selectedTool.status === 'pending'
+                          : selectedTool.status === 'pending' || selectedTool.status === 'en_attente'
                             ? 'secondary'
                             : 'destructive'
                       }
                     >
-                      {selectedTool.status === 'active'
+                      {selectedTool.status === 'active' || selectedTool.status === 'actif'
                         ? 'Approuvé'
-                        : selectedTool.status === 'pending'
+                        : selectedTool.status === 'pending' || selectedTool.status === 'en_attente'
                           ? 'En attente'
                           : 'Refusé'}
                     </Badge>
                     <div className="flex items-center gap-1 text-sm">
                       <Star className="h-4 w-4 fill-warning text-warning" />
-                      {selectedTool.rating} ({selectedTool.reviewCount} avis)
+                      {selectedTool.rating} ({selectedTool.reviewCount || 0} avis)
                     </div>
                   </div>
                 </div>
@@ -333,7 +429,7 @@ export default function AdminTools() {
 
               <div>
                 <h4 className="font-medium mb-2">Description complète</h4>
-                <p className="text-sm text-muted-foreground">{selectedTool.longDescription}</p>
+                <p className="text-sm text-muted-foreground">{selectedTool.longDescription || selectedTool.description}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -350,7 +446,7 @@ export default function AdminTools() {
                           </span>
                         </Badge>
                       );
-                    })}
+                    }) || <p className="text-xs text-muted-foreground">Aucun modèle spécifié</p>}
                   </div>
                 </div>
                 <div>
@@ -360,13 +456,13 @@ export default function AdminTools() {
                       <Badge key={platform} variant="secondary">
                         {platform}
                       </Badge>
-                    ))}
+                    )) || <p className="text-xs text-muted-foreground">Non spécifié</p>}
                   </div>
                 </div>
               </div>
 
               <DialogFooter className="flex-col sm:flex-row gap-2">
-                {selectedTool.status === 'pending' && (
+                {(selectedTool.status === 'pending' || selectedTool.status === 'en_attente') && (
                   <>
                     <Button
                       variant="outline"
@@ -387,86 +483,33 @@ export default function AdminTools() {
                     </Button>
                   </>
                 )}
-                {selectedTool.status !== 'pending' && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => {
-                      handleDelete(selectedTool);
-                      setSelectedTool(null);
-                    }}
-                  >
-                    Supprimer
-                  </Button>
-                )}
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    handleDelete(selectedTool);
+                    setSelectedTool(null);
+                  }}
+                >
+                  Supprimer
+                </Button>
               </DialogFooter>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Dialogue d'ajout d'outil (simplifié) */}
+      {/* Dialogue d'ajout d'outil */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Ajouter un nouvel outil</DialogTitle>
-            <DialogDescription>Ajoutez directement un outil à la plateforme</DialogDescription>
+            <DialogDescription>Remplissez le formulaire complet pour ajouter l&apos;outil au catalogue</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Nom de l&apos;outil</Label>
-              <Input id="name" placeholder="Ex: ChatGPT" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="url">URL</Label>
-              <Input id="url" type="url" placeholder="https://..." />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description courte</Label>
-              <Input id="description" placeholder="Une brève description..." />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="fullDescription">Description complète</Label>
-              <Textarea id="fullDescription" placeholder="Description détaillée de l&apos;outil..." rows={4} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Catégorie</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label>Tarification</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="free">Gratuit</SelectItem>
-                    <SelectItem value="freemium">Freemium</SelectItem>
-                    <SelectItem value="paid">Payant</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-              Annuler
-            </Button>
-            <Button onClick={() => setIsAddDialogOpen(false)}>
-              Ajouter l&apos;outil
-            </Button>
-          </DialogFooter>
+          <ToolForm 
+            onSubmit={handleAddToolSubmit} 
+            onCancel={() => setIsAddDialogOpen(false)} 
+            isSubmitting={isSubmitting}
+          />
         </DialogContent>
       </Dialog>
     </div>

@@ -35,12 +35,13 @@ import {
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Search, Users, UserCheck, UserX, MoreHorizontal, Eye, ShieldAlert, Ban, RefreshCw, PlusCircle } from 'lucide-react';
-import { mockUsers, mockProposedTools, reviews, getToolById } from '../../lib/mock-data';
+import { Search, Users, UserCheck, UserX, MoreHorizontal, Eye, ShieldAlert, Ban, RefreshCw, PlusCircle, Loader2 } from 'lucide-react';
+import { mockProposedTools, reviews, getToolById } from '../../lib/mock-data';
 import { toast } from 'sonner';
+import api from '../../services/api';
 
 // Composant StatCard local
-function StatCard({ title, value, icon: Icon, variant = 'primary' }) {
+function StatCard({ title, value, icon: Icon, variant = 'primary', loading = false }) {
   const variantClasses = {
     primary: 'bg-primary/10 text-primary',
     success: 'bg-success/10 text-success',
@@ -55,7 +56,11 @@ function StatCard({ title, value, icon: Icon, variant = 'primary' }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        {loading ? (
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        ) : (
+          <div className="text-2xl font-bold">{value}</div>
+        )}
       </CardContent>
     </Card>
   );
@@ -66,15 +71,34 @@ export default function AdminUsers() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showAddAdminDialog, setShowAddAdminDialog] = useState(false);
   const [newAdmin, setNewAdmin] = useState({ name: '', email: '', password: '' });
+
+  // Récupération des utilisateurs depuis l'API
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const data = await api.get('users');
+      setUsers(data.users || []);
+    } catch (err) {
+      toast.error("Erreur lors de la récupération des utilisateurs");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   // Récupération des paramètres d'URL pour ouverture auto et surbrillance
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const editId = searchParams.get('edit');
-    if (editId) {
+    if (editId && users.length > 0) {
       const user = users.find(u => u.id === editId);
       if (user) {
         setSelectedUser(user);
@@ -104,60 +128,69 @@ export default function AdminUsers() {
   };
 
   const filteredUsers = users.filter((user) => {
+    const name = user.name || `${user.prenom || ''} ${user.nom || ''}`;
     const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const activeUsers = users.filter((u) => u.status === 'active').length;
-  const suspendedUsers = users.filter((u) => u.status === 'suspended').length;
+  const suspendedUsers = users.filter((u) => u.status === 'suspended' || u.status === 'suspendu').length;
 
-  const handleSuspend = (user) => {
-    setUsers(users.map((u) =>
-      u.id === user.id ? { ...u, status: 'suspended' } : u
-    ));
-    if (selectedUser?.id === user.id) setSelectedUser(null);
-    toast.success(`Utilisateur ${user.name} suspendu`);
+  const handleSuspend = async (user) => {
+    try {
+      await api.post('update_user', { id: user.id, statut: 'suspendu' });
+      setUsers(users.map((u) =>
+        u.id === user.id ? { ...u, status: 'suspended' } : u
+      ));
+      if (selectedUser?.id === user.id) setSelectedUser(prev => ({ ...prev, status: 'suspended' }));
+      toast.success(`Utilisateur ${user.name || user.email} suspendu`);
+    } catch (err) {
+      toast.error("Erreur lors de la suspension");
+    }
   };
 
-  const handleReactivate = (user) => {
-    setUsers(users.map((u) =>
-      u.id === user.id ? { ...u, status: 'active' } : u
-    ));
-    if (selectedUser?.id === user.id) setSelectedUser(null);
-    toast.success(`Utilisateur ${user.name} réactivé`);
+  const handleReactivate = async (user) => {
+    try {
+      await api.post('update_user', { id: user.id, statut: 'actif' });
+      setUsers(users.map((u) =>
+        u.id === user.id ? { ...u, status: 'active' } : u
+      ));
+      if (selectedUser?.id === user.id) setSelectedUser(prev => ({ ...prev, status: 'active' }));
+      toast.success(`Utilisateur ${user.name || user.email} réactivé`);
+    } catch (err) {
+      toast.error("Erreur lors de la réactivation");
+    }
   };
 
-  const handleAddAdminSubmit = () => {
+  const handleAddAdminSubmit = async () => {
     if (!newAdmin.name || !newAdmin.email || !newAdmin.password) {
       toast.error('Tous les champs sont requis');
       return;
     }
-    const newAdminUser = {
-      id: `admin-${Date.now()}`,
-      name: newAdmin.name,
-      email: newAdmin.email,
-      role: 'admin',
-      status: 'active',
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
-      avatar: '',
-      favorites: [],
-      collections: [],
-      proposedTools: [],
-      reviewsCount: 0,
-    };
-    setUsers([...users, newAdminUser]);
-    setShowAddAdminDialog(false);
-    setNewAdmin({ name: '', email: '', password: '' });
-    toast.success('Administrateur ajouté avec succès');
+    
+    try {
+      await api.post('register', {
+        name: newAdmin.name,
+        email: newAdmin.email,
+        password: newAdmin.password,
+        role: 'admin'
+      });
+      
+      toast.success('Administrateur ajouté avec succès');
+      setShowAddAdminDialog(false);
+      setNewAdmin({ name: '', email: '', password: '' });
+      fetchUsers();
+    } catch (err) {
+      toast.error(err.message || "Erreur lors de l'ajout de l'administrateur");
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* En-tête avec bouton d'ajout */}
+      {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Gestion des utilisateurs</h1>
@@ -213,19 +246,19 @@ export default function AdminUsers() {
         </DialogContent>
       </Dialog>
 
-      {/* Cartes statistiques (inchangées) */}
+      {/* Cartes statistiques */}
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total utilisateurs" value={users.length} icon={Users} variant="primary" />
-        <StatCard title="Utilisateurs actifs" value={activeUsers} icon={UserCheck} variant="success" />
-        <StatCard title="Utilisateurs suspendus" value={suspendedUsers} icon={UserX} variant="destructive" />
+        <StatCard title="Total utilisateurs" value={users.length} icon={Users} variant="primary" loading={loading} />
+        <StatCard title="Utilisateurs actifs" value={activeUsers} icon={UserCheck} variant="success" loading={loading} />
+        <StatCard title="Utilisateurs suspendus" value={suspendedUsers} icon={UserX} variant="destructive" loading={loading} />
       </div>
 
-      {/* Filtres et tableau (inchangés) */}
+      {/* Filtres et tableau */}
       <Card>
         <CardHeader>
           <CardTitle>Liste des utilisateurs</CardTitle>
           <CardDescription>
-            {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''} trouvé{filteredUsers.length > 1 ? 's' : ''}
+            {loading ? "Chargement..." : `${filteredUsers.length} utilisateur${filteredUsers.length > 1 ? 's' : ''} trouvé${filteredUsers.length > 1 ? 's' : ''}`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -263,66 +296,80 @@ export default function AdminUsers() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id} id={`user-row-${user.id}`}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{user.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                      {user.role === 'admin' ? 'Admin' : 'Utilisateur'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.status === 'active' ? 'default' : 'destructive'}>
-                      {user.status === 'active' ? 'Actif' : 'Suspendu'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{new Date(user.createdAt).toLocaleDateString('fr-FR')}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setSelectedUser(user)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          Voir détails
-                        </DropdownMenuItem>
-                        {user.role !== 'admin' && (
-                          user.status === 'active' ? (
-                            <DropdownMenuItem onClick={() => handleSuspend(user)}>
-                              <Ban className="mr-2 h-4 w-4" />
-                              Suspendre
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem onClick={() => handleReactivate(user)}>
-                              <RefreshCw className="mr-2 h-4 w-4" />
-                              Réactiver
-                            </DropdownMenuItem>
-                          )
-                        )}
-                        
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                    <p className="mt-2 text-sm text-muted-foreground">Récupération des utilisateurs...</p>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    Aucun utilisateur trouvé.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredUsers.map((user) => (
+                  <TableRow key={user.id} id={`user-row-${user.id}`}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={user.avatar} alt={user.name} />
+                          <AvatarFallback>{(user.name || user.email || '?').charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{user.name || `${user.prenom || ''} ${user.nom || ''}`}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                        {user.role === 'admin' ? 'Admin' : 'Utilisateur'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={(user.status === 'active' || user.status === 'actif') ? 'default' : 'destructive'}>
+                        {(user.status === 'active' || user.status === 'actif') ? 'Actif' : 'Suspendu'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'N/A'}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setSelectedUser(user)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Voir détails
+                          </DropdownMenuItem>
+                          {user.role !== 'admin' && (
+                            (user.status === 'active' || user.status === 'actif') ? (
+                              <DropdownMenuItem onClick={() => handleSuspend(user)}>
+                                <Ban className="mr-2 h-4 w-4" />
+                                Suspendre
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => handleReactivate(user)}>
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Réactiver
+                              </DropdownMenuItem>
+                            )
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Modale de détails avec onglets (avec liens améliorés) */}
+      {/* Modale de détails */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -334,16 +381,16 @@ export default function AdminUsers() {
               <div className="flex items-center gap-4 pb-4 border-b">
                 <Avatar className="h-16 w-16">
                   <AvatarImage src={selectedUser.avatar} alt={selectedUser.name} />
-                  <AvatarFallback>{selectedUser.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{(selectedUser.name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="font-semibold text-lg">{selectedUser.name}</h3>
+                  <h3 className="font-semibold text-lg">{selectedUser.name || `${selectedUser.prenom || ''} ${selectedUser.nom || ''}`}</h3>
                   <p className="text-muted-foreground">{selectedUser.email}</p>
                   <Badge
-                    variant={selectedUser.status === 'active' ? 'default' : 'destructive'}
+                    variant={(selectedUser.status === 'active' || selectedUser.status === 'actif') ? 'default' : 'destructive'}
                     className="mt-1"
                   >
-                    {selectedUser.status === 'active' ? 'Actif' : 'Suspendu'}
+                    {(selectedUser.status === 'active' || selectedUser.status === 'actif') ? 'Actif' : 'Suspendu'}
                   </Badge>
                 </div>
               </div>
@@ -351,53 +398,41 @@ export default function AdminUsers() {
               <div className="grid grid-cols-2 gap-4 text-sm pb-4 border-b">
                 <div>
                   <p className="text-muted-foreground">Inscription</p>
-                  <p className="font-medium">{new Date(selectedUser.createdAt).toLocaleDateString('fr-FR')}</p>
+                  <p className="font-medium">{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('fr-FR') : 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Dernière connexion</p>
-                  <p className="font-medium">{new Date(selectedUser.lastLogin).toLocaleDateString('fr-FR')}</p>
+                  <p className="font-medium">{selectedUser.lastLogin ? new Date(selectedUser.lastLogin).toLocaleDateString('fr-FR') : 'Jamais'}</p>
                 </div>
               </div>
 
-              {/* Onglets pour les propositions et commentaires */}
+              {/* Onglets */}
               <Tabs defaultValue="proposals" className="mt-2">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="proposals">Outils proposés</TabsTrigger>
                   <TabsTrigger value="reviews">Commentaires</TabsTrigger>
                 </TabsList>
 
-                {/* Outils proposés */}
                 <TabsContent value="proposals" className="space-y-3 mt-4">
                   {getUserProposals(selectedUser.id).length > 0 ? (
                     <div className="space-y-2">
-                      {getUserProposals(selectedUser.id).map(proposal => {
-                        const existingTool = getToolById(proposal.id);
-                        return (
-                          <div key={proposal.id} className="flex items-center justify-between p-3 rounded-lg border">
-                            <div>
-                              <p className="font-medium">{proposal.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Statut : <Badge variant="outline" className={
-                                  proposal.status === 'pending' ? 'bg-warning/10 text-warning' :
-                                    proposal.status === 'approved' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
-                                }>
-                                  {proposal.status === 'pending' ? 'En attente' : proposal.status === 'approved' ? 'Approuvé' : 'Refusé'}
-                                </Badge>
-                              </p>
-                            </div>
-                            <Link to={`/admin/proposals/${proposal.id}`}>
-                              <Button variant="ghost" size="sm">Voir les détails</Button>
-                            </Link>
+                      {getUserProposals(selectedUser.id).map(proposal => (
+                        <div key={proposal.id} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div>
+                            <p className="font-medium">{proposal.name}</p>
+                            <Badge variant="outline">{proposal.status}</Badge>
                           </div>
-                        );
-                      })}
+                          <Link to={`/admin/proposals/${proposal.id}`}>
+                            <Button variant="ghost" size="sm">Détails</Button>
+                          </Link>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Aucun outil proposé</p>
                   )}
                 </TabsContent>
 
-                {/* Commentaires */}
                 <TabsContent value="reviews" className="space-y-3 mt-4">
                   {getUserReviews(selectedUser.id).length > 0 ? (
                     <div className="space-y-2">
@@ -407,14 +442,10 @@ export default function AdminUsers() {
                           <div key={review.id} className="flex items-center justify-between p-3 rounded-lg border">
                             <div>
                               <p className="font-medium">{tool?.name || 'Outil inconnu'}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span>Note: {review.rating}/5</span>
-                                <span>•</span>
-                                <span className="truncate max-w-[200px]">{review.comment}</span>
-                              </div>
+                              <p className="text-xs text-muted-foreground truncate max-w-[200px]">{review.comment}</p>
                             </div>
                             <Link to={`/tools/${tool?.slug || '#'}?highlight=${review.id}`}>
-                              <Button variant="ghost" size="sm">Voir le commentaire</Button>
+                              <Button variant="ghost" size="sm">Voir</Button>
                             </Link>
                           </div>
                         );
@@ -427,24 +458,18 @@ export default function AdminUsers() {
               </Tabs>
 
               <div className="flex gap-2 pt-4 border-t">
-                {selectedUser.status === 'active' && selectedUser.role !== 'admin' ? (
+                {(selectedUser.status === 'active' || selectedUser.status === 'actif') && selectedUser.role !== 'admin' ? (
                   <Button
                     variant="destructive"
                     className="flex-1"
-                    onClick={() => {
-                      handleSuspend(selectedUser);
-                      setSelectedUser(null);
-                    }}
+                    onClick={() => handleSuspend(selectedUser)}
                   >
                     Suspendre le compte
                   </Button>
-                ) : selectedUser.status === 'suspended' && selectedUser.role !== 'admin' ? (
+                ) : (selectedUser.status === 'suspended' || selectedUser.status === 'suspendu') && selectedUser.role !== 'admin' ? (
                   <Button
                     className="flex-1"
-                    onClick={() => {
-                      handleReactivate(selectedUser);
-                      setSelectedUser(null);
-                    }}
+                    onClick={() => handleReactivate(selectedUser)}
                   >
                     Réactiver le compte
                   </Button>
