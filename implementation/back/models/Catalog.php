@@ -31,6 +31,16 @@ class Catalog
             $params['category_slug'] = $filters['category'];
         }
 
+        if (!empty($filters['model'])) {
+            $where[] = "EXISTS (
+                SELECT 1 FROM outil_model om
+                JOIN models m ON m.idMod = om.idMod
+                WHERE om.idOut = o.idOut AND (m.idMod = :model_id OR m.slug = :model_slug)
+            )";
+            $params['model_id'] = ctype_digit((string) $filters['model']) ? $filters['model'] : 0;
+            $params['model_slug'] = $filters['model'];
+        }
+
         if (!empty($filters['pricing'])) {
             $where[] = "o.pricing_type = :pricing";
             $params['pricing'] = $filters['pricing'];
@@ -65,6 +75,35 @@ class Catalog
         $tool = $stmt->fetch();
 
         return $tool ? $this->formatTool($tool) : null;
+    }
+
+    public function model($idOrSlug)
+    {
+        $sql = "
+            SELECT m.idMod, m.nom, m.slug, m.type, m.description, m.licence,
+                   m.est_open_source, m.release_date, m.multimodal, m.a_api,
+                   f.nom AS provider,
+                   (SELECT GROUP_CONCAT(feat.name ORDER BY feat.name SEPARATOR '||')
+                    FROM model_feature mf
+                    JOIN features feat ON feat.id_features = mf.id_features
+                    WHERE mf.idMod = m.idMod) AS features,
+                   (SELECT GROUP_CONCAT(CONCAT(p.domaine, ':', p.score) ORDER BY p.domaine SEPARATOR '||')
+                    FROM model_performance mp
+                    JOIN performance p ON p.id_performance = mp.id_performance
+                    WHERE mp.idMod = m.idMod) AS performances
+            FROM models m
+            LEFT JOIN fournisseur f ON f.id_fourn = m.id_fourn
+            WHERE m.idMod = :id OR m.slug = :slug
+            LIMIT 1
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'id' => ctype_digit((string) $idOrSlug) ? $idOrSlug : 0,
+            'slug' => $idOrSlug,
+        ]);
+        $model = $stmt->fetch();
+
+        return $model ? $this->formatModel($model) : null;
     }
 
     public function categories()

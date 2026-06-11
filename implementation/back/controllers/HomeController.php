@@ -69,6 +69,17 @@ class HomeController
         ok(['models' => $this->catalog->models()]);
     }
 
+    public function model(array $data)
+    {
+        $id = $data['id'] ?? $data['slug'] ?? null;
+        if (!$id) {
+            fail('Identifiant modele manquant', 422);
+        }
+
+        $model = $this->catalog->model($id);
+        $model ? ok(['model' => $model]) : fail('Modele introuvable', 404);
+    }
+
     public function reviews(array $data)
     {
         $toolId = $data['toolId'] ?? $data['idOut'] ?? null;

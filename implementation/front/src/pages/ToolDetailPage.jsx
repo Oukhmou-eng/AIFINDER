@@ -51,10 +51,7 @@ import { Footer } from '../components/layout/footer';
 import { useAuth } from '../contexts/auth-context';
 import { useCompare } from '../contexts/compare-context';
 import {
-  getToolById,
-  getReviewsByTool,
-  getModelById,
-  getCategoryById
+  getModelById
 } from '../lib/mock-data';
 import { cn } from '../lib/utils';
 import Sidebar from '../components/layout/sidebar';
@@ -133,7 +130,8 @@ export default function ToolDetailPage() {
   const { slug } = useParams();
   const [apiTool, setApiTool] = useState(null);
   const [apiReviews, setApiReviews] = useState([]);
-  const tool = apiTool || getToolById(slug);
+  const [isLoading, setIsLoading] = useState(true);
+  const tool = apiTool;
   const { isAuthenticated, isFavorite, addFavorite, removeFavorite } = useAuth();
   const { addToolToCompare, removeToolFromCompare, isToolInCompare, canAddTool } = useCompare();
   const [showAddToCollection, setShowAddToCollection] = useState(false);
@@ -145,26 +143,32 @@ export default function ToolDetailPage() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const location = useLocation();
 
-  const reviews = apiReviews.length ? apiReviews : tool ? getReviewsByTool(tool.id) : [];
-  const categoriesForTool = tool?.categories?.length
-    ? tool.categories
-    : tool?.categoryIds?.map(id => getCategoryById(id)).filter(cat => cat !== undefined) || [];
-
-  const isInCompare = isToolInCompare(tool.id);
-  const isFav = isFavorite(tool.id);
-
   useEffect(() => {
+    setIsLoading(true);
     CatalogAPI.tool(slug)
       .then((item) => {
         setApiTool(item);
-        return CatalogAPI.reviews(item.id);
+        if (item) {
+          return CatalogAPI.reviews(item.id);
+        }
+        return [];
       })
       .then(setApiReviews)
-      .catch(() => {
+      .catch((error) => {
+        console.error("Error fetching tool details:", error);
         setApiTool(null);
         setApiReviews([]);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, [slug]);
+
+  const reviews = apiReviews;
+  const categoriesForTool = tool?.categories || [];
+
+  const isInCompare = tool ? isToolInCompare(tool.id) : false;
+  const isFav = tool ? isFavorite(tool.id) : false;
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -174,6 +178,24 @@ export default function ToolDetailPage() {
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     }
   }, [location]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex flex-1">
+          <Sidebar />
+          <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              <p className="text-muted-foreground animate-pulse">Chargement des détails de l'outil...</p>
+            </div>
+          </main>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!tool) {
     return (
@@ -265,8 +287,7 @@ export default function ToolDetailPage() {
     doc.text('Modèles AI utilisés', 20, platformsY + 25);
     doc.setFontSize(10);
     tool.aiModels.forEach((m, i) => {
-      const model = getModelById(m.modelId);
-      doc.text(`• ${model?.name || m.modelId} (${m.accessType === 'free' ? 'Gratuit' : 'Payant'})`, 25, platformsY + 35 + i * 7);
+      doc.text(`• ${m.name || m.modelId} (${m.accessType === 'free' ? 'Gratuit' : 'Payant'})`, 25, platformsY + 35 + i * 7);
     });
     doc.setFontSize(10);
     doc.text(`URL: ${tool.url}`, 20, 280);
@@ -491,7 +512,7 @@ export default function ToolDetailPage() {
                                   className="flex items-center justify-between hover:opacity-80 transition-opacity"
                                 >
                                   <div>
-                                    <p className="font-semibold text-foreground">{model?.name || m.modelId}</p>
+                                    <p className="font-semibold text-foreground">{m.name || model?.name || m.modelId}</p>
                                     <p className="text-sm text-muted-foreground">{model?.provider}</p>
                                   </div>
                                   <Badge

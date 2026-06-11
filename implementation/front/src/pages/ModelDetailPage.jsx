@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Check, Award, Cpu } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -7,13 +8,12 @@ import { Progress } from '../components/ui/progress';
 import { Header } from '../components/layout/header';
 import { Footer } from '../components/layout/footer';
 import { ToolCard } from '../components/tools/tool-card';
-import { aiModels, getToolsByModel, getModelById } from '../lib/mock-data';
 import { cn } from '../lib/utils';
 import Sidebar from '../components/layout/sidebar';
-//import ModelCapabilities from '../components/ui/ModelCapabilities';
-//import PricingPlansSection from '../components/ui/PricingPlansSection';
 import { ModelCapabilities } from '../components/ui/model-capabilities';
 import { PricingPlansSection } from '../components/ui/pricing-plans';
+import CatalogAPI from '../services/catalogAPI';
+
 const pricingColors = {
   free: 'bg-success/10 text-success border-success/20',
   freemium: 'bg-info/10 text-info border-info/20',
@@ -45,7 +45,50 @@ function BenchmarkScore({ label, score, maxScore = 100 }) {
 
 export default function ModelDetailPage() {
   const { id } = useParams();
-  const model = getModelById(id);
+  const [model, setModel] = useState(null);
+  const [toolsUsingModel, setToolsUsingModel] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    CatalogAPI.model(id)
+      .then((data) => {
+        setModel(data);
+        if (data) {
+          // Utilise data.id pour filtrer les outils
+          return CatalogAPI.tools({ model: data.id });
+        }
+        return [];
+      })
+      .then((tools) => {
+        setToolsUsingModel(Array.isArray(tools) ? tools : tools.tools || []);
+      })
+      .catch((error) => {
+        console.error("Error fetching model details:", error);
+        setModel(null);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex flex-1">
+          <Sidebar />
+          <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              <p className="text-muted-foreground animate-pulse">Chargement du modèle...</p>
+            </div>
+          </main>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!model) {
     return (
@@ -68,7 +111,6 @@ export default function ModelDetailPage() {
     );
   }
 
-  const toolsUsingModel = getToolsByModel(model.id);
   const modelBenchmarks = model.benchmarks || {};
 
   return (

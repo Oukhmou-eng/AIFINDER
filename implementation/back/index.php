@@ -28,6 +28,7 @@ $routes = [
     'tool' => ['HomeController', 'tool', ['GET']],
     'categories' => ['HomeController', 'categories', ['GET']],
     'models' => ['HomeController', 'models', ['GET']],
+    'model' => ['HomeController', 'model', ['GET']],
     'reviews' => ['HomeController', 'reviews', ['GET']],
     'create_review' => ['HomeController', 'createReview', ['POST']],
     'report' => ['HomeController', 'report', ['POST']],
