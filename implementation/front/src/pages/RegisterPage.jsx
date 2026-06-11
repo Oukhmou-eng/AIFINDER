@@ -49,7 +49,7 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const success = await register(formData.name, formData.email, formData.password);
+      const success = await register( formData.email, formData.password,formData.name);
       if (success) {
         navigate("/dashboard");
       } else {
