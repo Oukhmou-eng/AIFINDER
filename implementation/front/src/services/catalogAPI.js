@@ -26,6 +26,11 @@ export const CatalogAPI = {
     return data.models || [];
   },
 
+  async model(idOrSlug) {
+    const data = await api.get('model', { slug: idOrSlug });
+    return data.model;
+  },
+
   async reviews(toolId) {
     const data = await api.get('reviews', { toolId });
     return data.reviews || [];

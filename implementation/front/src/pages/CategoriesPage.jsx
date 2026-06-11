@@ -1,19 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import {
-  ArrowRight,
-  PenLine,
-  Image as ImageIcon,
-  Code,
-  Mic,
-  Video,
-  Zap,
-  MessageSquare,
-  Search,
-  Sparkles,
-  TrendingUp,
-  Palette
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react'; // seulement pour le bouton "Explorer"
+import * as Icons from 'lucide-react';     // toutes les icônes disponibles
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -23,17 +11,13 @@ import { categories } from '../lib/mock-data';
 import Sidebar from '../components/layout/sidebar';
 import CatalogAPI from '../services/catalogAPI';
 
-const iconMap = {
-  PenLine,
-  Image: ImageIcon,
-  Code,
-  Mic,
-  Video,
-  Zap,
-  MessageSquare,
-  Search,
-  Palette,
-  TrendingUp,
+const toPascalCase = (str) =>
+  str.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('');
+
+const getIcon = (iconName) => {
+  if (!iconName) return Icons.HelpCircle;
+  const pascal = toPascalCase(iconName);
+  return Icons[pascal] || Icons.HelpCircle;
 };
 
 export default function CategoriesPage() {
@@ -54,16 +38,16 @@ export default function CategoriesPage() {
           <div className="container mx-auto px-4 py-8">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground mb-2">
-                Catégories d&apos;outils AI
+                Catégories d'outils AI
               </h1>
               <p className="text-muted-foreground">
-                Explorez les outils AI par domaine d&apos;application
+                Explorez les outils AI par domaine d'application
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {categoryList.map((category) => {
-                const IconComponent = iconMap[category.icon] || Sparkles;
+                const IconComponent = getIcon(category.icon);
                 return (
                   <Link key={category.id} to={`/categories/${category.slug}`}>
                     <Card className="group hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer h-full">
@@ -97,7 +81,6 @@ export default function CategoriesPage() {
           </div>
         </main>
       </div>
-
       <Footer />
     </div>
   );

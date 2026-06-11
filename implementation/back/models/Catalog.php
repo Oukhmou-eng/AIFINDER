@@ -15,8 +15,10 @@ class Catalog
         $params = [];
 
         if (!empty($filters['q'])) {
-            $where[] = "(o.nom LIKE :q OR o.description_courte LIKE :q OR o.description_longue LIKE :q)";
-            $params['q'] = '%' . $filters['q'] . '%';
+            $where[] = "(o.nom LIKE :q1 OR o.description_courte LIKE :q2 OR o.description_longue LIKE :q3)";
+            $params['q1'] = '%' . $filters['q'] . '%';
+            $params['q2'] = '%' . $filters['q'] . '%';
+            $params['q3'] = '%' . $filters['q'] . '%';
         }
 
         if (!empty($filters['category'])) {
@@ -29,6 +31,16 @@ class Catalog
             $params['category_slug'] = $filters['category'];
         }
 
+        if (!empty($filters['model'])) {
+            $where[] = "EXISTS (
+                SELECT 1 FROM outil_model om
+                JOIN models m ON m.idMod = om.idMod
+                WHERE om.idOut = o.idOut AND (m.idMod = :model_id OR m.slug = :model_slug)
+            )";
+            $params['model_id'] = ctype_digit((string) $filters['model']) ? $filters['model'] : 0;
+            $params['model_slug'] = $filters['model'];
+        }
+
         if (!empty($filters['pricing'])) {
             $where[] = "o.pricing_type = :pricing";
             $params['pricing'] = $filters['pricing'];
@@ -39,6 +51,7 @@ class Catalog
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
 
+        $sql .= ' GROUP BY o.idOut';
         $sql .= $this->sortSql($filters['sortBy'] ?? null);
 
         if (!empty($filters['limit']) && (int) $filters['limit'] > 0) {
@@ -53,7 +66,7 @@ class Catalog
 
     public function tool($idOrSlug)
     {
-        $sql = $this->toolBaseSql() . " WHERE o.idOut = :id OR o.slug = :slug LIMIT 1";
+        $sql = $this->toolBaseSql() . " WHERE o.idOut = :id OR o.slug = :slug GROUP BY o.idOut LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'id' => ctype_digit((string) $idOrSlug) ? $idOrSlug : 0,
@@ -62,6 +75,35 @@ class Catalog
         $tool = $stmt->fetch();
 
         return $tool ? $this->formatTool($tool) : null;
+    }
+
+    public function model($idOrSlug)
+    {
+        $sql = "
+            SELECT m.idMod, m.nom, m.slug, m.type, m.description, m.licence,
+                   m.est_open_source, m.release_date, m.multimodal, m.a_api,
+                   f.nom AS provider,
+                   (SELECT GROUP_CONCAT(feat.name ORDER BY feat.name SEPARATOR '||')
+                    FROM model_feature mf
+                    JOIN features feat ON feat.id_features = mf.id_features
+                    WHERE mf.idMod = m.idMod) AS features,
+                   (SELECT GROUP_CONCAT(CONCAT(p.domaine, ':', p.score) ORDER BY p.domaine SEPARATOR '||')
+                    FROM model_performance mp
+                    JOIN performance p ON p.id_performance = mp.id_performance
+                    WHERE mp.idMod = m.idMod) AS performances
+            FROM models m
+            LEFT JOIN fournisseur f ON f.id_fourn = m.id_fourn
+            WHERE m.idMod = :id OR m.slug = :slug
+            LIMIT 1
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'id' => ctype_digit((string) $idOrSlug) ? $idOrSlug : 0,
+            'slug' => $idOrSlug,
+        ]);
+        $model = $stmt->fetch();
+
+        return $model ? $this->formatModel($model) : null;
     }
 
     public function categories()
@@ -188,6 +230,159 @@ class Catalog
         ];
     }
 
+    public function searchTools(array $params): array
+    {
+        $query = $params['q'] ?? '';
+        $category = $params['category'] ?? null;
+        $pricing = isset($params['pricing']) ? explode(',', $params['pricing']) : [];
+        $platforms = isset($params['platforms']) ? explode(',', $params['platforms']) : [];
+        $functions = isset($params['functions']) ? explode(',', $params['functions']) : [];
+        $models = isset($params['models']) ? explode(',', $params['models']) : [];
+        $sortBy = $params['sortBy'] ?? 'trending';
+
+        $sql = "
+            SELECT o.*,
+                   f.nom AS provider,
+                   AVG(a.note) AS rating,
+                   COUNT(DISTINCT a.id_avis) AS review_count,
+                   COUNT(DISTINCT fav.idFav) AS favorite_count,
+                   GROUP_CONCAT(DISTINCT c.id_Cat ORDER BY c.id_Cat SEPARATOR ',') AS category_ids,
+                   GROUP_CONCAT(DISTINCT CONCAT(c.id_Cat, ':', c.slug, ':', c.nom_Cat) ORDER BY c.id_Cat SEPARATOR '||') AS category_pairs,
+                   GROUP_CONCAT(DISTINCT p.slug ORDER BY p.slug SEPARATOR ',') AS platforms,
+                   GROUP_CONCAT(DISTINCT feat.name ORDER BY feat.name SEPARATOR '||') AS features,
+                   GROUP_CONCAT(DISTINCT CONCAT(m.idMod, ':', m.nom) ORDER BY m.idMod SEPARATOR '||') AS model_pairs,
+                   GROUP_CONCAT(DISTINCT CONCAT(perf.domaine, ':', perf.score) ORDER BY perf.domaine SEPARATOR '||') AS performance_pairs,
+                   CASE
+                       WHEN o.nom = :p_exact THEN 1
+                       WHEN o.nom LIKE :p_like THEN 2
+                       WHEN MATCH(o.recherche_texte) AGAINST(:p_match IN NATURAL LANGUAGE MODE) THEN 3
+                       ELSE 4
+                   END AS priority
+            FROM outils o
+            LEFT JOIN fournisseur f ON f.id_fourn = o.id_fourn
+            LEFT JOIN avis a ON a.idOut = o.idOut
+            LEFT JOIN favori fav ON fav.idOut = o.idOut
+            LEFT JOIN outil_categorie oc ON oc.idOut = o.idOut
+            LEFT JOIN categories c ON c.id_Cat = oc.id_Cat
+            LEFT JOIN outil_plateforme op ON op.idOut = o.idOut
+            LEFT JOIN plateforme p ON p.id = op.id
+            LEFT JOIN outil_feature ofe ON ofe.idOut = o.idOut
+            LEFT JOIN features feat ON feat.id_features = ofe.id_features
+            LEFT JOIN outil_model om ON om.idOut = o.idOut
+            LEFT JOIN models m ON m.idMod = om.idMod
+            LEFT JOIN outil_performance operf ON operf.idOut = o.idOut
+            LEFT JOIN performance perf ON perf.id_performance = operf.id_performance
+            WHERE 1=1
+        ";
+
+        $bindings = [];
+
+        if (!empty($query)) {
+            $sql .= " AND (o.nom = :w_exact 
+                           OR o.nom LIKE :w_like 
+                           OR MATCH(o.recherche_texte) AGAINST(:w_match IN NATURAL LANGUAGE MODE))";
+            $bindings[':p_exact'] = $query;
+            $bindings[':p_like'] = "%$query%";
+            $bindings[':p_match'] = $query;
+            $bindings[':w_exact'] = $query;
+            $bindings[':w_like'] = "%$query%";
+            $bindings[':w_match'] = $query;
+        } else {
+            $sql .= " AND (1=1)";
+            $bindings[':p_exact'] = '';
+            $bindings[':p_like'] = '';
+            $bindings[':p_match'] = '';
+        }
+
+        if ($category) {
+            $sql .= " AND EXISTS (
+                SELECT 1 FROM outil_categorie oc2
+                JOIN categories c2 ON c2.id_Cat = oc2.id_Cat
+                WHERE oc2.idOut = o.idOut AND (c2.slug = :category_slug OR c2.id_Cat = :category_id)
+            )";
+            $bindings[':category_slug'] = $category;
+            $bindings[':category_id'] = is_numeric($category) ? (int)$category : 0;
+        }
+
+        if (!empty($pricing)) {
+            $placeholders = [];
+            foreach ($pricing as $i => $p) {
+                $placeholder = ":pricing_$i";
+                $placeholders[] = $placeholder;
+                $bindings[$placeholder] = $p;
+            }
+            $sql .= " AND o.pricing_type IN (" . implode(',', $placeholders) . ")";
+        }
+
+        if (!empty($platforms)) {
+            $sql .= " AND EXISTS (
+                SELECT 1 FROM outil_plateforme op2
+                JOIN plateforme p2 ON p2.id = op2.id
+                WHERE op2.idOut = o.idOut AND p2.nom IN (";
+            $placeholders = [];
+            foreach ($platforms as $i => $plat) {
+                $placeholder = ":plat_$i";
+                $placeholders[] = $placeholder;
+                $bindings[$placeholder] = $plat;
+            }
+            $sql .= implode(',', $placeholders) . "))";
+        }
+
+        if (!empty($functions)) {
+            $sql .= " AND EXISTS (
+                SELECT 1 FROM outil_feature ofe2
+                JOIN features f2 ON f2.id_features = ofe2.id_features
+                WHERE ofe2.idOut = o.idOut AND f2.name IN (";
+            $placeholders = [];
+            foreach ($functions as $i => $func) {
+                $placeholder = ":func_$i";
+                $placeholders[] = $placeholder;
+                $bindings[$placeholder] = $func;
+            }
+            $sql .= implode(',', $placeholders) . "))";
+        }
+
+        if (!empty($models)) {
+            $sql .= " AND EXISTS (
+                SELECT 1 FROM outil_model om2
+                WHERE om2.idOut = o.idOut AND om2.idMod IN (";
+            $placeholders = [];
+            foreach ($models as $i => $mod) {
+                $placeholder = ":mod_$i";
+                $placeholders[] = $placeholder;
+                $bindings[$placeholder] = (int)$mod;
+            }
+            $sql .= implode(',', $placeholders) . "))";
+        }
+
+        $sql .= " GROUP BY o.idOut ORDER BY priority ASC, ";
+
+        switch ($sortBy) {
+            case 'rating':
+                $sql .= "rating DESC, review_count DESC";
+                break;
+            case 'usage':
+                $sql .= "favorite_count DESC, review_count DESC";
+                break;
+            case 'recent':
+                $sql .= "o.created_at DESC, o.idOut DESC";
+                break;
+            default:
+                $sql .= "priority ASC, favorite_count DESC, review_count DESC, o.created_at DESC";
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($bindings);
+        $rows = $stmt->fetchAll();
+
+        $tools = array_map([$this, 'formatTool'], $rows);
+
+        return [
+            'total' => count($tools),
+            'tools' => $tools,
+        ];
+    }
+
     private function toolBaseSql()
     {
         return "
@@ -216,7 +411,6 @@ class Catalog
             LEFT JOIN models m ON m.idMod = om.idMod
             LEFT JOIN outil_performance operf ON operf.idOut = o.idOut
             LEFT JOIN performance perf ON perf.id_performance = operf.id_performance
-            GROUP BY o.idOut
         ";
     }
 

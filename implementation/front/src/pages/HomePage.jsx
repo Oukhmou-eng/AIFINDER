@@ -1,19 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Search,
-  ArrowRight,
-  Sparkles,
-  TrendingUp,
-  Star,
-  Zap,
-  Code,
-  Image as ImageIcon,
-  MessageSquare,
-  Mic,
-  Video,
-  PenLine,
-} from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
@@ -31,17 +18,13 @@ import Sidebar from '../components/layout/sidebar';
 import CatalogAPI from '../services/catalogAPI';
 
 // Map des icônes (identique)
-const iconMap = {
-  PenLine,
-  Image: ImageIcon,
-  Code,
-  Mic,
-  Video,
-  Zap,
-  MessageSquare,
-  Search,
-  Palette: Sparkles,
-  TrendingUp,
+const toPascalCase = (str) =>
+  str.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('');
+
+const getIcon = (iconName) => {
+  if (!iconName) return Icons.HelpCircle;
+  const pascal = toPascalCase(iconName);
+  return Icons[pascal] || Icons.HelpCircle;
 };
 
 export default function HomePage() {
@@ -72,7 +55,7 @@ export default function HomePage() {
             <div className="container mx-auto px-4 py-20 md:py-28 relative">
               <div className="max-w-3xl mx-auto text-center">
                 <Badge variant="secondary" className="mb-4">
-                  <Sparkles className="h-3 w-3 mr-1" />
+                  <Icons.Sparkles className="h-3 w-3 mr-1" />
                   Plus de {totalTools} outils AI répertoriés
                 </Badge>
 
@@ -91,7 +74,7 @@ export default function HomePage() {
                 <form action="/search" method="get" className="max-w-2xl mx-auto">
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
                         type="search"
                         name="q"
@@ -139,14 +122,14 @@ export default function HomePage() {
                 <Link to="/categories">
                   <Button variant="ghost" className="hidden sm:flex">
                     Voir toutes
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <Icons.ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {topCategories.map((category) => {
-                  const IconComponent = iconMap[category.icon] || Zap;
+                  const IconComponent = getIcon(category.icon);
                   return (
                     <Link key={category.id} to={`/categories/${category.slug}`}>
                       <Card className="group hover:border-primary/50 hover:shadow-md transition-all cursor-pointer h-full">
@@ -171,7 +154,7 @@ export default function HomePage() {
                 <Link to="/categories">
                   <Button variant="outline">
                     Voir toutes les catégories
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <Icons.ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -184,7 +167,7 @@ export default function HomePage() {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
-                    <Sparkles className="h-6 w-6 text-primary" />
+                    <Icons.Sparkles className="h-6 w-6 text-primary" />
                     Outils en vedette
                   </h2>
                   <p className="text-muted-foreground mt-1">
@@ -194,7 +177,7 @@ export default function HomePage() {
                 <Link to="/tools?featured=true">
                   <Button variant="ghost" className="hidden sm:flex">
                     Voir tous
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <Icons.ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -213,7 +196,7 @@ export default function HomePage() {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
-                    <TrendingUp className="h-6 w-6 text-primary" />
+                    <Icons.TrendingUp className="h-6 w-6 text-primary" />
                     Tendances
                   </h2>
                   <p className="text-muted-foreground mt-1">
@@ -223,7 +206,7 @@ export default function HomePage() {
                 <Link to="/ranking">
                   <Button variant="ghost" className="hidden sm:flex">
                     Voir le classement
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <Icons.ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -238,7 +221,7 @@ export default function HomePage() {
                 <Link to="/ranking">
                   <Button variant="outline">
                     Voir le classement complet
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <Icons.ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -250,10 +233,10 @@ export default function HomePage() {
             <div className="container mx-auto px-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 {[
-                  { value: `${totalTools}+`, label: 'Outils répertoriés', icon: Zap },
-                  { value: '10+', label: 'Catégories', icon: Search },
-                  { value: '15+', label: 'Modèles AI', icon: Sparkles },
-                  { value: '4.5', label: 'Note moyenne', icon: Star },
+                  { value: `${totalTools}+`, label: 'Outils répertoriés', icon: Icons.Zap },
+                  { value: '10+', label: 'Catégories', icon: Icons.Search },
+                  { value: '15+', label: 'Modèles AI', icon: Icons.Sparkles },
+                  { value: '4.5', label: 'Note moyenne', icon: Icons.Star },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
                     <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
@@ -284,7 +267,7 @@ export default function HomePage() {
               <Link to="/propose-tool">
                 <Button size="lg">
                   Proposer un outil
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <Icons.ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>

@@ -12,6 +12,15 @@ class HomeController
         $this->catalog = new Catalog();
     }
 
+
+
+    public function searchTools(array $data)
+    {
+        $result = $this->catalog->searchTools($data);
+        ok($result);
+    }
+    
+
     public function index(array $data)
     {
         ok([
@@ -58,6 +67,17 @@ class HomeController
     public function models(array $data)
     {
         ok(['models' => $this->catalog->models()]);
+    }
+
+    public function model(array $data)
+    {
+        $id = $data['id'] ?? $data['slug'] ?? null;
+        if (!$id) {
+            fail('Identifiant modele manquant', 422);
+        }
+
+        $model = $this->catalog->model($id);
+        $model ? ok(['model' => $model]) : fail('Modele introuvable', 404);
     }
 
     public function reviews(array $data)

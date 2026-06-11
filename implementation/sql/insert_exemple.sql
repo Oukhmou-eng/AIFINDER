@@ -404,3 +404,75 @@ INSERT IGNORE INTO `model_performance`
 (9, 3), (9, 10), (10, 8);
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- =====================================================
+-- 1. Ajouter la colonne recherche_texte
+-- =====================================================
+ALTER TABLE outils ADD COLUMN recherche_texte TEXT AFTER description_longue;
+
+-- =====================================================
+-- 2. Index FULLTEXT pour la recherche rapide
+-- =====================================================
+ALTER TABLE outils ADD FULLTEXT idx_recherche (recherche_texte);
+
+-- =====================================================
+-- 3. Procédure qui construit la chaîne de recherche
+-- =====================================================
+DELIMITER $$
+CREATE PROCEDURE maj_recherche_texte(IN p_idOut INT)
+BEGIN
+    UPDATE outils
+    SET recherche_texte = CONCAT_WS(' ',
+        COALESCE(nom, ''),
+        COALESCE(slug, ''),
+        COALESCE(description_courte, ''),
+        COALESCE(description_longue, ''),
+        COALESCE(pricing_type, ''),
+        COALESCE(type_tarif, ''),
+        (SELECT GROUP_CONCAT(DISTINCT m.nom SEPARATOR ' ') FROM outil_model om JOIN models m ON om.idMod = m.idMod WHERE om.idOut = p_idOut),
+        (SELECT GROUP_CONCAT(DISTINCT p.nom SEPARATOR ' ') FROM outil_plateforme op JOIN plateforme p ON op.id = p.id WHERE op.idOut = p_idOut),
+        (SELECT GROUP_CONCAT(DISTINCT f.name SEPARATOR ' ') FROM outil_feature ofe JOIN features f ON ofe.id_features = f.id_features WHERE ofe.idOut = p_idOut),
+        (SELECT GROUP_CONCAT(DISTINCT t.nom SEPARATOR ' ') FROM outil_tag ot JOIN tags t ON ot.id_tag = t.id_tag WHERE ot.idOut = p_idOut),
+        (SELECT GROUP_CONCAT(DISTINCT pp.name SEPARATOR ' ') FROM pricing_plans pp WHERE pp.idOut = p_idOut),
+        (SELECT GROUP_CONCAT(DISTINCT pp.description SEPARATOR ' ') FROM pricing_plans pp WHERE pp.idOut = p_idOut)
+    )
+    WHERE idOut = p_idOut;
+END$$
+DELIMITER ;
+
+-- =====================================================
+-- 4. Trigger après insertion/modification/suppression sur les tables liées
+--    (exemple pour outil_model, adaptez de même pour outil_plateforme, outil_feature, etc.)
+-- =====================================================
+CREATE TRIGGER after_outil_model_insert
+AFTER INSERT ON outil_model FOR EACH ROW
+CALL maj_recherche_texte(NEW.idOut);
+
+CREATE TRIGGER after_outil_model_delete
+AFTER DELETE ON outil_model FOR EACH ROW
+CALL maj_recherche_texte(OLD.idOut);
+
+-- Idem pour outil_plateforme, outil_feature, outil_tag, pricing_plans
+-- (vous pouvez copier ce modèle en changeant le nom de la table)
+
+-- =====================================================
+-- 5. Initialiser la colonne pour tous les outils existants
+-- =====================================================
+DELIMITER $$
+CREATE PROCEDURE init_recherche_texte()
+BEGIN
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE v_idOut INT;
+    DECLARE cur CURSOR FOR SELECT idOut FROM outils;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    OPEN cur;
+    read_loop: LOOP
+        FETCH cur INTO v_idOut;
+        IF done THEN LEAVE read_loop; END IF;
+        CALL maj_recherche_texte(v_idOut);
+    END LOOP;
+    CLOSE cur;
+END$$
+DELIMITER ;
+
+CALL init_recherche_texte();

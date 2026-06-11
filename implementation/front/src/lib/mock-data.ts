@@ -164,7 +164,7 @@ export interface ProposedTool {
 
 // ---------- AI MODELS ----------
 export const aiModels: AIModel[] = [
-  {
+  /* {
     id: 'gpt-4',
     name: 'GPT-4',
     provider: 'OpenAI',
@@ -234,6 +234,7 @@ export const aiModels: AIModel[] = [
   },
   {
     id: 'gemini-ultra',
+    
     name: 'Gemini Ultra',
     provider: 'Google',
     description: 'Le modèle le plus avancé de Google.',
@@ -303,12 +304,12 @@ export const aiModels: AIModel[] = [
     capabilities: ['audio'],
     pricing: 'freemium',
     benchmarks: { voice_quality: 97, emotion_capture: 94, latency: 85 }
-  }
+  } */
 ];
 
 // ---------- CATEGORIES ----------
 export const categories: Category[] = [
-  { id: 'writing', name: 'Rédaction & Contenu', slug: 'redaction-contenu', description: 'Outils pour la rédaction, le copywriting et la création de contenu.', icon: 'PenLine', toolCount: 12 },
+ /*  { id: 'writing', name: 'Rédaction & Contenu', slug: 'redaction-contenu', description: 'Outils pour la rédaction, le copywriting et la création de contenu.', icon: 'PenLine', toolCount: 12 },
   { id: 'image', name: 'Génération d\'images', slug: 'generation-images', description: 'Créez des images uniques avec l\'IA.', icon: 'Image', toolCount: 8 },
   { id: 'code', name: 'Développement & Code', slug: 'developpement-code', description: 'Assistants de programmation et outils de développement.', icon: 'Code', toolCount: 15 },
   { id: 'audio', name: 'Audio & Voix', slug: 'audio-voix', description: 'Transcription, synthèse vocale et édition audio.', icon: 'Mic', toolCount: 6 },
@@ -318,11 +319,11 @@ export const categories: Category[] = [
   { id: 'research', name: 'Recherche & Analyse', slug: 'recherche-analyse', description: 'Outils de recherche et d\'analyse de données.', icon: 'Search', toolCount: 7 },
   { id: 'design', name: 'Design & Créativité', slug: 'design-creativite', description: 'Outils de design assistés par IA.', icon: 'Palette', toolCount: 8 },
   { id: 'marketing', name: 'Marketing', slug: 'marketing', description: 'Outils marketing et publicité.', icon: 'TrendingUp', toolCount: 6 }
-];
+ */];
 
 // ---------- TOOLS (avec categoryIds) ----------
 export const tools: Tool[] = [
-  {
+ /*  {
     id: 'chatgpt', name: 'ChatGPT', slug: 'chatgpt', description: 'Assistant conversationnel polyvalent basé sur GPT-4.',
     longDescription: 'ChatGPT est un assistant IA développé par OpenAI...',
     logo: '/logos/chatgpt.svg', url: 'https://chat.openai.com', categoryIds: ['chatbot', 'writing'],
@@ -567,7 +568,7 @@ export const tools: Tool[] = [
       { name: 'Pro', price: 49, period: 'month', features: ['Mots illimités', 'Tous templates', 'IA avancée'] },
       { name: 'Team', price: 79, period: 'month', description: 'par utilisateur', features: ['Collaboration', 'Support prioritaire'] }
     ]
-  }
+  } */
 ];
 
 // ---------- REVIEWS ----------
