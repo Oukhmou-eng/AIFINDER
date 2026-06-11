@@ -40,6 +40,7 @@ $routes = [
 
     'login' => ['AuthController', 'login', ['POST']],
     'register' => ['AuthController', 'register', ['POST']],
+    'google_auth' => ['AuthController', 'googleAuth', ['POST']],
     'logout' => ['UserController', 'logout', ['POST']],
     'me' => ['UserController', 'me', ['GET']],
     'users' => ['UserController', 'listUsers', ['GET']],

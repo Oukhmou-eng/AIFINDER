@@ -78,6 +78,76 @@ class AuthController
             'avatar_url' => $data['avatar_url'] ?? null,
         ]);
 
-        ok(['user' => $this->users->findById($id)], 'Compte cree avec succes');
+        $user = $this->users->findById($id);
+        $token = encodeToken([
+            'id' => (int) $id,
+            'email' => $data['email'],
+            'role' => $role,
+            'iat' => time(),
+        ]);
+
+        ok([
+            'user' => $user,
+            'token' => $token
+        ], 'Compte cree avec succes');
+    }
+
+    public function googleAuth(array $data)
+    {
+        $credential = $data['credential'] ?? null;
+        if (!$credential) {
+            fail('Jeton Google manquant', 400);
+        }
+
+        // Verification du jeton aupres de Google via l'API publique
+        $url = "https://oauth2.googleapis.com/tokeninfo?id_token=" . $credential;
+        $response = @file_get_contents($url);
+        
+        if ($response === false) {
+            fail('Echec de la verification du jeton Google. Verifiez que l\'extension openssl est activee dans php.ini', 401);
+        }
+
+        $payload = json_decode($response, true);
+        if (!$payload || isset($payload['error'])) {
+            fail('Jeton Google invalide', 401);
+        }
+
+        $email = $payload['email'];
+        $nom = $payload['family_name'] ?? '';
+        $prenom = $payload['given_name'] ?? '';
+        $avatar = $payload['picture'] ?? null;
+
+        $user = $this->auth->findByEmail($email);
+
+        if (!$user) {
+            $id = $this->auth->register([
+                'nom' => $nom ?: 'User',
+                'prenom' => $prenom ?: 'Google',
+                'email' => $email,
+                'password' => bin2hex(random_bytes(16)),
+                'role' => 'user',
+                'avatar_url' => $avatar,
+            ]);
+            $user = $this->auth->findByEmail($email);
+        }
+
+        if ($user['statut'] !== 'actif') {
+            fail('Compte non actif', 403);
+        }
+
+        $this->auth->updateLastLogin($user['idU']);
+        $publicUser = $this->users->findById($user['idU']);
+        $token = encodeToken([
+            'id' => (int) $user['idU'],
+            'email' => $user['email'],
+            'role' => $user['role'],
+            'iat' => time(),
+        ]);
+
+        ok([
+            'user' => $publicUser,
+            'token' => $token,
+            'redirectTo' => $user['role'] === 'admin' ? '/admin' : '/dashboard',
+        ], 'Authentification Google reussie');
     }
 }

@@ -1,13 +1,11 @@
 <?php
 
-$host = getenv('DB_HOST') ?: '127.0.0.1';
-$dbname = getenv('DB_NAME') ?: 'dbAI';
-$username = getenv('DB_USER') ?: 'root';
-$password = getenv('DB_PASSWORD');
+$host =  '127.0.0.1';
+$dbname =  'dbAI';
+$username = 'root';
+$password = '';
 
-if ($password === false) {
-    $password = '1516';
-}
+
 
 try {
     return new PDO(
