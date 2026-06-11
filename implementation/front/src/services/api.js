@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/atelier_web/Application-Web_AIFinder/implementation/back/index.php'; // Mis à jour pour inclure le sous-dossier atelier_web
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/Application-Web_AIFinder/implementation/back/index.php';
 
 export function getToken() {
   return localStorage.getItem('aifinder_token');
