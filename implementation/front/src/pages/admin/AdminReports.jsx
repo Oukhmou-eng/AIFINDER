@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useLocation, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
+import { Label } from '../../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -32,11 +33,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
-import { Flag, Clock, CheckCircle, XCircle, MessageSquare, Wrench, MoreHorizontal, Eye } from 'lucide-react';
-import { mockReports, tools, reviews } from '../../lib/mock-data';
+import { Flag, Clock, CheckCircle, XCircle, MessageSquare, Wrench, MoreHorizontal, Eye, Loader2, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
+import { AdminAPI } from '../../services/adminAPI';
 
-// Composant StatCard local
-function StatCard({ title, value, icon: Icon, variant = 'primary' }) {
+function StatCard({ title, value, icon: Icon, variant = 'primary', loading = false }) {
   const variantClasses = {
     primary: 'bg-primary/10 text-primary',
     success: 'bg-success/10 text-success',
@@ -47,201 +48,130 @@ function StatCard({ title, value, icon: Icon, variant = 'primary' }) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className={`rounded-full p-2 ${variantClasses[variant]}`}>
+        <div className={`rounded-full p-2 ${variantClasses[variant] || variantClasses.primary}`}>
           <Icon className="h-4 w-4" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        {loading ? (
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        ) : (
+          <div className="text-2xl font-bold">{value}</div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-// Composant ReportsTable local
-function ReportsTable({ reports, onView, onResolve, onReject }) {
-  if (reports.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">Aucun signalement trouvé</p>
-      </div>
-    );
-  }
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Cible</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Motif</TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead>Statut</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {reports.map((report) => (
-          <TableRow key={report.id} id={`report-row-${report.id}`}>
-            <TableCell className="font-medium">{report.targetName}</TableCell>
-            <TableCell>
-              <Badge variant="outline">
-                {report.type === 'tool' ? 'Outil' : 'Commentaire'}
-              </Badge>
-            </TableCell>
-            <TableCell>{report.reason}</TableCell>
-            <TableCell>{new Date(report.createdAt).toLocaleDateString('fr-FR')}</TableCell>
-            <TableCell>
-              <Badge
-                variant={
-                  report.status === 'pending'
-                    ? 'secondary'
-                    : report.status === 'resolved'
-                      ? 'default'
-                      : 'outline'
-                }
-              >
-                {report.status === 'pending'
-                  ? 'En attente'
-                  : report.status === 'resolved'
-                    ? 'Résolu'
-                    : 'Rejeté'}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onView(report)}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Voir détails
-                  </DropdownMenuItem>
-                  {report.status === 'pending' && (
-                    <>
-                      <DropdownMenuItem onClick={() => onResolve(report)}>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Résoudre
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onReject(report)}>
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Rejeter
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
-
 export default function AdminReports() {
-  // Enrichissement des signalements mock avec des noms affichables
-  const initialReports = mockReports.map((report) => {
-    let targetName = report.targetId;
-    if (report.type === 'tool') {
-      const tool = tools.find(t => t.id === report.targetId);
-      targetName = tool?.name || report.targetId;
-    } else if (report.type === 'comment') {
-      const review = reviews.find(r => r.id === report.targetId);
-      targetName = review ? `Commentaire sur ${review.toolId}` : report.targetId;
-    }
-    return {
-      ...report,
-      targetName,
-      reporterName: `Utilisateur ${report.userId.slice(-4)}`, // simplifié
-    };
-  });
-
-  const location = useLocation();
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedReport, setSelectedReport] = useState(null);
-  const [reports, setReports] = useState(initialReports);
+  
+  const location = useLocation();
 
-  const filteredReports = reports.filter((report) => {
-    const matchesType = typeFilter === 'all' || report.type === typeFilter;
-    const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
-    return matchesType && matchesStatus;
-  });
-
-  const pendingCount = reports.filter((r) => r.status === 'pending').length;
-  const resolvedCount = reports.filter((r) => r.status === 'resolved').length;
-  const rejectedCount = reports.filter((r) => r.status === 'rejected').length;
+  const fetchReports = async () => {
+    setLoading(true);
+    try {
+      const data = await AdminAPI.reports();
+      setReports(data.reports || []);
+    } catch (err) {
+      toast.error(err.message || 'Erreur lors du chargement des signalements');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const viewId = searchParams.get('view');
-    if (viewId) {
-      const report = reports.find(r => r.id === viewId);
-      if (report) {
-        setSelectedReport(report);
-        setTimeout(() => {
-          const row = document.getElementById(`report-row-${viewId}`);
-          if (row) {
-            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            row.classList.add('bg-primary/10', 'transition-colors', 'duration-500');
-            setTimeout(() => row.classList.remove('bg-primary/10'), 2000);
-          }
-        }, 100);
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
+    fetchReports();
+  }, []);
+
+  const filteredReports = useMemo(() => {
+    return (reports || []).filter((report) => {
+      const matchesType = typeFilter === 'all' || report.type === typeFilter;
+      const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
+      return matchesType && matchesStatus;
+    });
+  }, [reports, typeFilter, statusFilter]);
+
+  const stats = useMemo(() => {
+    const total = reports.length;
+    const pending = reports.filter((r) => r.status === 'pending').length;
+    const resolved = reports.filter((r) => r.status === 'resolved').length;
+    const rejected = reports.filter((r) => r.status === 'rejected').length;
+    return { total, pending, resolved, rejected };
+  }, [reports]);
+
+  // Handle URL highlighting
+  useEffect(() => {
+    if (reports.length > 0) {
+      const searchParams = new URLSearchParams(location.search);
+      const viewId = searchParams.get('view');
+      if (viewId) {
+        const report = reports.find(r => r.id === viewId);
+        if (report) {
+          setSelectedReport(report);
+          setTimeout(() => {
+            const row = document.getElementById(`report-row-${viewId}`);
+            if (row) {
+              row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              row.classList.add('bg-primary/10');
+              setTimeout(() => row.classList.remove('bg-primary/10'), 3000);
+            }
+          }, 200);
+        }
       }
     }
   }, [location.search, reports]);
 
-  const handleResolve = (report) => {
-    setReports(reports.map(r =>
-      r.id === report.id
-        ? { ...r, status: 'resolved', resolvedAt: new Date().toISOString() }
-        : r
-    ));
-  };
-
-  const handleReject = (report) => {
-    setReports(reports.map(r =>
-      r.id === report.id
-        ? { ...r, status: 'rejected', resolvedAt: new Date().toISOString() }
-        : r
-    ));
+  const handleUpdateStatus = async (reportId, newStatus) => {
+    setUpdating(true);
+    try {
+      await AdminAPI.updateReportStatus(reportId, newStatus);
+      toast.success(newStatus === 'resolved' ? 'Signalement résolu' : 'Signalement rejeté');
+      setReports(current => current.map(r => 
+        r.id === reportId ? { ...r, status: newStatus } : r
+      ));
+      setSelectedReport(null);
+    } catch (err) {
+      toast.error(err.message || 'Erreur lors de la mise à jour');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* En-tête */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Gestion des signalements</h1>
-        <p className="text-muted-foreground mt-1">Traitez les signalements d&apos;outils et de commentaires</p>
+        <h1 className="text-3xl font-bold tracking-tight">Gestion des signalements</h1>
+        <p className="text-muted-foreground mt-1 text-lg">Traitez les alertes envoyées par les utilisateurs</p>
       </div>
 
       {/* Cartes statistiques */}
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Total signalements" value={reports.length} icon={Flag} variant="primary" />
-        <StatCard title="En attente" value={pendingCount} icon={Clock} variant="warning" />
-        <StatCard title="Résolus" value={resolvedCount} icon={CheckCircle} variant="success" />
-        <StatCard title="Rejetés" value={rejectedCount} icon={XCircle} variant="destructive" />
+        <StatCard title="Total" value={stats.total} icon={Flag} variant="primary" loading={loading} />
+        <StatCard title="En attente" value={stats.pending} icon={Clock} variant="warning" loading={loading} />
+        <StatCard title="Résolus" value={stats.resolved} icon={CheckCircle} variant="success" loading={loading} />
+        <StatCard title="Rejetés" value={stats.rejected} icon={XCircle} variant="destructive" loading={loading} />
       </div>
 
       {/* Filtres et tableau */}
-      <Card>
-        <CardHeader>
+      <Card className="shadow-sm overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b">
           <CardTitle>Liste des signalements</CardTitle>
           <CardDescription>
-            {filteredReports.length} signalement{filteredReports.length > 1 ? 's' : ''}
+            {loading ? 'Chargement...' : `${filteredReports.length} signalement${filteredReports.length > 1 ? 's' : ''} trouvé${filteredReports.length > 1 ? 's' : ''}`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <CardContent className="p-0">
+          <div className="p-4 border-b flex flex-col sm:flex-row gap-4">
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Type" />
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Type de cible" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les types</SelectItem>
@@ -250,8 +180,8 @@ export default function AdminReports() {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Statut" />
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Filtrer par statut" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les statuts</SelectItem>
@@ -262,68 +192,203 @@ export default function AdminReports() {
             </Select>
           </div>
 
-          <ReportsTable
-            reports={filteredReports}
-            onView={setSelectedReport}
-            onResolve={handleResolve}
-            onReject={handleReject}
-          />
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="text-center py-20">
+                <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
+                <p className="mt-4 text-muted-foreground font-medium">Chargement des signalements...</p>
+              </div>
+            ) : filteredReports.length === 0 ? (
+              <div className="text-center py-20 bg-muted/10">
+                <Flag className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+                <p className="text-muted-foreground text-lg">Aucun signalement trouvé</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader className="bg-muted/20">
+                  <TableRow>
+                    <TableHead>Cible</TableHead>
+                    <TableHead>Motif</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead className="text-right pr-6">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredReports.map((report) => (
+                    <TableRow key={report.id} id={`report-row-${report.id}`} className="hover:bg-muted/5 transition-colors">
+                      <TableCell className="font-bold">
+                        <div className="flex items-center gap-2">
+                          {report.type === 'tool' ? <Wrench className="h-4 w-4 text-muted-foreground" /> : <MessageSquare className="h-4 w-4 text-muted-foreground" />}
+                          <div className="min-w-0">
+                            <p className="truncate">{report.targetName}</p>
+                            <span className="text-[10px] text-muted-foreground uppercase font-bold">
+                              {report.type === 'tool' ? 'Outil' : 'Commentaire'}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        <Badge variant="outline" className="font-medium">{report.reason}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {new Date(report.createdAt).toLocaleDateString('fr-FR')}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            report.status === 'pending'
+                              ? 'secondary'
+                              : report.status === 'resolved'
+                                ? 'default'
+                                : 'outline'
+                          }
+                          className={report.status === 'pending' ? 'bg-warning/20 text-warning-foreground border-warning/30' : ''}
+                        >
+                          {report.status === 'pending'
+                            ? 'En attente'
+                            : report.status === 'resolved'
+                              ? 'Résolu'
+                              : 'Rejeté'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => setSelectedReport(report)}
+                            title="Voir les détails"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-5 w-5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setSelectedReport(report)} className="cursor-pointer">
+                                <Eye className="mr-2 h-4 w-4" />
+                                Détails complets
+                              </DropdownMenuItem>
+                              {report.status === 'pending' && (
+                                <>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleUpdateStatus(report.id, 'resolved')}
+                                    className="text-success cursor-pointer focus:bg-success/10"
+                                  >
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Résoudre
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleUpdateStatus(report.id, 'rejected')}
+                                    className="text-destructive cursor-pointer focus:bg-destructive/10"
+                                  >
+                                    <XCircle className="mr-2 h-4 w-4" />
+                                    Rejeter
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
         </CardContent>
       </Card>
 
       {/* Modale de détails */}
-      <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
+      <Dialog open={!!selectedReport} onOpenChange={(open) => !open && !updating && setSelectedReport(null)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Détails du signalement</DialogTitle>
-            <DialogDescription>Informations et actions disponibles</DialogDescription>
+            <DialogTitle className="text-2xl">Détails du signalement</DialogTitle>
+            <DialogDescription>Analyse et traitement de l&apos;alerte</DialogDescription>
           </DialogHeader>
           {selectedReport && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg bg-warning/10 flex items-center justify-center">
+            <div className="space-y-6 py-4">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
                   {selectedReport.type === 'tool' ? (
-                    <Wrench className="h-6 w-6 text-warning" />
+                    <Wrench className="h-6 w-6 text-primary" />
                   ) : (
-                    <MessageSquare className="h-6 w-6 text-warning" />
+                    <MessageSquare className="h-6 w-6 text-primary" />
                   )}
                 </div>
-                <div>
-                  <h3 className="font-semibold">{selectedReport.targetName}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedReport.type === 'tool' ? 'Outil' : 'Commentaire'} signalé
-                  </p>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-lg truncate">{selectedReport.targetName}</h3>
+                  <div className="flex gap-2 items-center">
+                    <Badge variant="secondary" className="text-[10px] h-5">
+                      {selectedReport.type === 'tool' ? 'OUTIL SIGNALÉ' : 'COMMENTAIRE SIGNALÉ'}
+                    </Badge>
+                    {selectedReport.type === 'tool' && selectedReport.toolId && (
+                      <a 
+                        href={`/tools/${selectedReport.toolId}`} 
+                        className="text-[10px] text-primary hover:underline flex items-center gap-1 font-bold"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Voir la page <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="grid gap-4">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Motif</p>
-                  <Badge variant="outline" className="mt-1">{selectedReport.reason}</Badge>
+                  <Label className="text-xs font-bold uppercase text-muted-foreground mb-1.5 block">Motif du signalement</Label>
+                  <p className="font-semibold text-foreground border-l-4 border-primary pl-3 py-1 bg-primary/5 rounded-r">
+                    {selectedReport.reason}
+                  </p>
                 </div>
 
                 {selectedReport.details && (
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Description</p>
-                    <p className="text-sm mt-1">{selectedReport.details}</p>
+                    <Label className="text-xs font-bold uppercase text-muted-foreground mb-1 block">Description détaillée</Label>
+                    <div className="p-3 rounded-lg border bg-muted/20 text-sm leading-relaxed">
+                      {selectedReport.details}
+                    </div>
+                  </div>
+                )}
+                
+                {selectedReport.commentContent && (
+                  <div>
+                    <Label className="text-xs font-bold uppercase text-muted-foreground mb-1 block">Contenu du commentaire</Label>
+                    <div className="p-3 rounded-lg border border-warning/30 bg-warning/5 text-sm italic">
+                      "{selectedReport.commentContent}"
+                    </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6 pt-2">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Signalé par</p>
-                    <p className="text-sm mt-1">{selectedReport.reporterName}</p>
+                    <Label className="text-xs font-bold uppercase text-muted-foreground mb-1 block">Rapporté par</Label>
+                    <p className="text-sm font-medium flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                      {selectedReport.reporterName}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Date</p>
-                    <p className="text-sm mt-1">
-                      {new Date(selectedReport.createdAt).toLocaleDateString('fr-FR')}
+                    <Label className="text-xs font-bold uppercase text-muted-foreground mb-1 block">Date du rapport</Label>
+                    <p className="text-sm font-medium">
+                      {new Date(selectedReport.createdAt).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
                     </p>
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Statut actuel</p>
+                <div className="pt-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground mb-1.5 block">Statut actuel</Label>
                   <Badge
                     variant={
                       selectedReport.status === 'pending'
@@ -332,35 +397,33 @@ export default function AdminReports() {
                           ? 'default'
                           : 'outline'
                     }
-                    className="mt-1"
+                    className={`h-7 px-3 ${selectedReport.status === 'pending' ? 'bg-warning/20 text-warning-foreground border-warning/30' : ''}`}
                   >
                     {selectedReport.status === 'pending'
-                      ? 'En attente'
+                      ? 'Action admin requise'
                       : selectedReport.status === 'resolved'
-                        ? 'Résolu'
-                        : 'Rejeté'}
+                        ? 'Traité et résolu'
+                        : 'Signalement rejeté'}
                   </Badge>
                 </div>
               </div>
 
               {selectedReport.status === 'pending' && (
-                <DialogFooter className="flex-col sm:flex-row gap-2">
+                <DialogFooter className="gap-2 sm:gap-0 border-t pt-6">
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      handleReject(selectedReport);
-                      setSelectedReport(null);
-                    }}
+                    onClick={() => handleUpdateStatus(selectedReport.id, 'rejected')}
+                    disabled={updating}
+                    className="flex-1"
                   >
-                    Rejeter le signalement
+                    {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Rejeter l\'alerte'}
                   </Button>
                   <Button
-                    onClick={() => {
-                      handleResolve(selectedReport);
-                      setSelectedReport(null);
-                    }}
+                    onClick={() => handleUpdateStatus(selectedReport.id, 'resolved')}
+                    disabled={updating}
+                    className="flex-1"
                   >
-                    Marquer comme résolu
+                    {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Marquer comme résolu'}
                   </Button>
                 </DialogFooter>
               )}

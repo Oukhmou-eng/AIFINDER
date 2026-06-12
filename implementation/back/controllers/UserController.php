@@ -46,6 +46,32 @@ class UserController
         ok(['user' => $this->users->update($id, $data)], 'Utilisateur mis a jour');
     }
 
+    public function changePassword(array $data)
+    {
+        $auth = $this->currentUserPayload($data);
+        $currentPassword = $data['currentPassword'] ?? '';
+        $newPassword = $data['newPassword'] ?? '';
+
+        if (!$currentPassword || !$newPassword) {
+            fail('Mots de passe requis');
+        }
+
+        $pdo = require __DIR__ . '/../config/database.php';
+        $stmt = $pdo->prepare("SELECT mot_de_passe FROM utilisateur WHERE idU = :id");
+        $stmt->execute(['id' => $auth['id']]);
+        $user = $stmt->fetch();
+
+        if (!$user || !password_verify($currentPassword, $user['mot_de_passe'])) {
+            fail('Mot de passe actuel incorrect');
+        }
+
+        $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("UPDATE utilisateur SET mot_de_passe = :pass WHERE idU = :id");
+        $stmt->execute(['pass' => $hashed, 'id' => $auth['id']]);
+
+        ok([], 'Mot de passe mis a jour avec succes');
+    }
+
     public function deleteUser(array $data)
     {
         $id = $data['id'] ?? $data['idU'] ?? null;

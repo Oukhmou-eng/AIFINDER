@@ -53,11 +53,34 @@ $routes = [
     'collections' => ['UserController', 'collections', ['GET']],
     'create_collection' => ['UserController', 'createCollection', ['POST']],
     'submit_tool' => ['UserController', 'submitTool', ['POST']],
+    'change_password' => ['UserController', 'changePassword', ['POST']],
 
     'admin_dashboard' => ['AdminController', 'dashboard', ['GET']],
     'admin_users' => ['AdminController', 'users', ['GET']],
     'admin_tools' => ['AdminController', 'tools', ['GET']],
+    'admin_categories' => ['AdminController', 'categories', ['GET']],
+    'admin_create_category' => ['AdminController', 'createCategory', ['POST']],
+    'admin_update_category' => ['AdminController', 'updateCategory', ['PUT', 'PATCH', 'POST']],
+    'admin_delete_category' => ['AdminController', 'deleteCategory', ['DELETE', 'POST']],
     
+    'admin_models' => ['AdminController', 'models', ['GET']],
+    'admin_create_model' => ['AdminController', 'createModel', ['POST']],
+    'admin_update_model' => ['AdminController', 'updateModel', ['PUT', 'PATCH', 'POST']],
+    'admin_delete_model' => ['AdminController', 'deleteModel', ['DELETE', 'POST']],
+    
+    'admin_notifications' => ['AdminController', 'notifications', ['GET']],
+    'admin_send_notification' => ['AdminController', 'sendNotification', ['POST']],
+    'admin_delete_notification' => ['AdminController', 'deleteNotification', ['DELETE', 'POST']],
+    
+    'admin_reports' => ['AdminController', 'reports', ['GET']],
+    'admin_update_report_status' => ['AdminController', 'updateReportStatus', ['POST', 'PUT']],
+
+    'admin_submissions'   => ['AdminController', 'submissions',   ['GET']],
+    'admin_approve_tool'  => ['AdminController', 'approveTool',   ['POST']],
+    'admin_reject_tool'   => ['AdminController', 'rejectTool',    ['POST']],
+    'admin_delete_tool'   => ['AdminController', 'deleteTool',    ['DELETE', 'POST']],
+    'admin_create_tool'   => ['AdminController', 'createTool',    ['POST']],
+    'admin_validate_tool' => ['ValidationController', 'validateTool', ['POST']],
 ];
 
 if (!isset($routes[$action])) {
@@ -85,5 +108,5 @@ try {
     $controller = new $controllerName();
     $controller->$methodName($data);
 } catch (Throwable $e) {
-    fail('Erreur serveur', 500, ['error' => $e->getMessage()]);
+    fail('Erreur serveur : ' . $e->getMessage(), 500, ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 }

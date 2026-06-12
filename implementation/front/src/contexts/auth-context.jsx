@@ -69,6 +69,11 @@ export function AuthProvider({ children }) {
     setUser(prev => prev ? { ...prev, ...data } : null);
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    await AuthAPI.deleteAccount();
+    logout();
+  }, [logout]);
+
   const addFavorite = useCallback(async (toolId) => {
     const favorites = await CatalogAPI.favorite(toolId, true);
     setUser(prev => {
@@ -153,6 +158,7 @@ export function AuthProvider({ children }) {
     logout,
     register,
     updateProfile,
+    deleteAccount,
     addFavorite,
     removeFavorite,
     isFavorite,

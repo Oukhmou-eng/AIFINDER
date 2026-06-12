@@ -23,8 +23,9 @@ function cleanString($value)
 
 function slugify($value)
 {
-    $value = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', cleanString($value));
-    $value = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $value));
+    $value = cleanString($value);
+    $value = preg_replace('/[^\p{L}\p{N}]+/u', '-', $value);
+    $value = mb_strtolower($value);
     return trim($value, '-') ?: 'item-' . time();
 }
 

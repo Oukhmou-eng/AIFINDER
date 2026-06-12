@@ -81,7 +81,7 @@ class Catalog
     {
         $sql = "
             SELECT m.idMod, m.nom, m.slug, m.type, m.description, m.licence,
-                   m.est_open_source, m.release_date, m.multimodal, m.a_api,
+                   m.est_open_source, m.release_date, m.multimodal, m.a_api, m.id_fourn,
                    f.nom AS provider,
                    (SELECT GROUP_CONCAT(feat.name ORDER BY feat.name SEPARATOR '||')
                     FROM model_feature mf
@@ -133,7 +133,7 @@ class Catalog
     {
         $stmt = $this->pdo->query("
             SELECT m.idMod, m.nom, m.slug, m.type, m.description, m.licence,
-                   m.est_open_source, m.release_date, m.multimodal, m.a_api,
+                   m.est_open_source, m.release_date, m.multimodal, m.a_api, m.id_fourn,
                    f.nom AS provider,
                    GROUP_CONCAT(DISTINCT feat.name ORDER BY feat.name SEPARATOR '||') AS features,
                    GROUP_CONCAT(DISTINCT CONCAT(p.domaine, ':', p.score) ORDER BY p.domaine SEPARATOR '||') AS performances
@@ -479,6 +479,7 @@ class Catalog
     {
         return [
             'id' => (string) $row['idMod'],
+            'id_fourn' => (string) ($row['id_fourn'] ?? ''),
             'name' => $row['nom'],
             'slug' => $row['slug'],
             'provider' => $row['provider'],

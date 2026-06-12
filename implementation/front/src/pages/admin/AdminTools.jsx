@@ -33,11 +33,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
-import { Search, Wrench, Clock, CheckCircle, XCircle, Plus, Star, MoreHorizontal, Eye, Trash2, Loader2 } from 'lucide-react';
+import { Search, Wrench, Clock, CheckCircle, XCircle, Plus, Star, MoreHorizontal, Eye, Trash2, Loader2, ShieldCheck } from 'lucide-react';
 import { getModelById } from '../../lib/mock-data';
 import { toast } from 'sonner';
 import api from '../../services/api';
+import { AdminAPI } from '../../services/adminAPI';
 import { ToolForm } from '../../components/tools/tool-form';
+import { Textarea } from '../../components/ui/textarea';
 
 // Composant StatCard local
 function StatCard({ title, value, icon: Icon, variant = 'primary', loading = false }) {
@@ -66,8 +68,156 @@ function StatCard({ title, value, icon: Icon, variant = 'primary', loading = fal
   );
 }
 
+// ============================================================
+// Validation de proposition (scores par champ) - AJOUT
+// ============================================================
+
+function scoreColor(score) {
+  if (score >= 80) return 'bg-success text-success-foreground';
+  if (score >= 60) return 'bg-warning text-warning-foreground';
+  return 'bg-destructive text-destructive-foreground';
+}
+
+function scoreBorder(score) {
+  if (score >= 80) return 'border-success/40 bg-success/5';
+  if (score >= 60) return 'border-warning/40 bg-warning/5';
+  return 'border-destructive/40 bg-destructive/5';
+}
+
+// Panneau du score final + scores par champ
+function ValidationPanel({ validation }) {
+  if (!validation) {
+    return (
+      <div className="rounded-lg border p-4 text-sm text-muted-foreground">
+        Lancez la validation pour calculer les scores des champs.
+      </div>
+    );
+  }
+
+  const entries = Object.entries(validation.fields || {});
+
+  return (
+    <div className="space-y-4">
+      <div className={`rounded-lg border p-4 ${scoreBorder(validation.finalScore)}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Score final</p>
+            <p className="text-3xl font-bold">{validation.finalScore}/100</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Source: {validation.source || 'local'}
+            </p>
+          </div>
+          <Badge className={scoreColor(validation.finalScore)}>
+            {validation.recommendation === 'validable' ? 'Validable' : 'À revoir'}
+          </Badge>
+        </div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+          <div className="h-full bg-primary" style={{ width: `${validation.finalScore}%` }} />
+        </div>
+        {validation.externalSummary && (
+          <p className="mt-3 text-sm text-muted-foreground">{validation.externalSummary}</p>
+        )}
+        {validation.externalError && (
+          <p className="mt-3 text-sm text-destructive">{validation.externalError}</p>
+        )}
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {entries.map(([field, result]) => (
+          <div key={field} className={`rounded-lg border p-3 ${scoreBorder(result.score)}`}>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-medium">{field}</p>
+                <p className="text-xs text-muted-foreground">{result.label}</p>
+              </div>
+              <Badge className={scoreColor(result.score)}>{result.score}/100</Badge>
+            </div>
+            {result.issues?.length > 0 && (
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+                {result.issues.map((issue, idx) => <li key={idx}>{issue}</li>)}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Détails de la proposition affichés en haut de la modale de validation
+function ProposalInfo({ tool, submission }) {
+  if (!tool) return null;
+
+  return (
+    <div className="grid gap-4 text-sm">
+      <div className="grid gap-3 md:grid-cols-2">
+        <div>
+          <p className="text-muted-foreground">Nom</p>
+          <p className="font-medium">{tool.name}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Fournisseur</p>
+          <p className="font-medium">{tool.provider || '-'}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">URL officielle</p>
+          <a href={tool.url} target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
+            {tool.url}
+          </a>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Tarification</p>
+          <p className="font-medium">{tool.pricing || '-'}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Proposé par</p>
+          <p className="font-medium">
+            {submission ? `${submission.userName} (${submission.userEmail})` : '-'}
+          </p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Date</p>
+          <p className="font-medium">
+            {submission?.createdAt ? new Date(submission.createdAt).toLocaleDateString('fr-FR') : '-'}
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-muted-foreground">Description courte</p>
+        <p className="font-medium">{tool.description || '-'}</p>
+      </div>
+      <div>
+        <p className="text-muted-foreground">Description détaillée</p>
+        <p className="whitespace-pre-line">{tool.longDescription || '-'}</p>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <div>
+          <p className="mb-2 text-muted-foreground">Catégories</p>
+          <div className="flex flex-wrap gap-2">
+            {tool.categories?.length ? tool.categories.map(cat => <Badge key={cat.id} variant="outline">{cat.name}</Badge>) : '-'}
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-muted-foreground">Plateformes</p>
+          <div className="flex flex-wrap gap-2">
+            {tool.platforms?.length ? tool.platforms.map(platform => <Badge key={platform} variant="secondary">{platform}</Badge>) : '-'}
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-muted-foreground">Modèles IA</p>
+          <div className="flex flex-wrap gap-2">
+            {tool.aiModels?.length ? tool.aiModels.map(model => <Badge key={model.modelId} variant="outline">{model.name}</Badge>) : '-'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Composant ToolsTable local
-function ToolsTable({ tools, onView, onApprove, onReject, onDelete, loading = false }) {
+function ToolsTable({ tools, onView, onValidate, onApprove, onReject, onDelete, loading = false }) {
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -142,6 +292,10 @@ function ToolsTable({ tools, onView, onApprove, onReject, onDelete, loading = fa
                     </DropdownMenuItem>
                     {(tool.status === 'pending' || tool.status === 'en_attente') && (
                       <>
+                        <DropdownMenuItem onClick={() => onValidate(tool)}>
+                          <ShieldCheck className="mr-2 h-4 w-4" />
+                          Tester / valider les champs
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onApprove(tool)}>
                           <CheckCircle className="mr-2 h-4 w-4" />
                           Approuver
@@ -177,13 +331,43 @@ export default function AdminTools() {
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rejectDialog, setRejectDialog] = useState({ open: false, tool: null, reason: '' });
+  const [validationDialog, setValidationDialog] = useState({
+    open: false,
+    tool: null,
+    submission: null,
+    validation: null,
+    loading: false,
+  });
+
+  // Lance la validation des champs via l'API (action: admin_validate_tool)
+  const openValidation = async (tool) => {
+    setValidationDialog({ open: true, tool, submission: null, validation: null, loading: true });
+    try {
+      const data = await AdminAPI.validateTool(tool.id);
+      setValidationDialog({
+        open: true,
+        tool: data.tool || tool,
+        submission: data.submission || null,
+        validation: data.validation || null,
+        loading: false,
+      });
+    } catch (err) {
+      toast.error(err.message || 'Erreur lors de la validation des champs');
+      setValidationDialog(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const closeValidation = () => {
+    setValidationDialog({ open: false, tool: null, submission: null, validation: null, loading: false });
+  };
 
   const location = useLocation();
 
   const fetchTools = async () => {
     setLoading(true);
     try {
-      const data = await api.get('tools');
+      const data = await AdminAPI.tools();
       setTools(data.tools || []);
     } catch (err) {
       toast.error("Erreur lors de la récupération des outils");
@@ -252,22 +436,12 @@ export default function AdminTools() {
   const handleAddToolSubmit = async (formData) => {
     setIsSubmitting(true);
     try {
-      // Simulation locale pour l'instant
-      const newTool = {
-        id: `new-${Date.now()}`,
-        ...formData,
-        status: 'active',
-        rating: 0,
-        usageCount: 0,
-        reviewCount: 0,
-        categories: categories.filter(c => c.id === formData.categoryId)
-      };
-      
-      setTools([newTool, ...tools]);
+      await AdminAPI.createTool(formData);
       toast.success("Outil ajouté avec succès");
       setIsAddDialogOpen(false);
+      fetchTools();
     } catch (err) {
-      toast.error("Erreur lors de l'ajout de l'outil");
+      toast.error(err.message || "Erreur lors de l'ajout de l'outil");
     } finally {
       setIsSubmitting(false);
     }
@@ -275,29 +449,41 @@ export default function AdminTools() {
 
   const handleApprove = async (tool) => {
     try {
-      toast.success(`Outil ${tool.name} approuvé`);
+      await AdminAPI.approveTool(tool.id);
+      toast.success(`Outil "${tool.name}" approuvé`);
       setTools(tools.map(t => t.id === tool.id ? { ...t, status: 'active' } : t));
     } catch (err) {
-      toast.error("Erreur lors de l'approbation");
+      toast.error(err.message || "Erreur lors de l'approbation");
     }
   };
 
-  const handleReject = async (tool) => {
+  const handleReject = (tool) => {
+    setRejectDialog({ open: true, tool, reason: '' });
+  };
+
+  const confirmReject = async () => {
+    const { tool, reason } = rejectDialog;
     try {
-      toast.success(`Outil ${tool.name} refusé`);
-      setTools(tools.map(t => t.id === tool.id ? { ...t, status: 'rejected' } : t));
+      await AdminAPI.rejectTool(tool.id, reason);
+      toast.success(`Outil "${tool.name}" refusé`);
+      setTools(tools.map(t => t.id === tool.id ? { ...t, status: 'refusé' } : t));
+      setRejectDialog({ open: false, tool: null, reason: '' });
+      setSelectedTool(null);
+      closeValidation();
     } catch (err) {
-      toast.error("Erreur lors du refus");
+      toast.error(err.message || "Erreur lors du refus");
     }
   };
 
   const handleDelete = async (tool) => {
-    if (window.confirm(`Voulez-vous vraiment supprimer l'outil ${tool.name} ?`)) {
+    if (window.confirm(`Voulez-vous vraiment supprimer l'outil "${tool.name}" ?`)) {
       try {
-        toast.success(`Outil ${tool.name} supprimé`);
+        await AdminAPI.deleteTool(tool.id);
+        toast.success(`Outil "${tool.name}" supprimé`);
         setTools(tools.filter(t => t.id !== tool.id));
+        setSelectedTool(null);
       } catch (err) {
-        toast.error("Erreur lors de la suppression");
+        toast.error(err.message || "Erreur lors de la suppression");
       }
     }
   };
@@ -372,6 +558,7 @@ export default function AdminTools() {
           <ToolsTable
             tools={filteredTools}
             onView={setSelectedTool}
+            onValidate={openValidation}
             onApprove={handleApprove}
             onReject={handleReject}
             onDelete={handleDelete}
@@ -505,11 +692,89 @@ export default function AdminTools() {
             <DialogTitle>Ajouter un nouvel outil</DialogTitle>
             <DialogDescription>Remplissez le formulaire complet pour ajouter l&apos;outil au catalogue</DialogDescription>
           </DialogHeader>
-          <ToolForm 
-            onSubmit={handleAddToolSubmit} 
-            onCancel={() => setIsAddDialogOpen(false)} 
+          <ToolForm
+            onSubmit={handleAddToolSubmit}
+            onCancel={() => setIsAddDialogOpen(false)}
             isSubmitting={isSubmitting}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Modale de validation de la proposition (scores par champ) */}
+      <Dialog open={validationDialog.open} onOpenChange={(open) => !open && closeValidation()}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Validation de la proposition</DialogTitle>
+            <DialogDescription>Contrôle sémantique, URL, champs obligatoires et score final</DialogDescription>
+          </DialogHeader>
+          {validationDialog.tool && (
+            <div className="space-y-6">
+              <ProposalInfo tool={validationDialog.tool} submission={validationDialog.submission} />
+              {validationDialog.loading ? (
+                <div className="rounded-lg border p-8 text-center">
+                  <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+                  <p className="mt-2 text-sm text-muted-foreground">Validation des champs...</p>
+                </div>
+              ) : (
+                <ValidationPanel validation={validationDialog.validation} />
+              )}
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setRejectDialog({ open: true, tool: validationDialog.tool, reason: '' })}
+              disabled={
+                !validationDialog.tool ||
+                !(validationDialog.tool.status === 'pending' || validationDialog.tool.status === 'en_attente') ||
+                validationDialog.loading
+              }
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Rejeter
+            </Button>
+            <Button
+              onClick={() => {
+                handleApprove(validationDialog.tool);
+                closeValidation();
+              }}
+              disabled={
+                !validationDialog.tool ||
+                !(validationDialog.tool.status === 'pending' || validationDialog.tool.status === 'en_attente') ||
+                validationDialog.loading
+              }
+            >
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Valider et publier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialogue de refus avec motif */}
+      <Dialog open={rejectDialog.open} onOpenChange={(open) => !open && setRejectDialog({ open: false, tool: null, reason: '' })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Refuser l&apos;outil</DialogTitle>
+            <DialogDescription>
+              Indiquez le motif du refus pour &quot;{rejectDialog.tool?.name}&quot;. Ce message sera envoyé à l&apos;utilisateur.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Motif du refus (optionnel)"
+            value={rejectDialog.reason}
+            onChange={(e) => setRejectDialog(prev => ({ ...prev, reason: e.target.value }))}
+            rows={3}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialog({ open: false, tool: null, reason: '' })}>
+              Annuler
+            </Button>
+            <Button variant="destructive" onClick={confirmReject}>
+              <XCircle className="mr-2 h-4 w-4" />
+              Confirmer le refus
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -25,6 +25,18 @@ export const AuthAPI = {
     return data.user;
   },
 
+  async updateProfile(data) {
+    return api.post('update_user', data);
+  },
+
+  async changePassword(currentPassword, newPassword) {
+    return api.post('change_password', { currentPassword, newPassword });
+  },
+
+  async deleteAccount() {
+    return api.post('delete_user');
+  },
+
   logout() {
     setToken(null);
   },

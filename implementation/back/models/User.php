@@ -176,20 +176,252 @@ class User
         return $this->collections($userId);
     }
 
-    public function submitTool($userId, array $data)
+    public function submitTool($userId, array $data, string $toolStatus = 'en_attente')
     {
-        $stmt = $this->pdo->prepare("
-            INSERT INTO soumission_outil
-            (statut, note_admin, nombre_soum, limite_soum, created_at, idU, idOut)
-            VALUES ('en_attente', :note_admin, 1, 3, CURRENT_DATE, :user_id, :tool_id)
-        ");
-        $stmt->execute([
-            'note_admin' => $data['note_admin'] ?? $data['note'] ?? null,
-            'user_id' => $userId,
-            'tool_id' => $data['idOut'] ?? $data['toolId'] ?? null,
-        ]);
+        $this->pdo->beginTransaction();
+        try {
+            // Fournisseur: find by name or fall back to first available
+            $provId = $this->findOrCreateFournisseur(cleanString($data['provider'] ?? ''));
 
-        return ['id' => (string) $this->pdo->lastInsertId(), 'status' => 'pending'];
+            // 1. Create or Find tool
+            $name = cleanString($data['name']);
+            $slug = slugify($name);
+
+            $stmt = $this->pdo->prepare("SELECT idOut, statut FROM outils WHERE slug = :slug LIMIT 1");
+            $stmt->execute(['slug' => $slug]);
+            $existingTool = $stmt->fetch();
+
+            if ($existingTool) {
+                if ($existingTool['statut'] === 'actif' && $toolStatus === 'en_attente') {
+                    throw new Exception("Cet outil ('$name') est déjà présent dans notre catalogue.");
+                }
+                $toolId = $existingTool['idOut'];
+                
+                // Update basic info if it's still pending
+                if ($existingTool['statut'] === 'en_attente') {
+                    $stmt = $this->pdo->prepare("
+                        UPDATE outils SET 
+                            pricing_type = :pricing_type, 
+                            description_courte = :short_desc, 
+                            site_url = :site_url,
+                            type_tarif = :type_tarif
+                        WHERE idOut = :id
+                    ");
+                    $stmt->execute([
+                        'pricing_type' => $data['pricingType'] ?? 'freemium',
+                        'short_desc'   => $data['shortDescription'] ?? '',
+                        'site_url'     => $data['url'] ?? '',
+                        'type_tarif'   => $data['pricingType'] ?? 'freemium',
+                        'id'           => $toolId
+                    ]);
+                }
+            } else {
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO outils
+                    (nom, slug, pricing_type, description_courte, description_longue, site_url, logo_url,
+                     statut, created_at, release_date, open_source, type_tarif, id_fourn)
+                    VALUES (:nom, :slug, :pricing_type, :short_desc, :long_desc, :site_url, :logo_url,
+                            :statut, CURRENT_DATE, :release_date, :open_source, :type_tarif, :id_fourn)
+                ");
+                $stmt->execute([
+                    'nom'          => $name,
+                    'slug'         => $slug,
+                    'pricing_type' => $data['pricingType'] ?? 'freemium',
+                    'short_desc'   => $data['shortDescription'] ?? '',
+                    'long_desc'    => $data['longDescription'] ?? null,
+                    'site_url'     => $data['url'] ?? '',
+                    'logo_url'     => $data['logoUrl'] ?? null,
+                    'statut'       => $toolStatus,
+                    'release_date' => !empty($data['releaseDate']) ? $data['releaseDate'] : null,
+                    'open_source'  => (int)($data['isOpenSource'] ?? 0),
+                    'type_tarif'   => $data['pricingType'] ?? 'freemium',
+                    'id_fourn'     => $provId,
+                ]);
+                $toolId = $this->pdo->lastInsertId();
+            }
+
+            // 2. Category: create new if requested, then link
+            $catId = $data['categoryId'] ?? null;
+            if ($catId === 'new' && !empty($data['newCategory']['name'])) {
+                $catName = cleanString($data['newCategory']['name']);
+                $catSlug = slugify($catName);
+                
+                // Check if category already exists by slug
+                $stmt = $this->pdo->prepare("SELECT id_Cat FROM categories WHERE slug = :slug LIMIT 1");
+                $stmt->execute(['slug' => $catSlug]);
+                $catId = $stmt->fetchColumn();
+                
+                if (!$catId) {
+                    $catDesc = cleanString($data['newCategory']['description'] ?? '');
+                    $stmt = $this->pdo->prepare(
+                        "INSERT INTO categories (nom_Cat, slug, icone, description) VALUES (:name, :slug, 'Layers', :desc)"
+                    );
+                    $stmt->execute(['name' => $catName, 'slug' => $catSlug, 'desc' => $catDesc ?: null]);
+                    $catId = $this->pdo->lastInsertId();
+                }
+            }
+            if ($catId && $catId !== 'new') {
+                $stmt = $this->pdo->prepare("INSERT IGNORE INTO outil_categorie (idOut, id_Cat) VALUES (:tool_id, :cat_id)");
+                $stmt->execute(['tool_id' => $toolId, 'cat_id' => $catId]);
+            }
+
+            // 3. Tags — frontend sends [{name: 'tag'}] objects or plain strings
+            if (!empty($data['tags']) && is_array($data['tags'])) {
+                foreach ($data['tags'] as $tag) {
+                    $tagName = is_array($tag) ? cleanString($tag['name'] ?? '') : cleanString((string) $tag);
+                    if (!$tagName) continue;
+                    $tagSlug = slugify($tagName);
+                    
+                    $stmt = $this->pdo->prepare("SELECT id_tag FROM tags WHERE slug = :slug LIMIT 1");
+                    $stmt->execute(['slug' => $tagSlug]);
+                    $tagId = $stmt->fetchColumn();
+                    
+                    if (!$tagId) {
+                        $stmt = $this->pdo->prepare("INSERT INTO tags (nom, slug) VALUES (:name, :slug)");
+                        $stmt->execute(['name' => $tagName, 'slug' => $tagSlug]);
+                        $tagId = $this->pdo->lastInsertId();
+                    }
+                    $stmt = $this->pdo->prepare("INSERT IGNORE INTO outil_tag (idOut, id_tag) VALUES (:tool_id, :tag_id)");
+                    $stmt->execute(['tool_id' => $toolId, 'tag_id' => $tagId]);
+                }
+            }
+
+            // 4. Platforms
+            if (!empty($data['platforms']) && is_array($data['platforms'])) {
+                foreach ($data['platforms'] as $platformName) {
+                    $platformName = cleanString($platformName);
+                    if (!$platformName) continue;
+                    $pltfSlug = slugify($platformName);
+                    
+                    $stmt = $this->pdo->prepare("SELECT id FROM plateforme WHERE slug = :slug LIMIT 1");
+                    $stmt->execute(['slug' => $pltfSlug]);
+                    $pltfId = $stmt->fetchColumn();
+                    
+                    if (!$pltfId) {
+                        $stmt = $this->pdo->prepare("INSERT INTO plateforme (nom, slug) VALUES (:name, :slug)");
+                        $stmt->execute(['name' => $platformName, 'slug' => $pltfSlug]);
+                        $pltfId = $this->pdo->lastInsertId();
+                    }
+                    $stmt = $this->pdo->prepare("INSERT IGNORE INTO outil_plateforme (idOut, id) VALUES (:tool_id, :pltf_id)");
+                    $stmt->execute(['tool_id' => $toolId, 'pltf_id' => $pltfId]);
+                }
+            }
+
+            // 5. AI Models: link existing OR create new (isNew: true)
+            if (!empty($data['models']) && is_array($data['models'])) {
+                foreach ($data['models'] as $model) {
+                    if (!empty($model['isNew'])) {
+                        $modelName = cleanString($model['name'] ?? '');
+                        if (!$modelName) continue;
+                        $modelProvId = $this->findOrCreateFournisseur(
+                            cleanString($model['provider'] ?? $data['provider'] ?? '')
+                        ) ?? $provId;
+                        if (!$modelProvId) continue;
+                        $stmt = $this->pdo->prepare("
+                            INSERT INTO models
+                            (nom, slug, type, description, licence, api_url, est_open_source, multimodal, a_api, id_fourn)
+                            VALUES (:name, :slug, :type, :desc, :licence, :apiUrl, :openSource, :multimodal, :hasApi, :provId)
+                        ");
+                        $stmt->execute([
+                            'name'       => $modelName,
+                            'slug'       => slugify($modelName),
+                            'type'       => cleanString($model['type'] ?? 'LLM'),
+                            'desc'       => cleanString($model['description'] ?? '') ?: null,
+                            'licence'    => cleanString($model['license'] ?? $model['licence'] ?? '') ?: null,
+                            'apiUrl'     => cleanString($model['apiUrl'] ?? '') ?: null,
+                            'openSource' => (int)($model['openSource'] ?? 0),
+                            'multimodal' => (int)($model['multimodal'] ?? 0),
+                            'hasApi'     => (int)($model['hasApi'] ?? 0),
+                            'provId'     => $modelProvId,
+                        ]);
+                        $linkedModelId = $this->pdo->lastInsertId();
+                    } else {
+                        $linkedModelId = $model['modelId'] ?? $model['id'] ?? null;
+                        if (!$linkedModelId || str_starts_with((string) $linkedModelId, 'new-')) continue;
+                    }
+                    $stmt = $this->pdo->prepare("INSERT IGNORE INTO outil_model (idOut, idMod) VALUES (:tool_id, :model_id)");
+                    $stmt->execute(['tool_id' => $toolId, 'model_id' => $linkedModelId]);
+                }
+            }
+
+            // 6. Features
+            if (!empty($data['features']) && is_array($data['features'])) {
+                foreach ($data['features'] as $feat) {
+                    $featName = cleanString($feat['name'] ?? '');
+                    if (!$featName) continue;
+                    $stmt = $this->pdo->prepare("SELECT id_features FROM features WHERE name = :name LIMIT 1");
+                    $stmt->execute(['name' => $featName]);
+                    $featId = $stmt->fetchColumn();
+                    if (!$featId) {
+                        $stmt = $this->pdo->prepare("INSERT INTO features (name, description) VALUES (:name, :desc)");
+                        $stmt->execute(['name' => $featName, 'desc' => cleanString($feat['description'] ?? '') ?: null]);
+                        $featId = $this->pdo->lastInsertId();
+                    }
+                    $stmt = $this->pdo->prepare("INSERT IGNORE INTO outil_feature (idOut, id_features) VALUES (:tool_id, :feat_id)");
+                    $stmt->execute(['tool_id' => $toolId, 'feat_id' => $featId]);
+                }
+            }
+
+            // 7. Performances — stored as individual performance records linked to the tool
+            if (!empty($data['performances']) && is_array($data['performances'])) {
+                foreach ($data['performances'] as $perf) {
+                    $domain = cleanString($perf['domain'] ?? '');
+                    $score  = max(0, min(100, (int)($perf['score'] ?? 0)));
+                    if (!$domain) continue;
+                    $stmt = $this->pdo->prepare("INSERT INTO performance (domaine, score) VALUES (:domain, :score)");
+                    $stmt->execute(['domain' => $domain, 'score' => $score]);
+                    $perfId = $this->pdo->lastInsertId();
+                    $stmt = $this->pdo->prepare("INSERT INTO outil_performance (idOut, id_performance) VALUES (:tool_id, :perf_id)");
+                    $stmt->execute(['tool_id' => $toolId, 'perf_id' => $perfId]);
+                }
+            }
+
+            // 8. Submission record (only for user proposals, not admin direct creation)
+            $submissionId = null;
+            if ($toolStatus === 'en_attente') {
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO soumission_outil
+                    (statut, note_admin, nombre_soum, limite_soum, created_at, idU, idOut)
+                    VALUES ('en_attente', :note_admin, 1, 3, CURRENT_DATE, :user_id, :tool_id)
+                ");
+                $stmt->execute([
+                    'note_admin' => $data['note_admin'] ?? $data['note'] ?? null,
+                    'user_id'    => $userId,
+                    'tool_id'    => $toolId,
+                ]);
+                $submissionId = $this->pdo->lastInsertId();
+            }
+
+            $this->pdo->commit();
+            return [
+                'id'     => (string) ($submissionId ?? $toolId),
+                'status' => $toolStatus === 'actif' ? 'approved' : 'pending',
+                'toolId' => (string) $toolId,
+            ];
+        } catch (Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    private function findOrCreateFournisseur(string $name): ?int
+    {
+        if (!$name) {
+            $row = $this->pdo->query("SELECT id_fourn FROM fournisseur LIMIT 1")->fetchColumn();
+            return $row ? (int) $row : null;
+        }
+        $stmt = $this->pdo->prepare("SELECT id_fourn FROM fournisseur WHERE nom = :name LIMIT 1");
+        $stmt->execute(['name' => $name]);
+        $id = $stmt->fetchColumn();
+        if ($id) return (int) $id;
+        try {
+            $stmt = $this->pdo->prepare("INSERT INTO fournisseur (nom, slug, created_at) VALUES (:name, :slug, CURRENT_DATE)");
+            $stmt->execute(['name' => $name, 'slug' => slugify($name)]);
+            return (int) $this->pdo->lastInsertId();
+        } catch (Throwable $e) {
+            $row = $this->pdo->query("SELECT id_fourn FROM fournisseur LIMIT 1")->fetchColumn();
+            return $row ? (int) $row : null;
+        }
     }
 
     private function formatUser(array $user)

@@ -33,11 +33,11 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { useAuth } from '../contexts/auth-context';
-import { categories, aiModels } from '../lib/mock-data';
 import { toast } from 'sonner';
 import { Footer } from '../components/layout/footer';
 import { Header } from '../components/layout/header';
 import Sidebar from '../components/layout/sidebar';
+import CatalogAPI from '../services/catalogAPI';
 
 import { ToolForm } from '../components/tools/tool-form';
 
@@ -49,13 +49,11 @@ export default function ProposeToolPage() {
   const handleSubmit = async (formData) => {
     setIsSubmitting(true);
     try {
-      console.log('Proposition envoyée:', formData);
-      // Simulation d'appel API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await CatalogAPI.submitTool(formData);
       toast.success('Votre proposition a été soumise avec succès !');
       navigate('/dashboard');
     } catch (err) {
-      toast.error("Erreur lors de la soumission");
+      toast.error(err.message || "Erreur lors de la soumission");
     } finally {
       setIsSubmitting(false);
     }
