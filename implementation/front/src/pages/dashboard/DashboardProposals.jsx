@@ -12,10 +12,10 @@ import {
   DialogFooter,
 } from '../../components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { PlusCircle, Clock, CheckCircle, XCircle, AlertCircle, Edit } from 'lucide-react';
-import { mockProposedTools, tools as mockTools, categories, aiModels } from '../../lib/mock-data';
+import { PlusCircle, Clock, CheckCircle, XCircle, AlertCircle, Edit, Loader2, ExternalLink } from 'lucide-react';
+import { CatalogAPI } from '../../services/catalogAPI';
 import { toast } from 'sonner';
-import { FullProposalEditor } from '../../components/dashboard/FullProposalEditor'; // à créer
+import { FullProposalEditor } from '../../components/dashboard/FullProposalEditor';
 
 // StatCard (inchangé)
 function StatCard({ title, value, icon: Icon, variant }) {
@@ -38,121 +38,123 @@ function StatCard({ title, value, icon: Icon, variant }) {
   );
 }
 
-// Composant d'affichage des détails (avec motif de rejet et bouton de modification)
+// Composant d'affichage des détails (adapté aux données réelles)
 function ProposalDetailDialog({ proposal, open, onOpenChange, onEdit }) {
+  const [fullTool, setFullTool] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && proposal?.toolId) {
+      setLoading(true);
+      CatalogAPI.tool(proposal.toolId)
+        .then(setFullTool)
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    } else {
+      setFullTool(null);
+    }
+  }, [open, proposal]);
+
   if (!proposal) return null;
+
+  const data = fullTool || proposal;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Détails de la proposition : {proposal.name}</DialogTitle>
+          <DialogTitle>Détails de la proposition : {proposal.toolName || proposal.name}</DialogTitle>
         </DialogHeader>
-        <Tabs defaultValue="general">
-          <TabsList className="grid grid-cols-4 mb-4">
-            <TabsTrigger value="general">Général</TabsTrigger>
-            <TabsTrigger value="features">Fonctionnalités</TabsTrigger>
-            <TabsTrigger value="models">Modèles AI</TabsTrigger>
-            <TabsTrigger value="pricing">Tarifs & Plans</TabsTrigger>
-          </TabsList>
+        
+        {loading ? (
+          <div className="flex h-64 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <Tabs defaultValue="general">
+            <TabsList className="grid grid-cols-4 mb-4">
+              <TabsTrigger value="general">Général</TabsTrigger>
+              <TabsTrigger value="features">Fonctionnalités</TabsTrigger>
+              <TabsTrigger value="models">Modèles AI</TabsTrigger>
+              <TabsTrigger value="pricing">Tarifs & Plans</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="general" className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-              <div><strong>Nom :</strong> {proposal.name}</div>
-              <div><strong>Fournisseur :</strong> {proposal.provider || 'Non spécifié'}</div>
-              <div><strong>URL :</strong> <a href={proposal.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{proposal.url}</a></div>
-              <div><strong>Logo URL :</strong> {proposal.logoUrl || '-'}</div>
-              <div><strong>Date de sortie :</strong> {proposal.releaseDate ? new Date(proposal.releaseDate).toLocaleDateString('fr-FR') : '-'}</div>
-              <div><strong>Open Source :</strong> {proposal.isOpenSource ? 'Oui' : 'Non'}</div>
-              <div><strong>Catégorie :</strong> {proposal.categoryId} {proposal.newCategoryDesc && `(Nouvelle: ${proposal.newCategoryDesc})`}</div>
-              <div><strong>Tags :</strong> {proposal.tags?.map(t => t.name).join(', ') || '-'}</div>
-              <div><strong>Plateformes :</strong> {proposal.platforms?.join(', ') || '-'}</div>
-            </div>
-            <div><strong>Description courte :</strong> {proposal.shortDescription || proposal.description}</div>
-            <div><strong>Description détaillée :</strong> <p className="mt-1 whitespace-pre-line">{proposal.longDescription || proposal.description}</p></div>
-            {proposal.status === 'rejected' && proposal.rejectionReason && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                <strong className="text-destructive">Motif du rejet :</strong>
-                <p className="mt-1 text-destructive/80">{proposal.rejectionReason}</p>
-                {proposal.suggestions && (
-                  <div className="mt-2 text-sm">
-                    <strong className="text-destructive">Suggestions de rectification :</strong>
-                    <ul className="list-disc list-inside mt-1">
-                      {proposal.suggestions.map((s, idx) => <li key={idx}>{s}</li>)}
-                    </ul>
-                  </div>
-                )}
+            <TabsContent value="general" className="space-y-4">
+              <div className="grid grid-cols-2 gap-2">
+                <div><strong>Nom :</strong> {data.toolName || data.name}</div>
+                <div><strong>Fournisseur :</strong> {data.provider || 'Non spécifié'}</div>
+                <div><strong>URL :</strong> <a href={data.toolUrl || data.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{data.toolUrl || data.url}</a></div>
+                <div><strong>Logo URL :</strong> {data.toolLogo || data.logo || '-'}</div>
+                <div><strong>Date de sortie :</strong> {data.releaseDate ? new Date(data.releaseDate).toLocaleDateString('fr-FR') : '-'}</div>
+                <div><strong>Open Source :</strong> {data.openSource ? 'Oui' : 'Non'}</div>
+                <div><strong>Catégories :</strong> {data.categories?.map(c => c.name).join(', ') || '-'}</div>
               </div>
-            )}
-          </TabsContent>
+              <div><strong>Description courte :</strong> {data.toolDescription || data.description}</div>
+              <div><strong>Description détaillée :</strong> <p className="mt-1 whitespace-pre-line">{data.longDescription || data.description}</p></div>
+              {proposal.status === 'rejected' && proposal.adminNote && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <strong className="text-destructive">Motif du rejet :</strong>
+                  <p className="mt-1 text-destructive/80">{proposal.adminNote}</p>
+                </div>
+              )}
+            </TabsContent>
 
-          <TabsContent value="features" className="space-y-4">
-            <div>
-              <strong>Fonctionnalités propres :</strong>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {proposal.features?.map(f => <Badge key={f.name}>{f.name}</Badge>) || '-'}
-              </div>
-            </div>
-            <div>
-              <strong>Performances (benchmarks) :</strong>
-              <div className="space-y-1 mt-1">
-                {proposal.performances?.map(p => (
-                  <div key={p.domain}>{p.domain}: {p.score}/100 {p.description && `(${p.description})`}</div>
-                )) || '-'}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="models" className="space-y-4">
-            {proposal.models?.length > 0 ? (
-              proposal.models.map(model => (
-                <Card key={model.id}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">{model.name} ({model.provider})</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <p>{model.description}</p>
-                    <div><strong>Accès dans l'outil :</strong> {model.accessInTool === 'free' ? 'Gratuit' : 'Payant'}</div>
-                    <div><strong>Capacités :</strong> {model.capabilities?.join(', ') || '-'}</div>
-                    <div><strong>Performances :</strong> {model.performances?.map(p => `${p.domain}:${p.score}`).join(', ') || '-'}</div>
-                    <div><strong>Tags :</strong> {model.tags?.map(t => t.name).join(', ') || '-'}</div>
-                    {model.hasApi && <div><strong>API URL :</strong> <a href={model.apiUrl} className="text-primary">{model.apiUrl}</a></div>}
-                    {model.pricingPlans?.length > 0 && (
-                      <div><strong>Plans API :</strong>
-                        {model.pricingPlans.map(plan => (
-                          <div key={plan.name} className="ml-2 text-sm">{plan.name}: {plan.price}{plan.currency}/{plan.period}</div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <p>Aucun modèle associé</p>
-            )}
-          </TabsContent>
-
-          <TabsContent value="pricing" className="space-y-4">
-            <div><strong>Type de tarification global :</strong> {proposal.pricingType || proposal.pricing}</div>
-            {proposal.pricingPlans?.length > 0 && (
+            <TabsContent value="features" className="space-y-4">
               <div>
-                <strong>Plans de l'outil :</strong>
-                {proposal.pricingPlans.map(plan => (
-                  <Card key={plan.name} className="mt-2">
+                <strong>Fonctionnalités propres :</strong>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {data.ownFeatures?.map(f => <Badge key={f}>{f}</Badge>) || '-'}
+                </div>
+              </div>
+              <div>
+                <strong>Performances (benchmarks) :</strong>
+                <div className="space-y-1 mt-1">
+                  {data.benchmarks ? Object.entries(data.benchmarks).map(([domain, score]) => (
+                    <div key={domain}>{domain}: {score}/100</div>
+                  )) : '-'}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="models" className="space-y-4">
+              {data.aiModels?.length > 0 ? (
+                data.aiModels.map(model => (
+                  <Card key={model.modelId}>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base">{plan.name}</CardTitle>
+                      <CardTitle className="text-base">{model.name} ({model.provider})</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-1">
-                      <div>Prix : {plan.price}{plan.currency}/{plan.period}</div>
-                      <div>Fonctionnalités : {plan.features?.map(f => f.name).join(', ') || '-'}</div>
-                      <div>Modèles accessibles : {plan.availableModels?.map(m => m.modelId).join(', ') || '-'}</div>
+                    <CardContent className="space-y-2">
+                      <div><strong>Accès dans l'outil :</strong> {model.accessType === 'free' ? 'Gratuit' : 'Payant'}</div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                ))
+              ) : (
+                <p>Aucun modèle associé</p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="pricing" className="space-y-4">
+              <div><strong>Type de tarification global :</strong> {data.toolPricing || data.pricing}</div>
+              {data.pricingPlans?.length > 0 && (
+                <div>
+                  <strong>Plans de l'outil :</strong>
+                  {data.pricingPlans.map(plan => (
+                    <Card key={plan.id} className="mt-2">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">{plan.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-1">
+                        <div>Prix : {plan.price} {plan.currency} / {plan.period}</div>
+                        <div>Type : {plan.type}</div>
+                        <p className="text-sm text-muted-foreground">{plan.description}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
 
         {proposal.status === 'rejected' && (
           <div className="flex justify-end mt-4 pt-4 border-t">
@@ -170,19 +172,31 @@ function ProposalDetailDialog({ proposal, open, onOpenChange, onEdit }) {
 export default function DashboardProposals() {
   const location = useLocation();
   const { user } = useAuth();
-
-  const userProposals = mockProposedTools.filter(prop => prop.userId === user?.id);
-  const proposalsWithTool = userProposals.map(prop => ({
-    ...prop,
-    existingTool: mockTools.find(t => t.id === prop.id || t.name === prop.name)
-  }));
-
-  const pendingCount = proposalsWithTool.filter(p => p.status === 'pending').length;
-  const approvedCount = proposalsWithTool.filter(p => p.status === 'approved').length;
-  const rejectedCount = proposalsWithTool.filter(p => p.status === 'rejected').length;
-
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [editingProposal, setEditingProposal] = useState(null);
+
+  const fetchProposals = async () => {
+    try {
+      setLoading(true);
+      const data = await CatalogAPI.myProposals();
+      setSubmissions(data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des propositions:', error);
+      toast.error('Impossible de charger vos propositions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProposals();
+  }, []);
+
+  const pendingCount = submissions.filter(p => p.status === 'pending').length;
+  const approvedCount = submissions.filter(p => p.status === 'approved').length;
+  const rejectedCount = submissions.filter(p => p.status === 'rejected').length;
 
   const getStatusConfig = (status) => {
     switch (status) {
@@ -210,7 +224,15 @@ export default function DashboardProposals() {
         window.history.replaceState({}, '', window.location.pathname);
       }
     }
-  }, [location.search]);
+  }, [location.search, submissions]);
+
+  if (loading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -233,9 +255,9 @@ export default function DashboardProposals() {
       <Card>
         <CardHeader><CardTitle>Historique des propositions</CardTitle></CardHeader>
         <CardContent>
-          {proposalsWithTool.length > 0 ? (
+          {submissions.length > 0 ? (
             <div className="space-y-4">
-              {proposalsWithTool.map((proposal) => {
+              {submissions.map((proposal) => {
                 const statusConfig = getStatusConfig(proposal.status);
                 const StatusIcon = statusConfig.icon;
                 return (
@@ -247,15 +269,14 @@ export default function DashboardProposals() {
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-foreground">{proposal.name}</h3>
+                        <h3 className="font-semibold text-foreground">{proposal.toolName}</h3>
                         <Badge variant="outline" className={statusConfig.className}>
                           <StatusIcon className="mr-1 h-3 w-3" /> {statusConfig.label}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{proposal.description}</p>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{proposal.toolDescription}</p>
                       <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                        <span>Catégorie : {proposal.categoryId}</span>
-                        <span>Tarification : {proposal.pricing}</span>
+                        <span>Tarification : {proposal.toolPricing}</span>
                         <span>Proposé le : {new Date(proposal.createdAt).toLocaleDateString('fr-FR')}</span>
                       </div>
                     </div>
@@ -263,8 +284,8 @@ export default function DashboardProposals() {
                       {proposal.status === 'pending' && (
                         <Button variant="outline" size="sm" disabled>En cours d'examen</Button>
                       )}
-                      {proposal.status === 'approved' && (
-                        <Link to={`/tools/${proposal.id}`}>
+                      {proposal.status === 'approved' && proposal.toolSlug && (
+                        <Link to={`/tools/${proposal.toolSlug}`} onClick={(e) => e.stopPropagation()}>
                           <Button variant="outline" size="sm">Voir l'outil</Button>
                         </Link>
                       )}
@@ -288,22 +309,25 @@ export default function DashboardProposals() {
         proposal={selectedProposal}
         open={!!selectedProposal}
         onOpenChange={() => setSelectedProposal(null)}
-        onEdit={(prop) => setEditingProposal(prop)}
+        onEdit={(prop) => {
+          setEditingProposal(prop);
+          setSelectedProposal(null);
+        }}
       />
 
       {editingProposal && (
         <Dialog open={!!editingProposal} onOpenChange={() => setEditingProposal(null)}>
           <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Modifier la proposition : {editingProposal.name}</DialogTitle>
+              <DialogTitle>Modifier la proposition : {editingProposal.toolName}</DialogTitle>
             </DialogHeader>
             <FullProposalEditor
               initialData={editingProposal}
-              onSave={(updatedProposal) => {
-                // Mettre à jour la proposition dans le mock (ou envoyer à l'API)
+              onSave={async (updatedProposal) => {
+                // Ici on appellerait l'API pour mettre à jour la proposition
                 toast.success('Proposition modifiée et renvoyée pour examen');
                 setEditingProposal(null);
-                // Recharger les données (dans une vraie app, on rafraîchirait la liste)
+                fetchProposals();
               }}
               onCancel={() => setEditingProposal(null)}
             />

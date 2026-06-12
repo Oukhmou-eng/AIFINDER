@@ -128,13 +128,38 @@ class User
     public function notifications($userId)
     {
         $stmt = $this->pdo->prepare("
-            SELECT id_Notif AS id, cible, type, titre AS title, message, created_at AS createdAt
+            SELECT id_Notif AS id, cible, type, titre AS title, message, created_at AS createdAt, lu AS `read`
             FROM notification
             WHERE idU = :id
             ORDER BY created_at DESC, id_Notif DESC
         ");
         $stmt->execute(['id' => $userId]);
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        return array_map(function($row) {
+            $row['read'] = (bool)$row['read'];
+            return $row;
+        }, $rows);
+    }
+
+    public function markNotificationAsRead($userId, $notifId)
+    {
+        $stmt = $this->pdo->prepare("UPDATE notification SET lu = 1 WHERE id_Notif = :id AND idU = :user_id");
+        $stmt->execute(['id' => $notifId, 'user_id' => $userId]);
+        return $this->notifications($userId);
+    }
+
+    public function markAllNotificationsAsRead($userId)
+    {
+        $stmt = $this->pdo->prepare("UPDATE notification SET lu = 1 WHERE idU = :user_id");
+        $stmt->execute(['user_id' => $userId]);
+        return $this->notifications($userId);
+    }
+
+    public function deleteNotification($userId, $notifId)
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM notification WHERE id_Notif = :id AND idU = :user_id");
+        $stmt->execute(['id' => $notifId, 'user_id' => $userId]);
+        return $this->notifications($userId);
     }
 
     public function collections($userId)
@@ -146,7 +171,7 @@ class User
             LEFT JOIN collection_outil co ON co.id_coll = c.id_coll
             WHERE c.idU = :id
             GROUP BY c.id_coll
-            ORDER BY c.created_at DESC
+            ORDER BY c.created_at DESC, c.id_coll DESC
         ");
         $stmt->execute(['id' => $userId]);
 
@@ -172,6 +197,57 @@ class User
             'description' => $data['description'] ?? null,
             'user_id' => $userId,
         ]);
+
+        return $this->collections($userId);
+    }
+
+    public function updateCollection($userId, $collectionId, array $data)
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE collection 
+            SET nom = :nom, decription = :description 
+            WHERE id_coll = :id AND idU = :user_id
+        ");
+        $stmt->execute([
+            'nom' => $data['name'] ?? $data['nom'],
+            'description' => $data['description'] ?? null,
+            'id' => $collectionId,
+            'user_id' => $userId,
+        ]);
+
+        return $this->collections($userId);
+    }
+
+    public function deleteCollection($userId, $collectionId)
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM collection WHERE id_coll = :id AND idU = :user_id");
+        $stmt->execute(['id' => $collectionId, 'user_id' => $userId]);
+
+        return $this->collections($userId);
+    }
+
+    public function addToolToCollection($userId, $collectionId, $toolId)
+    {
+        // Verify collection ownership
+        $stmt = $this->pdo->prepare("SELECT 1 FROM collection WHERE id_coll = :id AND idU = :user_id");
+        $stmt->execute(['id' => $collectionId, 'user_id' => $userId]);
+        if (!$stmt->fetch()) return $this->collections($userId);
+
+        $stmt = $this->pdo->prepare("INSERT IGNORE INTO collection_outil (id_coll, idOut) VALUES (:coll_id, :tool_id)");
+        $stmt->execute(['coll_id' => $collectionId, 'tool_id' => $toolId]);
+
+        return $this->collections($userId);
+    }
+
+    public function removeToolFromCollection($userId, $collectionId, $toolId)
+    {
+        // Verify collection ownership
+        $stmt = $this->pdo->prepare("SELECT 1 FROM collection WHERE id_coll = :id AND idU = :user_id");
+        $stmt->execute(['id' => $collectionId, 'user_id' => $userId]);
+        if (!$stmt->fetch()) return $this->collections($userId);
+
+        $stmt = $this->pdo->prepare("DELETE FROM collection_outil WHERE id_coll = :coll_id AND idOut = :tool_id");
+        $stmt->execute(['coll_id' => $collectionId, 'tool_id' => $toolId]);
 
         return $this->collections($userId);
     }

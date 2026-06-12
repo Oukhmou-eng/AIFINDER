@@ -141,6 +141,10 @@ export default function ToolDetailPage() {
   const [isPromptLoading, setIsPromptLoading] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -163,6 +167,31 @@ export default function ToolDetailPage() {
         setIsLoading(false);
       });
   }, [slug]);
+
+  const handleReviewSubmit = async () => {
+    if (!reviewComment.trim()) {
+      toast.error('Veuillez entrer un commentaire');
+      return;
+    }
+
+    try {
+      setIsSubmittingReview(true);
+      const updatedReviews = await CatalogAPI.createReview({
+        toolId: tool.id,
+        rating: reviewRating,
+        comment: reviewComment
+      });
+      setApiReviews(updatedReviews);
+      setShowReviewForm(false);
+      setReviewComment('');
+      setReviewRating(5);
+      toast.success('Merci pour votre avis !');
+    } catch (error) {
+      toast.error("Erreur lors de l'envoi de l'avis");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   const reviews = apiReviews;
   const categoriesForTool = tool?.categories || [];
@@ -683,16 +712,75 @@ export default function ToolDetailPage() {
                   {isAuthenticated ? (
                     <Card>
                       <CardContent className="p-4">
-                        <div className="flex items-center gap-4">
-                          <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                          <div className="flex-1">
-                            <p className="font-medium">Partagez votre expérience</p>
-                            <p className="text-sm text-muted-foreground">
-                              Aidez les autres utilisateurs en laissant un avis
-                            </p>
+                        {!showReviewForm ? (
+                          <div className="flex items-center gap-4">
+                            <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                            <div className="flex-1">
+                              <p className="font-medium">Partagez votre expérience</p>
+                              <p className="text-sm text-muted-foreground">
+                                Aidez les autres utilisateurs en laissant un avis
+                              </p>
+                            </div>
+                            <Button onClick={() => setShowReviewForm(true)}>Écrire un avis</Button>
                           </div>
-                          <Button>Écrire un avis</Button>
-                        </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-medium">Votre avis sur {tool.name}</h3>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setShowReviewForm(false)}
+                              >
+                                Annuler
+                              </Button>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <label className="text-sm text-muted-foreground">Note</label>
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={cn(
+                                      "h-6 w-6 cursor-pointer transition-colors",
+                                      star <= reviewRating 
+                                        ? "fill-warning text-warning" 
+                                        : "text-muted-foreground/30 hover:text-warning"
+                                    )}
+                                    onClick={() => setReviewRating(star)}
+                                  />
+                                ))}
+                                <span className="ml-2 font-medium">{reviewRating}/5</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="text-sm text-muted-foreground">Commentaire</label>
+                              <Textarea
+                                placeholder="Qu'avez-vous pensé de cet outil ? Ses points forts, ses points faibles..."
+                                value={reviewComment}
+                                onChange={(e) => setReviewComment(e.target.value)}
+                                rows={4}
+                              />
+                            </div>
+
+                            <Button 
+                              onClick={handleReviewSubmit} 
+                              disabled={isSubmittingReview || !reviewComment.trim()}
+                              className="w-full"
+                            >
+                              {isSubmittingReview ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Envoi en cours...
+                                </>
+                              ) : (
+                                "Publier mon avis"
+                              )}
+                            </Button>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   ) : (

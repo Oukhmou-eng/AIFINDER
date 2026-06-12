@@ -100,40 +100,30 @@ export function AuthProvider({ children }) {
       if (!prev) return null;
       return { ...prev, collections };
     });
+    return collections;
   }, []);
 
-  const deleteCollection = useCallback((collectionId) => {
+  const deleteCollection = useCallback(async (collectionId) => {
+    const collections = await CatalogAPI.deleteCollection(collectionId);
     setUser(prev => {
       if (!prev) return null;
-      return { ...prev, collections: prev.collections.filter(c => c.id !== collectionId) };
+      return { ...prev, collections };
     });
   }, []);
 
-  const addToCollection = useCallback((collectionId, toolId) => {
+  const addToCollection = useCallback(async (collectionId, toolId) => {
+    const collections = await CatalogAPI.addToolToCollection(collectionId, toolId);
     setUser(prev => {
       if (!prev) return null;
-      return {
-        ...prev,
-        collections: prev.collections.map(c =>
-          c.id === collectionId && !c.toolIds.includes(toolId)
-            ? { ...c, toolIds: [...c.toolIds, toolId] }
-            : c
-        )
-      };
+      return { ...prev, collections };
     });
   }, []);
 
-  const removeFromCollection = useCallback((collectionId, toolId) => {
+  const removeFromCollection = useCallback(async (collectionId, toolId) => {
+    const collections = await CatalogAPI.removeToolFromCollection(collectionId, toolId);
     setUser(prev => {
       if (!prev) return null;
-      return {
-        ...prev,
-        collections: prev.collections.map(c =>
-          c.id === collectionId
-            ? { ...c, toolIds: c.toolIds.filter(id => id !== toolId) }
-            : c
-        )
-      };
+      return { ...prev, collections };
     });
   }, []);
 

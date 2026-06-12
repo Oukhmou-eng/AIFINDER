@@ -11,12 +11,13 @@ import {
   XCircle,
   ArrowRight,
   Bell,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { ToolCard } from '../../components/tools/tool-card';
-import { tools as mockTools, mockProposedTools, mockNotifications } from '../../lib/mock-data';
+import { CatalogAPI } from '../../services/catalogAPI';
 
 // Composant simple pour les cartes statistiques
 function UserStatCard({ title, value, icon: Icon, variant, description }) {
@@ -42,26 +43,51 @@ function UserStatCard({ title, value, icon: Icon, variant, description }) {
 
 export default function DashboardOverview() {
   const { user } = useAuth();
-  const [favorites, setFavorites] = useState(user?.favorites || []);
+  const [loading, setLoading] = useState(true);
+  const [favoriteTools, setFavoriteTools] = useState([]);
+  const [proposedTools, setProposedTools] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
-  // Données simulées
-  const favoriteTools = mockTools.filter((tool) => favorites.includes(tool.id)).slice(0, 4);
-  const proposedTools = mockProposedTools.filter(prop => prop.userId === user?.id) || [];
-  const recentNotifications = (user?.notifications || mockNotifications).filter((n) => !n.read).slice(0, 3);
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [favs, props, notifs, revs] = await Promise.all([
+          CatalogAPI.myFavorites(),
+          CatalogAPI.myProposals(),
+          CatalogAPI.notifications(),
+          CatalogAPI.myReviews()
+        ]);
+        setFavoriteTools(favs.slice(0, 4));
+        setProposedTools(props.slice(0, 5));
+        setNotifications(notifs.filter(n => !n.read).slice(0, 3));
+        setReviews(revs);
+      } catch (error) {
+        console.error('Erreur lors du chargement du tableau de bord:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const stats = {
-    favoritesCount: favorites.length,
+    favoritesCount: user?.favorites?.length || favoriteTools.length,
     collectionsCount: user?.collections?.length || 0,
-    commentsCount: user?.reviewsCount || 0,
+    commentsCount: reviews.length,
     proposedToolsCount: proposedTools.length,
     pendingTools: proposedTools.filter(p => p.status === 'pending').length,
   };
 
-  const toggleFavorite = (toolId) => {
-    setFavorites((prev) =>
-      prev.includes(toolId) ? prev.filter((id) => id !== toolId) : [...prev, toolId]
+  if (loading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -116,12 +142,12 @@ export default function DashboardOverview() {
             <Bell className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentNotifications.length > 0 ? (
+            {notifications.length > 0 ? (
               <>
-                {recentNotifications.map((notification) => (
+                {notifications.map((notification) => (
                   <Link
                     key={notification.id}
-                    to={notification.link || '/dashboard/notifications'}
+                    to="/dashboard/notifications"
                     className="block rounded-lg border border-border p-3 transition-colors hover:bg-accent"
                   >
                     <div className="flex items-start gap-2">
@@ -175,12 +201,12 @@ export default function DashboardOverview() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                        <span className="font-bold text-primary">{tool.name.charAt(0)}</span>
+                        <span className="font-bold text-primary">{tool.toolName?.charAt(0) || tool.name?.charAt(0)}</span>
                       </div>
                       <div>
-                        <p className="font-medium">{tool.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {tool.category}
+                        <p className="font-medium">{tool.toolName || tool.name}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-1">
+                          {tool.toolDescription || tool.description}
                         </p>
                       </div>
                     </div>

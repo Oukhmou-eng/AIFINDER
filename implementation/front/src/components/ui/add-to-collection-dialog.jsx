@@ -10,50 +10,59 @@ import { useAuth } from '../../contexts/auth-context';
 import { toast } from 'sonner';
 
 export function AddToCollectionDialog({ open, onOpenChange, tool, onAdded }) {
-  const { user, updateProfile } = useAuth();
+  const { user, addToCollection, createCollection } = useAuth();
   const [selectedCollectionId, setSelectedCollectionId] = useState('');
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionDesc, setNewCollectionDesc] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const collections = user?.collections || [];
 
-  const handleAddToExisting = () => {
+  const handleAddToExisting = async () => {
     if (!selectedCollectionId) return;
     const collection = collections.find(c => c.id === selectedCollectionId);
-    if (collection && !collection.toolIds.includes(tool.id)) {
-      const updatedCollections = collections.map(c =>
-        c.id === selectedCollectionId
-          ? { ...c, toolIds: [...c.toolIds, tool.id] }
-          : c
-      );
-      updateProfile({ collections: updatedCollections });
+    
+    if (collection && collection.toolIds.includes(tool.id)) {
+      toast.error('Cet outil est déjà dans cette collection');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await addToCollection(selectedCollectionId, tool.id);
       toast.success(`"${tool.name}" ajouté à ${collection.name}`);
       onAdded?.();
       onOpenChange(false);
-    } else if (collection?.toolIds.includes(tool.id)) {
-      toast.error('Cet outil est déjà dans cette collection');
+    } catch (error) {
+      toast.error("Erreur lors de l'ajout à la collection");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleCreateAndAdd = () => {
+  const handleCreateAndAdd = async () => {
     if (!newCollectionName.trim()) return;
-    setIsCreating(true);
-    const newCollection = {
-      id: `col-${Date.now()}`,
-      name: newCollectionName,
-      description: newCollectionDesc,
-      toolIds: [tool.id],
-      createdAt: new Date().toISOString(),
-    };
-    const updatedCollections = [...collections, newCollection];
-    updateProfile({ collections: updatedCollections });
-    toast.success(`Collection "${newCollectionName}" créée et outil ajouté`);
-    setNewCollectionName('');
-    setNewCollectionDesc('');
-    setIsCreating(false);
-    onAdded?.();
-    onOpenChange(false);
+    try {
+      setIsLoading(true);
+      const updatedCollections = await createCollection(newCollectionName, newCollectionDesc);
+      
+      // La nouvelle collection est la première car triée par date décroissante dans le backend
+      const newlyCreated = updatedCollections[0];
+      
+      if (newlyCreated) {
+        await addToCollection(newlyCreated.id, tool.id);
+      }
+      
+      toast.success(`Collection "${newCollectionName}" créée et outil ajouté`);
+      setNewCollectionName('');
+      setNewCollectionDesc('');
+      onAdded?.();
+      onOpenChange(false);
+    } catch (error) {
+      toast.error("Erreur lors de la création de la collection");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -120,7 +129,7 @@ export function AddToCollectionDialog({ open, onOpenChange, tool, onAdded }) {
             />
             <Button
               onClick={handleCreateAndAdd}
-              disabled={!newCollectionName.trim() || isCreating}
+              disabled={!newCollectionName.trim() || isLoading}
               className="w-full"
             >
               <Plus className="mr-2 h-4 w-4" />

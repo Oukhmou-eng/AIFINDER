@@ -41,6 +41,26 @@ export const CatalogAPI = {
     return data.reviews || [];
   },
 
+  async myReviews() {
+    const data = await api.get('my_reviews');
+    return data.reviews || [];
+  },
+
+  async myProposals() {
+    const data = await api.get('my_proposals');
+    return data.submissions || [];
+  },
+
+  async updateReview(id, payload) {
+    const data = await api.post('update_review', { id, ...payload });
+    return data.reviews || [];
+  },
+
+  async deleteReview(id) {
+    const data = await api.post('delete_review', { id });
+    return data.reviews || [];
+  },
+
   async report(payload) {
     const data = await api.post('report', payload);
     return data.report;
@@ -51,8 +71,28 @@ export const CatalogAPI = {
     return data.favorites || [];
   },
 
+  async myFavorites() {
+    const data = await api.get('my_favorites');
+    return data.tools || [];
+  },
+
   async notifications() {
     const data = await api.get('notifications');
+    return data.notifications || [];
+  },
+
+  async markNotificationAsRead(id) {
+    const data = await api.post('mark_notification_as_read', { id });
+    return data.notifications || [];
+  },
+
+  async markAllNotificationsAsRead() {
+    const data = await api.post('mark_all_notifications_as_read');
+    return data.notifications || [];
+  },
+
+  async deleteNotification(id) {
+    const data = await api.post('delete_notification', { id });
     return data.notifications || [];
   },
 
@@ -63,6 +103,26 @@ export const CatalogAPI = {
 
   async createCollection(name, description = '') {
     const data = await api.post('create_collection', { name, description });
+    return data.collections || [];
+  },
+
+  async updateCollection(id, name, description = '') {
+    const data = await api.post('update_collection', { id, name, description });
+    return data.collections || [];
+  },
+
+  async deleteCollection(id) {
+    const data = await api.post('delete_collection', { id });
+    return data.collections || [];
+  },
+
+  async addToolToCollection(collectionId, toolId) {
+    const data = await api.post('add_tool_to_collection', { collectionId, toolId });
+    return data.collections || [];
+  },
+
+  async removeToolFromCollection(collectionId, toolId) {
+    const data = await api.post('remove_tool_from_collection', { collectionId, toolId });
     return data.collections || [];
   },
 

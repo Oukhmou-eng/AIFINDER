@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -25,55 +25,89 @@ import {
   MoreVertical, 
   Pencil, 
   Trash2,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../../contexts/auth-context';
-import { reviews, tools } from '../../lib/mock-data';
+import { CatalogAPI } from '../../services/catalogAPI';
+import { toast } from 'sonner';
 
 export default function DashboardReviews() {
   const { user } = useAuth();
-  // Filtrer les avis de l'utilisateur connecté (comparaison par email ou id)
-  const userReviews = reviews.filter(r => r.userId === user?.id || r.userEmail === user?.email);
-  const [comments, setComments] = useState(userReviews);
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [editingComment, setEditingComment] = useState(null);
   const [editContent, setEditContent] = useState('');
+  const [editRating, setEditRating] = useState(0);
   const [deleteId, setDeleteId] = useState(null);
 
-  const handleEdit = (commentId, content) => {
-    setEditingComment(commentId);
-    setEditContent(content);
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setLoading(true);
+        const data = await CatalogAPI.myReviews();
+        setComments(data);
+      } catch (error) {
+        console.error('Erreur lors du chargement des avis:', error);
+        toast.error('Impossible de charger vos avis');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
+
+  const handleEdit = (comment) => {
+    setEditingComment(comment.id);
+    setEditContent(comment.comment);
+    setEditRating(comment.rating);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingComment) return;
-    setComments(prev => prev.map(c =>
-      c.id === editingComment
-        ? { ...c, comment: editContent, updatedAt: new Date().toISOString().split('T')[0] }
-        : c
-    ));
-    setEditingComment(null);
-    setEditContent('');
+    try {
+      const updatedReviews = await CatalogAPI.updateReview(editingComment, {
+        comment: editContent,
+        rating: editRating
+      });
+      setComments(updatedReviews);
+      setEditingComment(null);
+      setEditContent('');
+      toast.success('Avis mis à jour');
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteId) return;
-    setComments(prev => prev.filter(c => c.id !== deleteId));
-    setDeleteId(null);
+    try {
+      const updatedReviews = await CatalogAPI.deleteReview(deleteId);
+      setComments(updatedReviews);
+      setDeleteId(null);
+      toast.success('Avis supprimé');
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
+    }
   };
 
-  const getToolInfo = (toolId) => {
-    const tool = tools.find(t => t.id === toolId);
-    return tool ? { name: tool.name, slug: tool.slug } : { name: 'Outil inconnu', slug: '#' };
-  };
-
-  const renderStars = (rating) => {
+  const renderStars = (rating, interactive = false) => {
     return Array.from({ length: 5 }).map((_, i) => (
       <Star
         key={i}
-        className={`h-4 w-4 ${i < rating ? 'fill-warning text-warning' : 'text-muted-foreground/30'}`}
+        className={`h-4 w-4 ${i < rating ? 'fill-warning text-warning' : 'text-muted-foreground/30'} ${interactive ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
+        onClick={() => interactive && setEditRating(i + 1)}
       />
     ));
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -105,35 +139,31 @@ export default function DashboardReviews() {
       {comments.length > 0 ? (
         <div className="space-y-4">
           {comments.map((comment) => {
-            const toolInfo = getToolInfo(comment.toolId);
             return (
               <Card key={comment.id}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={comment.userAvatar} alt={comment.userName} />
-                        <AvatarFallback>{comment.userName?.charAt(0) || 'U'}</AvatarFallback>
+                        <AvatarImage src={user?.avatar} alt={user?.name} />
+                        <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{comment.userName}</span>
+                          <span className="font-medium">{user?.name}</span>
                           <Badge variant="outline" className="text-xs">Vous</Badge>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>Sur</span>
                           <Link
-                            to={`/tools/${toolInfo.slug}`}
+                            to={`/tools/${comment.toolSlug}`}
                             className="flex items-center gap-1 text-primary hover:underline"
                           >
-                            {toolInfo.name}
+                            {comment.toolName}
                             <ExternalLink className="h-3 w-3" />
                           </Link>
                           <span className="text-muted-foreground/50">|</span>
                           <span>{new Date(comment.createdAt).toLocaleDateString('fr-FR')}</span>
-                          {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
-                            <span className="text-muted-foreground/50">(modifié)</span>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -144,7 +174,7 @@ export default function DashboardReviews() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(comment.id, comment.comment)}>
+                        <DropdownMenuItem onClick={() => handleEdit(comment)}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Modifier
                         </DropdownMenuItem>
@@ -162,8 +192,8 @@ export default function DashboardReviews() {
                 <CardContent className="space-y-3">
                   {/* Note par étoiles */}
                   <div className="flex items-center gap-1">
-                    {renderStars(comment.rating)}
-                    <span className="ml-2 text-sm font-medium">{comment.rating}/5</span>
+                    {editingComment === comment.id ? renderStars(editRating, true) : renderStars(comment.rating)}
+                    <span className="ml-2 text-sm font-medium">{editingComment === comment.id ? editRating : comment.rating}/5</span>
                   </div>
 
                   {/* Contenu de l'avis (modifiable) */}

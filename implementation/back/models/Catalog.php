@@ -46,6 +46,23 @@ class Catalog
             $params['pricing'] = $filters['pricing'];
         }
 
+        if (!empty($filters['ids'])) {
+            $ids = is_array($filters['ids']) ? $filters['ids'] : explode(',', (string)$filters['ids']);
+            $ids = array_filter(array_map('trim', $ids), 'ctype_digit');
+            if (!empty($ids)) {
+                $placeholders = [];
+                foreach ($ids as $i => $id) {
+                    $placeholder = ":id_filter_$i";
+                    $placeholders[] = $placeholder;
+                    $params[$placeholder] = $id;
+                }
+                $where[] = "o.idOut IN (" . implode(',', $placeholders) . ")";
+            } else {
+                // If ids is provided but empty/invalid, return nothing
+                $where[] = "1=0";
+            }
+        }
+
         $sql = $this->toolBaseSql();
         if ($where) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
@@ -178,6 +195,33 @@ class Catalog
         }, $stmt->fetchAll());
     }
 
+    public function userReviews($userId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT a.id_avis, a.note, a.titre, a.contenu, a.created_at, a.idOut,
+                   o.nom AS tool_name, o.slug AS tool_slug
+            FROM avis a
+            JOIN outils o ON o.idOut = a.idOut
+            WHERE a.idU = :user_id
+            ORDER BY a.created_at DESC, a.id_avis DESC
+        ");
+        $stmt->execute(['user_id' => $userId]);
+
+        return array_map(function ($row) {
+            return [
+                'id' => (string) $row['id_avis'],
+                'toolId' => (string) $row['idOut'],
+                'toolName' => $row['tool_name'],
+                'toolSlug' => $row['tool_slug'],
+                'rating' => (int) $row['note'],
+                'title' => $row['titre'],
+                'comment' => $row['contenu'],
+                'createdAt' => $row['created_at'],
+                'replies' => [],
+            ];
+        }, $stmt->fetchAll());
+    }
+
     public function createReview($userId, array $data)
     {
         $stmt = $this->pdo->prepare("
@@ -198,6 +242,32 @@ class Catalog
         ]);
 
         return $this->reviews($data['idOut'] ?? $data['toolId']);
+    }
+
+    public function updateReview($userId, $reviewId, array $data)
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE avis 
+            SET note = :note, titre = :titre, contenu = :contenu 
+            WHERE id_avis = :id AND idU = :user_id
+        ");
+        $stmt->execute([
+            'note' => $data['note'] ?? $data['rating'],
+            'titre' => $data['titre'] ?? $data['title'] ?? null,
+            'contenu' => $data['contenu'] ?? $data['comment'],
+            'id' => $reviewId,
+            'user_id' => $userId,
+        ]);
+
+        return $this->userReviews($userId);
+    }
+
+    public function deleteReview($userId, $reviewId)
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM avis WHERE id_avis = :id AND idU = :user_id");
+        $stmt->execute(['id' => $reviewId, 'user_id' => $userId]);
+
+        return $this->userReviews($userId);
     }
 
     public function report(array $data, $userId = null)

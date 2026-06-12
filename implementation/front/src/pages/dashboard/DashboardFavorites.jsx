@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
@@ -9,20 +9,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
-import { Heart, Search, SlidersHorizontal } from 'lucide-react';
+import { Heart, Search, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { ToolCard } from '../../components/tools/tool-card';
 import { useAuth } from '../../contexts/auth-context';
-import { tools as mockTools, getCategoryById } from '../../lib/mock-data';
+import { CatalogAPI } from '../../services/catalogAPI';
 
 export default function DashboardFavorites() {
   const { user } = useAuth();
-  const favorites = user?.favorites || [];
+  const [favoriteTools, setFavoriteTools] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
 
-  // Récupération des outils favoris
-  const favoriteTools = mockTools.filter((tool) => favorites.includes(tool.id));
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        setLoading(true);
+        const tools = await CatalogAPI.myFavorites();
+        setFavoriteTools(tools);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des favoris:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFavorites();
+  }, []);
 
   // Filtrage et tri
   const filteredTools = favoriteTools
@@ -30,8 +44,11 @@ export default function DashboardFavorites() {
       const matchesSearch =
         tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         tool.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
       const matchesCategory =
-        categoryFilter === 'all' || tool.categoryId === categoryFilter;
+        categoryFilter === 'all' || 
+        (tool.categories && tool.categories.some(cat => cat.id === categoryFilter || cat.slug === categoryFilter));
+      
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
@@ -48,7 +65,23 @@ export default function DashboardFavorites() {
     });
 
   // Catégories uniques parmi les favoris
-  const uniqueCategories = [...new Set(favoriteTools.map((tool) => tool.categoryId))];
+  const categoriesMap = new Map();
+  favoriteTools.forEach(tool => {
+    if (tool.categories) {
+      tool.categories.forEach(cat => {
+        categoriesMap.set(cat.id, cat.name);
+      });
+    }
+  });
+  const uniqueCategories = Array.from(categoriesMap.entries()).map(([id, name]) => ({ id, name }));
+
+  if (loading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -56,7 +89,7 @@ export default function DashboardFavorites() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Mes favoris</h1>
         <p className="text-muted-foreground">
-          {favorites.length} outil{favorites.length > 1 ? 's' : ''} enregistré{favorites.length > 1 ? 's' : ''}
+          {favoriteTools.length} outil{favoriteTools.length > 1 ? 's' : ''} enregistré{favoriteTools.length > 1 ? 's' : ''}
         </p>
       </div>
 
@@ -79,14 +112,11 @@ export default function DashboardFavorites() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes les catégories</SelectItem>
-              {uniqueCategories.map((catId) => {
-                const category = getCategoryById(catId);
-                return (
-                  <SelectItem key={catId} value={catId}>
-                    {category?.name || catId}
-                  </SelectItem>
-                );
-              })}
+              {uniqueCategories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
