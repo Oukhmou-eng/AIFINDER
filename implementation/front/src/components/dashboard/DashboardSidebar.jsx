@@ -35,7 +35,7 @@ export default function DashboardSidebar() {
   const location = useLocation();
   const pathname = location.pathname;
   const [collapsed, setCollapsed] = useState(true);
-  const { user, logout } = useAuth();
+  const { user, logout, unreadNotificationCount } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -78,7 +78,7 @@ export default function DashboardSidebar() {
               key={item.href}
               to={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors relative",
                 isActive 
                   ? "bg-primary text-primary-foreground" 
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -88,10 +88,15 @@ export default function DashboardSidebar() {
             >
               <item.icon className="h-5 w-5 shrink-0" />
               {!collapsed && <span>{item.label}</span>}
-              {item.href === '/dashboard/notifications' && !collapsed && (
-                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-medium text-destructive-foreground">
-                  2
-                </span>
+              
+              {item.href === '/dashboard/notifications' && unreadNotificationCount > 0 && (
+                collapsed ? (
+                  <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                ) : (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-medium text-destructive-foreground">
+                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                  </span>
+                )
               )}
             </NavLink>
           )
@@ -107,7 +112,7 @@ export default function DashboardSidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-lg font-semibold text-foreground">AI Tools</span>
+            <span className="text-lg font-semibold text-foreground">AI Finder</span>
           </NavLink>
         )}
         <Button 

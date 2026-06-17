@@ -83,6 +83,7 @@ export function ToolForm({ onSubmit, onCancel, isSubmitting = false, initialData
 
   const [toolTags, setToolTags] = useState(initialData?.tags || []);
   const [newTagInput, setNewTagInput] = useState('');
+  const [availableTags, setAvailableTags] = useState([]);
 
   const [toolFeatures, setToolFeatures] = useState(initialData?.features || []);
   const [newFeatureName, setNewFeatureName] = useState('');
@@ -95,14 +96,16 @@ export function ToolForm({ onSubmit, onCancel, isSubmitting = false, initialData
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catData, modelData] = await Promise.all([
+        const [catData, modelData, tagData] = await Promise.all([
           api.get('categories'),
           api.get('models'),
+          api.get('tags'),
         ]);
         setAvailableCategories(catData.categories || []);
         setAvailableModels(modelData.models || []);
+        setAvailableTags(tagData.tags || []);
       } catch (err) {
-        toast.error('Impossible de charger les catégories et modèles');
+        toast.error('Impossible de charger les catégories, modèles ou tags');
       }
     };
     fetchData();
@@ -149,9 +152,23 @@ export function ToolForm({ onSubmit, onCancel, isSubmitting = false, initialData
     setCustomPlatform('');
   };
 
-  const handleAddTag = () => {
+  const handleSelectTag = (tagName) => {
+    if (!toolTags.some(tag => tag.name.toLowerCase() === tagName.toLowerCase())) {
+      setToolTags(prev => [...prev, { name: tagName }]);
+    }
+  };
+
+  const handleCreateAndAddTag = () => {
     const value = newTagInput.trim();
     if (!value) return;
+
+    // Rule: Refuse if the tag already exists in the available tags list
+    const existsInAvailable = availableTags.some(tag => tag.name.toLowerCase() === value.toLowerCase());
+    if (existsInAvailable) {
+      toast.error(`Le tag "${value}" existe déjà dans la liste. Veuillez le sélectionner.`);
+      return;
+    }
+
     if (!toolTags.some(tag => tag.name.toLowerCase() === value.toLowerCase())) {
       setToolTags(prev => [...prev, { name: value }]);
     }
@@ -341,7 +358,7 @@ export function ToolForm({ onSubmit, onCancel, isSubmitting = false, initialData
 
             <div className="space-y-2">
               <Label>Tags</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-2">
                 {toolTags.map((tag, index) => (
                   <Badge key={`${tag.name}-${index}`} variant="secondary" className="gap-1">
                     {tag.name}
@@ -349,9 +366,33 @@ export function ToolForm({ onSubmit, onCancel, isSubmitting = false, initialData
                   </Badge>
                 ))}
               </div>
-              <div className="flex gap-2">
-                <Input placeholder="Ex: rédaction, code, API" value={newTagInput} onChange={(e) => setNewTagInput(e.target.value)} />
-                <Button type="button" variant="secondary" onClick={handleAddTag}>Ajouter</Button>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Sélectionner existant</span>
+                  <Select onValueChange={handleSelectTag}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir un tag" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableTags.map(tag => (
+                        <SelectItem key={tag.id} value={tag.name}>{tag.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Ou créer nouveau</span>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Nouveau tag..." 
+                      value={newTagInput} 
+                      onChange={(e) => setNewTagInput(e.target.value)} 
+                    />
+                    <Button type="button" variant="secondary" onClick={handleCreateAndAddTag}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </AccordionContent>

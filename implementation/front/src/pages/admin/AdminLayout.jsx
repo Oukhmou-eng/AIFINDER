@@ -6,13 +6,19 @@ import Sidebar from '../../components/layout/sidebar';
 import { Header } from '../../components/layout/header';
 
 export default function AdminLayout() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Chargement...</div>;
+  }
 
   // Vérification admin
   if (!isAuthenticated || user?.role !== 'admin') {
     return <Navigate to="/login" replace />;
   }
+
+
 
   const handleLogout = () => {
     logout();

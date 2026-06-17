@@ -51,7 +51,7 @@ export function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <span className="text-lg font-bold text-primary-foreground">AI</span>
               </div>
-              <span className="text-xl font-bold text-foreground">Tools</span>
+              <span className="text-xl font-bold text-foreground">Finder</span>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
               Découvrez et comparez les meilleurs outils AI pour booster votre productivité.

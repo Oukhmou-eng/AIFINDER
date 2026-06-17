@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,Link  } from 'react-router-dom';
 import { X, Mail, Lock, User, Sparkles, Eye, EyeOff, Globe } from 'lucide-react';
 import { Button } from './button';
 import { Input } from './input';
@@ -7,11 +7,12 @@ import { Label } from './label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog';
 import { useAuth } from '../../contexts/auth-context';
 import { toast } from 'sonner';
-import { FcGoogle } from "react-icons/fc";
+
+import { GoogleLogin } from "@react-oauth/google";
 
 export function AuthModal({ open, onClose, defaultTab = 'login' }) {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle } = useAuth();
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,6 +39,23 @@ export function AuthModal({ open, onClose, defaultTab = 'login' }) {
       }
     } catch {
       setError('Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError("");
+    setLoading(true);
+    try {
+      const success = await loginWithGoogle(credentialResponse.credential);
+      if (success) {
+        (success === "admin" ? navigate("/admin") : navigate("/dashboard"));
+      } else {
+        setError("Échec de la connexion avec Google");
+      }
+    } catch (err) {
+      setError(err.message || "Erreur lors de la connexion Google");
     } finally {
       setLoading(false);
     }
@@ -79,18 +97,17 @@ export function AuthModal({ open, onClose, defaultTab = 'login' }) {
             <DialogTitle className="text-xl font-bold">
               {activeTab === 'login' ? 'Connexion rapide' : 'Créer un compte'}
             </DialogTitle>
-            
+
           </div>
         </DialogHeader>
 
         {/* Onglets */}
         <div className="flex border-b border-border px-6">
           <button
-            className={`pb-3 px-4 text-sm font-medium transition-colors relative ${
-              activeTab === 'login'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className={`pb-3 px-4 text-sm font-medium transition-colors relative ${activeTab === 'login'
+              ? 'text-primary border-b-2 border-primary'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
             onClick={() => {
               setActiveTab('login');
               setError('');
@@ -99,11 +116,10 @@ export function AuthModal({ open, onClose, defaultTab = 'login' }) {
             Se connecter
           </button>
           <button
-            className={`pb-3 px-4 text-sm font-medium transition-colors relative ${
-              activeTab === 'register'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className={`pb-3 px-4 text-sm font-medium transition-colors relative ${activeTab === 'register'
+              ? 'text-primary border-b-2 border-primary'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
             onClick={() => {
               setActiveTab('register');
               setError('');
@@ -251,15 +267,19 @@ export function AuthModal({ open, onClose, defaultTab = 'login' }) {
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full flex items-center gap-2"
-            onClick={() => toast.info('Connexion Google à implémenter')}
-          >
-            <FcGoogle className="h-5 w-5" />
-                Continuer avec Google
-          </Button>
+          <div className="w-full flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError("Échec de l'authentification Google")}
+              useOneTap
+              theme="outline"
+              size="large"
+              width="100%"
+              text="continue_with"
+              shape="rectangular"
+            />
+          </div>
+
 
           {activeTab === 'login' && (
             <p className="text-center text-xs text-muted-foreground mt-4">

@@ -306,13 +306,19 @@ export default function AdminReports() {
 
       {/* Modale de détails */}
       <Dialog open={!!selectedReport} onOpenChange={(open) => !open && !updating && setSelectedReport(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-lg p-0 flex flex-col max-h-[85vh]">
+          {/* En-tête fixe */}
+          <DialogHeader className="px-6 pt-6 pb-4">
             <DialogTitle className="text-2xl">Détails du signalement</DialogTitle>
             <DialogDescription>Analyse et traitement de l&apos;alerte</DialogDescription>
           </DialogHeader>
+
+          {/* Zone défilante avec espace intérieur supplémentaire */}
           {selectedReport && (
-            <div className="space-y-6 py-4">
+            <div className="flex-1 overflow-y-auto px-6 pb-2 space-y-6">
+              {/* Ajout d'un petit espace en haut de la zone défilante (optionnel) */}
+              <div className="pt-1"></div>
+              
               <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border">
                 <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
                   {selectedReport.type === 'tool' ? (
@@ -341,7 +347,7 @@ export default function AdminReports() {
                 </div>
               </div>
 
-              <div className="grid gap-4">
+              <div className="grid gap-5">
                 <div>
                   <Label className="text-xs font-bold uppercase text-muted-foreground mb-1.5 block">Motif du signalement</Label>
                   <p className="font-semibold text-foreground border-l-4 border-primary pl-3 py-1 bg-primary/5 rounded-r">
@@ -367,7 +373,7 @@ export default function AdminReports() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-6 pt-2">
+                <div className="grid grid-cols-2 gap-6 pt-3">
                   <div>
                     <Label className="text-xs font-bold uppercase text-muted-foreground mb-1 block">Rapporté par</Label>
                     <p className="text-sm font-medium flex items-center gap-1.5">
@@ -387,7 +393,7 @@ export default function AdminReports() {
                   </div>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-2 pb-1">
                   <Label className="text-xs font-bold uppercase text-muted-foreground mb-1.5 block">Statut actuel</Label>
                   <Badge
                     variant={
@@ -407,27 +413,31 @@ export default function AdminReports() {
                   </Badge>
                 </div>
               </div>
-
-              {selectedReport.status === 'pending' && (
-                <DialogFooter className="gap-2 sm:gap-0 border-t pt-6">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleUpdateStatus(selectedReport.id, 'rejected')}
-                    disabled={updating}
-                    className="flex-1"
-                  >
-                    {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Rejeter l\'alerte'}
-                  </Button>
-                  <Button
-                    onClick={() => handleUpdateStatus(selectedReport.id, 'resolved')}
-                    disabled={updating}
-                    className="flex-1"
-                  >
-                    {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Marquer comme résolu'}
-                  </Button>
-                </DialogFooter>
-              )}
+              
+              {/* Petit espace en bas de la zone défilante */}
+              <div className="pb-2"></div>
             </div>
+          )}
+
+          {/* Pied fixe – avec un peu plus d'espace intérieur */}
+          {selectedReport?.status === 'pending' && (
+            <DialogFooter className="px-6 pb-6 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => handleUpdateStatus(selectedReport.id, 'rejected')}
+                disabled={updating}
+                className="flex-1"
+              >
+                {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Rejeter l\'alerte'}
+              </Button>
+              <Button
+                onClick={() => handleUpdateStatus(selectedReport.id, 'resolved')}
+                disabled={updating}
+                className="flex-1"
+              >
+                {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Marquer comme résolu'}
+              </Button>
+            </DialogFooter>
           )}
         </DialogContent>
       </Dialog>

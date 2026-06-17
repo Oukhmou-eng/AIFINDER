@@ -36,9 +36,11 @@ import {
 } from '../../components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Search, Users, UserCheck, UserX, MoreHorizontal, Eye, ShieldAlert, Ban, RefreshCw, PlusCircle, Loader2 } from 'lucide-react';
-import { mockProposedTools, reviews, getToolById } from '../../lib/mock-data';
+import { mockProposedTools, reviews } from '../../lib/mock-data';
 import { toast } from 'sonner';
 import api from '../../services/api';
+import AdminAPI from '../../services/adminAPI';
+import { CatalogAPI } from '../../services/catalogAPI';
 
 // Composant StatCard local
 function StatCard({ title, value, icon: Icon, variant = 'primary', loading = false }) {
@@ -75,6 +77,9 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [showAddAdminDialog, setShowAddAdminDialog] = useState(false);
   const [newAdmin, setNewAdmin] = useState({ name: '', email: '', password: '' });
+  const [userSubmissions, setUserSubmissions] = useState([]);
+  const [userReviews, setUserReviews] = useState([]);
+  const [reviewsWithTools, setReviewsWithTools] = useState([]);
 
   // Récupération des utilisateurs depuis l'API
   const fetchUsers = async () => {
@@ -118,6 +123,23 @@ export default function AdminUsers() {
     }
   }, [location.search, users]);
 
+  useEffect(() => {
+    const loadReviewsWithTools = async () => {
+      const enriched = await Promise.all(
+        userReviews.map(async (review) => {
+          const tool = await getToolById(review.toolId);
+          return { ...review, tool };
+        })
+      );
+      setReviewsWithTools(enriched);
+    };
+    if (userReviews.length > 0) {
+      loadReviewsWithTools();
+    } else {
+      setReviewsWithTools([]);
+    }
+  }, [userReviews]);
+
   // Récupération des propositions et commentaires par utilisateur
   const getUserProposals = (userId) => {
     return mockProposedTools.filter(prop => prop.userId === userId);
@@ -136,6 +158,17 @@ export default function AdminUsers() {
     return matchesSearch && matchesStatus;
   });
 
+  const getToolById = async (toolId) => {
+
+    try {
+      const tool = await CatalogAPI.tool(toolId);
+      return tool || null;
+    }
+    catch (error) {
+      toast.error(`Erreur lors de la récupération de l'outil avec l'ID ${toolId}`);
+    }
+  }
+
   const activeUsers = users.filter((u) => u.status === 'active').length;
   const suspendedUsers = users.filter((u) => u.status === 'suspended' || u.status === 'suspendu').length;
 
@@ -149,6 +182,22 @@ export default function AdminUsers() {
       toast.success(`Utilisateur ${user.name || user.email} suspendu`);
     } catch (err) {
       toast.error("Erreur lors de la suspension");
+    }
+  };
+
+  const loadUserDetails = async (user) => {
+    try {
+      const [submissionsRes, reviewsRes] = await Promise.all([
+        AdminAPI.getUserSubmissions(user.id),
+        AdminAPI.getUserReviews(user.id)
+      ]);
+      console.log('User ID:', user.id);
+      console.log('Submissions:', submissionsRes);
+      console.log('Reviews:', reviewsRes);
+      setUserSubmissions(submissionsRes.submissions || []);
+      setUserReviews(reviewsRes.reviews || []);
+    } catch (err) {
+      toast.error("Erreur lors du chargement des détails");
     }
   };
 
@@ -170,7 +219,7 @@ export default function AdminUsers() {
       toast.error('Tous les champs sont requis');
       return;
     }
-    
+
     try {
       await api.post('register', {
         name: newAdmin.name,
@@ -178,7 +227,7 @@ export default function AdminUsers() {
         password: newAdmin.password,
         role: 'admin'
       });
-      
+
       toast.success('Administrateur ajouté avec succès');
       setShowAddAdminDialog(false);
       setNewAdmin({ name: '', email: '', password: '' });
@@ -279,7 +328,7 @@ export default function AdminUsers() {
               <SelectContent>
                 <SelectItem value="all">Tous les statuts</SelectItem>
                 <SelectItem value="active">Actifs</SelectItem>
-                <SelectItem value="suspended">Suspendus</SelectItem>
+                <SelectItem value="suspendu">Suspendus</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -341,7 +390,10 @@ export default function AdminUsers() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setSelectedUser(user)}>
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedUser(user);
+                            loadUserDetails(user);
+                          }}>
                             <Eye className="mr-2 h-4 w-4" />
                             Voir détails
                           </DropdownMenuItem>
@@ -414,15 +466,15 @@ export default function AdminUsers() {
                 </TabsList>
 
                 <TabsContent value="proposals" className="space-y-3 mt-4">
-                  {getUserProposals(selectedUser.id).length > 0 ? (
+                  {userSubmissions.length > 0 ? (
                     <div className="space-y-2">
-                      {getUserProposals(selectedUser.id).map(proposal => (
+                      {userSubmissions.map(proposal => (
                         <div key={proposal.id} className="flex items-center justify-between p-3 rounded-lg border">
                           <div>
-                            <p className="font-medium">{proposal.name}</p>
+                            <p className="font-medium">{proposal.toolName}</p>
                             <Badge variant="outline">{proposal.status}</Badge>
                           </div>
-                          <Link to={`/admin/proposals/${proposal.id}`}>
+                          <Link to={`/admin/proposals/${proposal.toolId}`}>
                             <Button variant="ghost" size="sm">Détails</Button>
                           </Link>
                         </div>
@@ -434,22 +486,19 @@ export default function AdminUsers() {
                 </TabsContent>
 
                 <TabsContent value="reviews" className="space-y-3 mt-4">
-                  {getUserReviews(selectedUser.id).length > 0 ? (
+                  {userReviews.length > 0 ? (
                     <div className="space-y-2">
-                      {getUserReviews(selectedUser.id).map(review => {
-                        const tool = getToolById(review.toolId);
-                        return (
-                          <div key={review.id} className="flex items-center justify-between p-3 rounded-lg border">
-                            <div>
-                              <p className="font-medium">{tool?.name || 'Outil inconnu'}</p>
-                              <p className="text-xs text-muted-foreground truncate max-w-[200px]">{review.comment}</p>
-                            </div>
-                            <Link to={`/tools/${tool?.slug || '#'}?highlight=${review.id}`}>
-                              <Button variant="ghost" size="sm">Voir</Button>
-                            </Link>
+                      {reviewsWithTools.map((review) => (
+                        <div key={review.id} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div>
+                            <p className="font-medium">{review.tool?.name || 'Outil inconnu'}</p>
+                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">{review.comment}</p>
                           </div>
-                        );
-                      })}
+                          <Link to={`/admin/proposals/${review.tool?.id || '#'}`}>
+                            <Button variant="ghost" size="sm">Voir</Button>
+                          </Link>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Aucun commentaire</p>

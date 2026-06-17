@@ -6,8 +6,12 @@ import Sidebar from '../../components/layout/sidebar';
 import { Header } from '../../components/layout/header';
 
 export default function DashboardLayout() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Chargement...</div>;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

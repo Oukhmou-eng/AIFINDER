@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/badge';
 import { Header } from '../components/layout/header';
 import { Footer } from '../components/layout/footer';
 import { categories } from '../lib/mock-data';
+import { useAuth } from '../contexts/auth-context';
 import Sidebar from '../components/layout/sidebar';
 import CatalogAPI from '../services/catalogAPI';
 
@@ -22,6 +23,7 @@ const getIcon = (iconName) => {
 
 export default function CategoriesPage() {
   const [apiCategories, setApiCategories] = useState([]);
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     CatalogAPI.categories().then(setApiCategories).catch(() => setApiCategories([]));

@@ -14,57 +14,41 @@ import {
   Trash2,
   Loader2
 } from 'lucide-react';
-import { CatalogAPI } from '../../services/catalogAPI';
-import { toast } from 'sonner';
+import { useAuth } from '../../contexts/auth-context';
 
 export default function DashboardNotifications() {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true);
-      const data = await CatalogAPI.notifications();
-      setNotifications(data);
-    } catch (error) {
-      console.error('Erreur lors du chargement des notifications:', error);
-      toast.error('Impossible de charger vos notifications');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  const { 
+    notifications, 
+    markNotificationAsRead, 
+    markAllNotificationsAsRead, 
+    deleteNotification 
+  } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const unreadNotifications = notifications.filter(n => !n.read);
   const readNotifications = notifications.filter(n => n.read);
 
-  const markAsRead = async (id) => {
+  const handleMarkAsRead = async (id) => {
     try {
-      const updated = await CatalogAPI.markNotificationAsRead(id);
-      setNotifications(updated);
+      await markNotificationAsRead(id);
       toast.success('Notification marquée comme lue');
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
     }
   };
 
-  const markAllAsRead = async () => {
+  const handleMarkAllAsRead = async () => {
     try {
-      const updated = await CatalogAPI.markAllNotificationsAsRead();
-      setNotifications(updated);
+      await markAllNotificationsAsRead();
       toast.success('Toutes les notifications sont marquées comme lues');
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
     }
   };
 
-  const deleteNotification = async (id) => {
+  const handleDeleteNotification = async (id) => {
     try {
-      const updated = await CatalogAPI.deleteNotification(id);
-      setNotifications(updated);
+      await deleteNotification(id);
       toast.success('Notification supprimée');
     } catch (error) {
       toast.error('Erreur lors de la suppression');
@@ -128,7 +112,7 @@ export default function DashboardNotifications() {
             </Link>
           )}
           {!notification.read && (
-            <Button variant="ghost" size="sm" onClick={() => markAsRead(notification.id)}>
+            <Button variant="ghost" size="sm" onClick={() => handleMarkAsRead(notification.id)}>
               <Check className="mr-1 h-4 w-4" />
               Marquer comme lu
             </Button>
@@ -137,7 +121,7 @@ export default function DashboardNotifications() {
             variant="ghost"
             size="sm"
             className="text-muted-foreground hover:text-destructive"
-            onClick={() => deleteNotification(notification.id)}
+            onClick={() => handleDeleteNotification(notification.id)}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -145,14 +129,6 @@ export default function DashboardNotifications() {
       </div>
     </div>
   );
-
-  if (loading && notifications.length === 0) {
-    return (
-      <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -168,7 +144,7 @@ export default function DashboardNotifications() {
             </p>
           </div>
           {unreadNotifications.length > 0 && (
-            <Button variant="outline" onClick={markAllAsRead}>
+            <Button variant="outline" onClick={handleMarkAllAsRead}>
               <CheckCheck className="mr-2 h-4 w-4" />
               Tout marquer comme lu
             </Button>

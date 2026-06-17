@@ -6,6 +6,12 @@ import { cn } from '../../lib/utils';
 export function PricingPlansSection({ plans, type = 'tool' }) {
   if (!plans || plans.length === 0) return null;
 
+  function formatTokenUnit(unit) {
+    if (unit >= 1_000_000) return (unit / 1_000_000).toFixed(0) + 'M';
+    if (unit >= 1_000) return (unit / 1_000).toFixed(0) + 'k';
+    return unit.toString();
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -22,7 +28,7 @@ export function PricingPlansSection({ plans, type = 'tool' }) {
                 <CardTitle className="text-lg">{plan.name}</CardTitle>
                 <div className="mt-2">
                   <span className="text-2xl font-bold">{plan.price}€</span>
-                  <span className="text-muted-foreground"> / {plan.period === 'month' ? 'mois' : 'an'}</span>
+                  <span className="text-muted-foreground"> / {plan.period === 'month' || plan.period === 'mois' ? 'mois' : 'an'}</span>
                 </div>
                 {plan.description && <CardDescription className="mt-1">{plan.description}</CardDescription>}
               </CardHeader>
@@ -33,7 +39,7 @@ export function PricingPlansSection({ plans, type = 'tool' }) {
                     <div className="space-y-2">
                       {plan.availableModels.map(model => (
                         <div key={model.modelId} className="border rounded-lg p-2 text-sm bg-muted/20">
-                          <p className="font-medium">{model.modelId}</p>
+                          <p className="font-medium">{model.name}</p>
                           {model.limits && <p className="text-xs text-muted-foreground mt-0.5">Limite : {model.limits}</p>}
                           {model.features && model.features.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
@@ -43,6 +49,27 @@ export function PricingPlansSection({ plans, type = 'tool' }) {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+                {type === 'model' && (
+                  <div className="text-sm text-muted-foreground">
+                    {(plan.inputPrice !== null || plan.outputPrice !== null) ? (
+                      <>
+                        {plan.inputPrice !== null && (
+                          <div>Entrée : {plan.inputPrice} {plan.currency} / {formatTokenUnit(plan.priceUnit)} tokens</div>
+                        )}
+                        {plan.outputPrice !== null && (
+                          <div>Sortie : {plan.outputPrice} {plan.currency} / {formatTokenUnit(plan.priceUnit)} tokens</div>
+                        )}
+                      </>
+                    ) : (
+                      <div>Prix à l’utilisation non renseigné</div>
+                    )}
+                    {plan.limits ? (
+                      <p className="text-xs text-muted-foreground mt-1">Limite : {plan.limits}</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-1">Aucune limite spécifiée</p>
+                    )}
                   </div>
                 )}
                 {plan.features && plan.features.length > 0 && (

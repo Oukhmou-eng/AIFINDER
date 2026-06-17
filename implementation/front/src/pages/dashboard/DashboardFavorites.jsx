@@ -12,43 +12,52 @@ import {
 import { Heart, Search, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { ToolCard } from '../../components/tools/tool-card';
 import { useAuth } from '../../contexts/auth-context';
-import { CatalogAPI } from '../../services/catalogAPI';
+import CatalogAPI from '../../services/catalogAPI';
 
 export default function DashboardFavorites() {
   const { user } = useAuth();
-  const [favoriteTools, setFavoriteTools] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const favorites = user?.favorites || [];
+  const [tools, setTools] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    const fetchFavorites = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        setLoading(true);
-        const tools = await CatalogAPI.myFavorites();
-        setFavoriteTools(tools);
+        const [toolsData, catsData] = await Promise.all([
+          CatalogAPI.tools(),
+          CatalogAPI.categories()
+        ]);
+        setTools(toolsData);
+        setCategories(catsData);
       } catch (error) {
-        console.error('Erreur lors de la récupération des favoris:', error);
+        console.error('Erreur lors du chargement des données:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-
-    fetchFavorites();
+    fetchData();
   }, []);
+
+  // Récupération des outils favoris
+  const favoriteTools = tools.filter((tool) => favorites.map(String).includes(String(tool.id)));
 
   // Filtrage et tri
   const filteredTools = favoriteTools
     .filter((tool) => {
       const matchesSearch =
         tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tool.description.toLowerCase().includes(searchQuery.toLowerCase());
+        tool.description?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesCategory =
         categoryFilter === 'all' || 
-        (tool.categories && tool.categories.some(cat => cat.id === categoryFilter || cat.slug === categoryFilter));
-      
+        tool.categories?.some(cat => String(cat.id) === String(categoryFilter)) ||
+        String(tool.categoryId) === String(categoryFilter);
+        
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
@@ -58,26 +67,20 @@ export default function DashboardFavorites() {
         case 'rating':
           return b.rating - a.rating;
         case 'reviews':
-          return b.reviewCount - a.reviewCount;
+          return (b.reviewCount || 0) - (a.reviewCount || 0);
         default: // 'recent'
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
       }
     });
 
   // Catégories uniques parmi les favoris
-  const categoriesMap = new Map();
-  favoriteTools.forEach(tool => {
-    if (tool.categories) {
-      tool.categories.forEach(cat => {
-        categoriesMap.set(cat.id, cat.name);
-      });
-    }
-  });
-  const uniqueCategories = Array.from(categoriesMap.entries()).map(([id, name]) => ({ id, name }));
+  const uniqueCategoryIds = [...new Set(favoriteTools.flatMap((tool) => 
+    tool.categories?.map(c => String(c.id)) || (tool.categoryId ? [String(tool.categoryId)] : [])
+  ))];
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
+      <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -89,7 +92,7 @@ export default function DashboardFavorites() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Mes favoris</h1>
         <p className="text-muted-foreground">
-          {favoriteTools.length} outil{favoriteTools.length > 1 ? 's' : ''} enregistré{favoriteTools.length > 1 ? 's' : ''}
+          {favorites.length} outil{favorites.length > 1 ? 's' : ''} enregistré{favorites.length > 1 ? 's' : ''}
         </p>
       </div>
 
@@ -106,17 +109,20 @@ export default function DashboardFavorites() {
         </div>
         <div className="flex gap-2">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[200px]">
               <SlidersHorizontal className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Catégorie" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes les catégories</SelectItem>
-              {uniqueCategories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                </SelectItem>
-              ))}
+              {uniqueCategoryIds.map((catId) => {
+                const category = categories.find(c => String(c.id) === catId);
+                return (
+                  <SelectItem key={catId} value={catId}>
+                    {category?.name || `Catégorie ${catId}`}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>

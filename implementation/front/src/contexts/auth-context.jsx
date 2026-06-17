@@ -7,10 +7,12 @@ const AuthContext = createContext(undefined);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const isAuthenticated = user !== null;
   const isAdmin = user?.role === 'admin';
   const unreadNotificationCount = notifications.filter(n => !n.read).length;
+
 
   useEffect(() => {
     let mounted = true;
@@ -26,13 +28,18 @@ export function AuthProvider({ children }) {
       .then((items) => {
         if (mounted) setNotifications(items);
       })
-      .catch(() => {
-        AuthAPI.logout();
+      .catch((error) => {
+        // Ne déconnecter que si l'erreur est une non-authentification (401) ou token absent
+        if (error?.response?.status === 401 || !getToken()) {
+          AuthAPI.logout();
+        }
+        // Sinon, on garde l'utilisateur tel quel (pas de token, pas de user)
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
       });
 
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   const login = useCallback(async (email, password) => {
@@ -52,6 +59,14 @@ export function AuthProvider({ children }) {
       return data.user?.role === 'admin' ? 'admin' : 'user';
     }
     return false;
+  }, []);
+
+  const removeFromCollection = useCallback(async (collectionId, toolId) => {
+    const collections = await CatalogAPI.removeToolFromCollection(collectionId, toolId);
+    setUser(prev => {
+      if (!prev) return null;
+      return { ...prev, collections };
+    });
   }, []);
 
   const logout = useCallback(() => {
@@ -119,28 +134,38 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
-  const removeFromCollection = useCallback(async (collectionId, toolId) => {
-    const collections = await CatalogAPI.removeToolFromCollection(collectionId, toolId);
-    setUser(prev => {
-      if (!prev) return null;
-      return { ...prev, collections };
-    });
+  const markNotificationAsRead = useCallback(async (notificationId) => {
+    try {
+      const updated = await CatalogAPI.markNotificationAsRead(notificationId);
+      setNotifications(updated);
+    } catch (error) {
+      console.error('Erreur lors du marquage de la notification:', error);
+    }
   }, []);
 
-  const markNotificationAsRead = useCallback((notificationId) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-    );
+  const markAllNotificationsAsRead = useCallback(async () => {
+    try {
+      const updated = await CatalogAPI.markAllNotificationsAsRead();
+      setNotifications(updated);
+    } catch (error) {
+      console.error('Erreur lors du marquage de toutes les notifications:', error);
+    }
   }, []);
 
-  const markAllNotificationsAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const deleteNotification = useCallback(async (notificationId) => {
+    try {
+      const updated = await CatalogAPI.deleteNotification(notificationId);
+      setNotifications(updated);
+    } catch (error) {
+      console.error('Erreur lors de la suppression de la notification:', error);
+    }
   }, []);
 
   const value = {
     user,
     isAuthenticated,
     isAdmin,
+    isLoading: loading,
     notifications,
     unreadNotificationCount,
     login,
@@ -158,6 +183,7 @@ export function AuthProvider({ children }) {
     removeFromCollection,
     markNotificationAsRead,
     markAllNotificationsAsRead,
+    deleteNotification,
   };
 
   return (

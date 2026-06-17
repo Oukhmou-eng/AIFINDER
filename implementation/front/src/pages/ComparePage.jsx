@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   X, Star, Check, Minus, ArrowLeft, Plus, 
   Filter, Eye, EyeOff, TrendingUp, Award, 
   BarChart3, Cpu, Globe, Smartphone, Monitor, 
-  Code, Image, Mic, Video, FileText, Brain
+  Code, Image, Mic, Video, FileText, Brain,
+  Loader2
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -35,9 +36,9 @@ import {
 import { Header } from '../components/layout/header';
 import { Footer } from '../components/layout/footer';
 import { useCompare } from '../contexts/compare-context';
-import { getModelById, getCategoryById, tools } from '../lib/mock-data';
 import { cn } from '../lib/utils';
 import Sidebar from '../components/layout/sidebar';
+import CatalogAPI from '../services/catalogAPI';
 
 const pricingColors = {
   free: 'bg-success/10 text-success border-success/20',
@@ -78,13 +79,54 @@ export default function ComparePage() {
   });
   const [showAddToolSheet, setShowAddToolSheet] = useState(false);
   const [selectedToolToAdd, setSelectedToolToAdd] = useState('');
+  const [availableTools, setAvailableTools] = useState([]);
+  const [allTools, setAllTools] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [models, setModels] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Outils disponibles (non déjà dans la comparaison)
-  const availableTools = tools.filter(t => !compareTools.some(ct => ct.id === t.id));
+  // Chargement des données depuis l'API
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [toolsData, categoriesData, modelsData] = await Promise.all([
+          CatalogAPI.tools(),
+          CatalogAPI.categories(),
+          CatalogAPI.models()
+        ]);
+        setAllTools(toolsData);
+        setCategories(categoriesData);
+        setModels(modelsData);
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Mise à jour des outils disponibles (ceux qui ne sont pas déjà dans la comparaison)
+  useEffect(() => {
+    if (allTools.length > 0) {
+      const filtered = allTools.filter(tool => !compareTools.some(ct => ct.id === tool.id));
+      setAvailableTools(filtered);
+    }
+  }, [allTools, compareTools]);
+
+  // Fonctions utilitaires pour récupérer les noms
+  const getCategoryById = (categoryId) => {
+    return categories.find(cat => cat.id === categoryId);
+  };
+
+  const getModelById = (modelId) => {
+    return models.find(model => model.id === modelId);
+  };
 
   const handleAddTool = () => {
     if (selectedToolToAdd && canAddTool) {
-      const tool = tools.find(t => t.id === selectedToolToAdd);
+      const tool = allTools.find(t => t.id === selectedToolToAdd);
       if (tool) {
         addToolToCompare(tool);
         setSelectedToolToAdd('');
@@ -92,6 +134,21 @@ export default function ComparePage() {
       }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex flex-1">
+          <Sidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </main>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (compareTools.length === 0) {
     return (
@@ -225,7 +282,7 @@ export default function ComparePage() {
                 </Button>
               </Link>
               <div className="flex items-center gap-2">
-                <Sheet>
+                <Sheet open={showAddToolSheet} onOpenChange={setShowAddToolSheet}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="sm" disabled={!canAddTool}>
                       <Plus className="mr-2 h-4 w-4" />
@@ -270,7 +327,6 @@ export default function ComparePage() {
                   {compareTools.length} outil{compareTools.length > 1 ? 's' : ''} en comparaison
                 </p>
               </div>
-              {/* Filtres (toggle sections) */}
               <div className="flex flex-wrap gap-2">
                 <Button
                   variant={visibleSections.general ? "default" : "outline"}
@@ -318,7 +374,7 @@ export default function ComparePage() {
             {/* En-têtes des outils */}
             <div className="grid gap-4 mb-8" style={{ gridTemplateColumns: `repeat(${compareTools.length}, 1fr)` }}>
               {compareTools.map((tool) => {
-                const category = getCategoryById(tool.categoryId);
+                const category = getCategoryById(tool.categoryIds?.[0]);
                 return (
                   <Card key={tool.id} className="relative">
                     <Button
@@ -331,9 +387,13 @@ export default function ComparePage() {
                     </Button>
                     <CardContent className="p-4 text-center">
                       <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-border mb-3">
-                        <span className="text-2xl font-bold text-primary">
-                          {tool.name.charAt(0)}
-                        </span>
+                        {tool.logo ? (
+                          <img src={tool.logo} alt={tool.name} className="max-w-full max-h-full object-contain p-1" />
+                        ) : (
+                          <span className="text-2xl font-bold text-primary">
+                            {tool.name.charAt(0)}
+                          </span>
+                        )}
                       </div>
                       <Link to={`/tools/${tool.slug}`}>
                         <h3 className="font-semibold text-foreground hover:text-primary transition-colors">
@@ -379,7 +439,7 @@ export default function ComparePage() {
                             value={
                               <div className="flex items-center justify-center gap-1">
                                 <Star className="h-4 w-4 fill-warning text-warning" />
-                                <span className="font-semibold">{tool.rating.toFixed(1)}</span>
+                                <span className="font-semibold">{tool.rating?.toFixed(1) || '0'}</span>
                               </div>
                             }
                             best={tool.rating === bestRating}
@@ -391,7 +451,7 @@ export default function ComparePage() {
                         {compareTools.map((tool) => (
                           <CompareCell
                             key={tool.id}
-                            value={tool.reviewCount.toLocaleString()}
+                            value={tool.reviewCount?.toLocaleString() || '0'}
                             best={tool.reviewCount === bestReviewCount}
                           />
                         ))}
@@ -401,7 +461,7 @@ export default function ComparePage() {
                         {compareTools.map((tool) => (
                           <CompareCell
                             key={tool.id}
-                            value={`${tool.trendingScore}/100`}
+                            value={`${tool.trendingScore || 0}/100`}
                             best={tool.trendingScore === bestTrending}
                           />
                         ))}
@@ -410,8 +470,8 @@ export default function ComparePage() {
                         <TableCell className="font-medium">Tarification</TableCell>
                         {compareTools.map((tool) => (
                           <TableCell key={tool.id} className="text-center">
-                            <Badge variant="outline" className={pricingColors[tool.pricing]}>
-                              {pricingLabels[tool.pricing]}
+                            <Badge variant="outline" className={pricingColors[tool.pricing] || pricingColors.free}>
+                              {pricingLabels[tool.pricing] || 'Gratuit'}
                             </Badge>
                           </TableCell>
                         ))}
@@ -459,7 +519,7 @@ export default function ComparePage() {
                           </TableCell>
                           {compareTools.map((tool) => (
                             <TableCell key={tool.id}>
-                              <FeatureCheck has={tool.functions.includes(func)} />
+                              <FeatureCheck has={tool.functions?.includes(func)} />
                             </TableCell>
                           ))}
                         </TableRow>
@@ -486,7 +546,7 @@ export default function ComparePage() {
                           </TableCell>
                           {compareTools.map((tool) => (
                             <TableCell key={tool.id}>
-                              <FeatureCheck has={tool.platforms.includes(platform)} />
+                              <FeatureCheck has={tool.platforms?.includes(platform)} />
                             </TableCell>
                           ))}
                         </TableRow>
@@ -507,7 +567,7 @@ export default function ComparePage() {
                         {compareTools.map((tool) => (
                           <TableCell key={tool.id} className="text-center">
                             <div className="flex flex-col gap-1">
-                              {tool.aiModels.map((m) => {
+                              {tool.aiModels?.map((m) => {
                                 const model = getModelById(m.modelId);
                                 return (
                                   <Badge

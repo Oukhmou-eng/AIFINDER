@@ -18,6 +18,7 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { ToolCard } from '../../components/tools/tool-card';
 import { CatalogAPI } from '../../services/catalogAPI';
+import AuthAPI from '../../services/authAPI';
 
 // Composant simple pour les cartes statistiques
 function UserStatCard({ title, value, icon: Icon, variant, description }) {
@@ -53,13 +54,22 @@ export default function DashboardOverview() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [favs, props, notifs, revs] = await Promise.all([
-          CatalogAPI.myFavorites(),
-          CatalogAPI.myProposals(),
+        const [favs, notifs] = await Promise.all([
+          CatalogAPI.tools(),
           CatalogAPI.notifications(),
-          CatalogAPI.myReviews()
         ]);
-        setFavoriteTools(favs.slice(0, 4));
+
+
+        const props = await CatalogAPI.myProposals(user?.id);
+        const revs = await AuthAPI.userComments();
+
+        console.log('Outils récupérés:', favs);
+        console.log('Notifications récupérées:', notifs);
+        console.log('Avis récupérés:', revs);
+        
+        const favIds = user?.favorites || []; 
+        setFavoriteTools(favs.filter(t => favIds.map(String).includes(String(t.id))).slice(0, 4));
+        console.log('Outils chargés:', favs);
         setProposedTools(props.slice(0, 5));
         setNotifications(notifs.filter(n => !n.read).slice(0, 3));
         setReviews(revs);
@@ -72,6 +82,7 @@ export default function DashboardOverview() {
 
     fetchDashboardData();
   }, []);
+ 
 
   const stats = {
     favoritesCount: user?.favorites?.length || favoriteTools.length,
@@ -80,6 +91,7 @@ export default function DashboardOverview() {
     proposedToolsCount: proposedTools.length,
     pendingTools: proposedTools.filter(p => p.status === 'pending').length,
   };
+  console.log('comment nbr:', stats.commentsCount);
 
   if (loading) {
     return (

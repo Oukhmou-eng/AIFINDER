@@ -60,16 +60,16 @@ class UserController
         }
 
         $pdo = require __DIR__ . '/../config/database.php';
-        $stmt = $pdo->prepare("SELECT mot_de_passe FROM utilisateur WHERE idU = :id");
+        $stmt = $pdo->prepare("SELECT MOT_DE_PASSE FROM UTILISATEUR WHERE IDU = :id");
         $stmt->execute(['id' => $auth['id']]);
         $user = $stmt->fetch();
 
-        if (!$user || !password_verify($currentPassword, $user['mot_de_passe'])) {
+        if (!$user || !password_verify($currentPassword, $user['MOT_DE_PASSE'])) {
             fail('Mot de passe actuel incorrect');
         }
 
         $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("UPDATE utilisateur SET mot_de_passe = :pass WHERE idU = :id");
+        $stmt = $pdo->prepare("UPDATE UTILISATEUR SET MOT_DE_PASSE = :pass WHERE IDU = :id");
         $stmt->execute(['pass' => $hashed, 'id' => $auth['id']]);
 
         ok([], 'Mot de passe mis a jour avec succes');
@@ -103,7 +103,7 @@ class UserController
     {
         $auth = $this->currentUserPayload($data);
         $favoriteIds = $this->users->favorites($auth['id']);
-        
+
         if (empty($favoriteIds)) {
             ok(['tools' => []]);
             return;
@@ -125,32 +125,41 @@ class UserController
         $pdo = require __DIR__ . '/../config/database.php';
 
         $stmt = $pdo->prepare("
-            SELECT s.id_soum AS id, s.statut, s.note_admin AS adminNote, s.created_at AS createdAt,
-                   o.idOut AS toolId, o.nom AS toolName, o.slug AS toolSlug,
-                   o.statut AS toolStatus, o.description_courte AS toolDescription,
-                   o.pricing_type AS toolPricing, o.site_url AS toolUrl, o.logo_url AS toolLogo
-            FROM soumission_outil s
-            LEFT JOIN outils o ON o.idOut = s.idOut
-            WHERE s.idU = :user_id
-            ORDER BY s.created_at DESC
-        ");
+        SELECT 
+            s.ID_SOUMISSION AS id,
+            s.STATUT AS statut,
+            s.NOTE_ADMIN AS adminNote,
+            s.DATE_MISE_A_JOUR AS createdAt,
+            o.IDOUT AS toolId,
+            o.NOM AS toolName,
+            o.SLUG AS toolSlug,
+            o.STATUT AS toolStatus,
+            o.DESCRIPTION_COURTE AS toolDescription,
+            o.TYPE_TARIF AS toolPricing,
+            o.SITE_URL AS toolUrl,
+            o.LOGO_URL AS toolLogo
+        FROM SOUMISSION_OUTIL s
+        LEFT JOIN OUTILS o ON o.IDOUT = s.IDOUT
+        WHERE s.IDU = :user_id
+        ORDER BY s.DATE_MISE_A_JOUR DESC
+    ");
         $stmt->execute(['user_id' => $auth['id']]);
 
         $submissions = array_map(function ($row) {
             $dbStatus = $row['statut'];
             return [
-                'id'              => (string) $row['id'],
-                'status'          => $dbStatus === 'en_attente' ? 'pending' : ($dbStatus === 'approuve' ? 'approved' : 'rejected'),
-                'adminNote'       => $row['adminNote'],
-                'createdAt'       => $row['createdAt'],
-                'toolId'          => (string) $row['toolId'],
-                'toolName'        => $row['toolName'],
-                'toolSlug'        => $row['toolSlug'],
-                'toolStatus'      => $row['toolStatus'],
+                'id' => (string) $row['id'],
+                'status' => $dbStatus === 'en_attente' ? 'pending' : ($dbStatus === 'approuve' ? 'approved' : 'rejected'),
+                'adminNote' => $row['adminNote'],
+                'createdAt' => $row['createdAt'],
+                'toolId' => (string) $row['toolId'],
+                'toolName' => $row['toolName'],
+                'toolSlug' => $row['toolSlug'],
+                'toolStatus' => $row['toolStatus'],
                 'toolDescription' => $row['toolDescription'],
-                'toolPricing'     => $row['toolPricing'],
-                'toolUrl'         => $row['toolUrl'],
-                'toolLogo'        => $row['toolLogo'],
+                'toolPricing' => $row['toolPricing'],
+                'toolUrl' => $row['toolUrl'],
+                'toolLogo' => $row['toolLogo'],
             ];
         }, $stmt->fetchAll());
 
@@ -287,6 +296,12 @@ class UserController
     public function logout(array $data)
     {
         ok([], 'Deconnexion reussie');
+    }
+
+    public function userComments(array $data)
+    {
+        $auth = $this->currentUserPayload($data);
+        ok(['comments' => $this->users->comments($auth['id'])]);
     }
 
     private function currentUserPayload(array $data)

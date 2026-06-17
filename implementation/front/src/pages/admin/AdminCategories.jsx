@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -27,13 +28,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
-import { 
-  Search, 
-  Plus, 
-  MoreHorizontal, 
-  Pencil, 
-  Trash2, 
-  Layers, 
+import {
+  Search,
+  Plus,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Layers,
   Loader2,
   Zap,
   Cpu,
@@ -45,7 +46,8 @@ import {
   Globe,
   Shield,
   Search as SearchIcon,
-  HelpCircle
+  HelpCircle,
+  Eye
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { toast } from 'sonner';
@@ -120,16 +122,18 @@ export default function AdminCategories() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
-  
+
   const [editMode, setEditMode] = useState(false);
   const [formName, setFormName] = useState('');
   const [formSlug, setFormSlug] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formIcon, setFormIcon] = useState('Layers');
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const navigate = useNavigate();
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -156,9 +160,9 @@ export default function AdminCategories() {
     );
   }, [categoriesList, searchQuery]);
 
-  const totalTools = useMemo(() => 
+  const totalTools = useMemo(() =>
     categoriesList.reduce((sum, cat) => sum + (cat.toolCount || 0), 0)
-  , [categoriesList]);
+    , [categoriesList]);
 
   const resetForm = () => {
     setFormName('');
@@ -214,7 +218,7 @@ export default function AdminCategories() {
       }
 
       const savedCategory = result.category;
-      
+
       setCategoriesList((current) => {
         if (editMode) {
           return current.map((cat) =>
@@ -376,6 +380,13 @@ export default function AdminCategories() {
                                 Modifier
                               </DropdownMenuItem>
                               <DropdownMenuItem
+                                onClick={() => navigate(`/categories/${category.slug}`)}
+                                className="cursor-pointer"
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                Voir détails
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
                                 onClick={() => confirmDelete(category)}
                                 className="text-destructive cursor-pointer focus:bg-destructive/10 focus:text-destructive"
                               >
@@ -409,7 +420,7 @@ export default function AdminCategories() {
                 : 'Ajoutez une nouvelle catégorie pour organiser votre catalogue.'}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-6 py-4">
             <div className="grid gap-2">
               <Label htmlFor="catName" className="text-sm font-bold">Nom de la catégorie *</Label>
@@ -421,7 +432,7 @@ export default function AdminCategories() {
                 autoFocus
               />
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="catSlug" className="text-sm font-bold">Identifiant (Slug)</Label>
               <Input
@@ -495,10 +506,10 @@ export default function AdminCategories() {
           <DialogHeader>
             <DialogTitle className="text-xl">Êtes-vous absolument sûr ?</DialogTitle>
             <DialogDescription>
-              La catégorie <span className="font-bold text-foreground">"{categoryToDelete?.name}"</span> sera définitivement supprimée. 
+              La catégorie <span className="font-bold text-foreground">"{categoryToDelete?.name}"</span> sera définitivement supprimée.
               {categoryToDelete?.toolCount > 0 && (
                 <span className="block mt-2 p-2 bg-destructive/10 text-destructive rounded-md border border-destructive/20 text-sm">
-                  Attention : Cette catégorie contient actuellement <span className="font-bold">{categoryToDelete.toolCount} outil(s)</span>. 
+                  Attention : Cette catégorie contient actuellement <span className="font-bold">{categoryToDelete.toolCount} outil(s)</span>.
                   Ces outils ne seront plus associés à cette catégorie.
                 </span>
               )}
@@ -508,8 +519,8 @@ export default function AdminCategories() {
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={deleting}>
               Annuler
             </Button>
-            <Button 
-              onClick={handleDelete} 
+            <Button
+              onClick={handleDelete}
               disabled={deleting}
               variant="destructive"
             >

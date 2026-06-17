@@ -23,27 +23,34 @@ class AuthController
         }
 
         $user = $this->auth->findByEmail(cleanString($data['email']));
-        if (!$user || !password_verify((string) $data['password'], $user['mot_de_passe'])) {
+
+        if (!$user) {
+            fail('Email incorrect', 401);
+        }
+        error_log("Tentative de connexion pour email: " . cleanString($data['email']));
+        error_log("Mot de passe fourni: " . (string) $data['password']);
+        
+        if (!$user || !password_verify((string) $data['password'], $user['MOT_DE_PASSE'])) {
             fail('Email ou mot de passe incorrect', 401);
         }
 
-        if ($user['statut'] !== 'actif') {
+        if ($user['STATUT'] !== 'actif') {
             fail('Compte non actif', 403);
         }
 
-        $this->auth->updateLastLogin($user['idU']);
-        $publicUser = $this->users->findById($user['idU']);
+        $this->auth->updateLastLogin($user['IDU']);
+        $publicUser = $this->users->findById($user['IDU']);
         $token = encodeToken([
-            'id' => (int) $user['idU'],
-            'email' => $user['email'],
-            'role' => $user['role'],
+            'id' => (int) $user['IDU'],
+            'email' => $user['EMAIL'],
+            'role' => $user['ROLE'],
             'iat' => time(),
         ]);
 
         ok([
             'user' => $publicUser,
             'token' => $token,
-            'redirectTo' => $user['role'] === 'admin' ? '/admin' : '/dashboard',
+            'redirectTo' => $user['ROLE'] === 'admin' ? '/admin' : '/dashboard',
         ], 'Connexion reussie');
     }
 
@@ -131,23 +138,23 @@ class AuthController
             $user = $this->auth->findByEmail($email);
         }
 
-        if ($user['statut'] !== 'actif') {
+        if ($user['STATUT'] !== 'actif') {
             fail('Compte non actif', 403);
         }
 
-        $this->auth->updateLastLogin($user['idU']);
-        $publicUser = $this->users->findById($user['idU']);
+        $this->auth->updateLastLogin($user['IDU']);
+        $publicUser = $this->users->findById($user['IDU']);
         $token = encodeToken([
-            'id' => (int) $user['idU'],
-            'email' => $user['email'],
-            'role' => $user['role'],
+            'id' => (int) $user['IDU'],
+            'email' => $user['EMAIL'],
+            'role' => $user['ROLE'],
             'iat' => time(),
         ]);
 
         ok([
             'user' => $publicUser,
             'token' => $token,
-            'redirectTo' => $user['role'] === 'admin' ? '/admin' : '/dashboard',
+            'redirectTo' => $user['ROLE'] === 'admin' ? '/admin' : '/dashboard',
         ], 'Authentification Google reussie');
     }
 }

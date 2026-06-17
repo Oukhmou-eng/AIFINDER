@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require_once '../../config/database' // adaptez le chemin vers votre connexion PDO
+require_once '../../config/database'; // adaptez le chemin vers votre connexion PDO
 
 // Récupération des paramètres
 $query = $_GET['q'] ?? '';

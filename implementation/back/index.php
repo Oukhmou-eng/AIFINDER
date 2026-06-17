@@ -2,7 +2,10 @@
 header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit(); }
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 // ... le reste
 
 session_start();
@@ -27,17 +30,23 @@ $routes = [
     'featured_tools' => ['HomeController', 'featuredTools', ['GET']],
     'tool' => ['HomeController', 'tool', ['GET']],
     'categories' => ['HomeController', 'categories', ['GET']],
+    'tags' => ['HomeController', 'tags', ['GET']],
     'models' => ['HomeController', 'models', ['GET']],
     'model' => ['HomeController', 'model', ['GET']],
     'reviews' => ['HomeController', 'reviews', ['GET']],
+    'comments' => ['HomeController', 'comments', ['GET']],
+    'add_comment' => ['HomeController', 'addComment', ['POST']],
+    'platforms' => ['HomeController', 'platforms', ['GET']],
+    'delete_comment' => ['HomeController', 'deleteComment', ['POST', 'DELETE']],
     'create_review' => ['HomeController', 'createReview', ['POST']],
     'report' => ['HomeController', 'report', ['POST']],
     'stats' => ['HomeController', 'stats', ['GET']],
     'searchTools' => ['HomeController', 'searchTools', ['GET']],
-    
+    'user_comments' => ['UserController', 'userComments', ['GET']],
+
     'resource' => ['ResourceController', 'list', ['GET']],
     'resource_item' => ['ResourceController', 'item', ['GET']],
-    
+
 
     'login' => ['AuthController', 'login', ['POST']],
     'register' => ['AuthController', 'register', ['POST']],
@@ -68,30 +77,38 @@ $routes = [
     'change_password' => ['UserController', 'changePassword', ['POST']],
 
     'admin_dashboard' => ['AdminController', 'dashboard', ['GET']],
+    'admin_update_tool' => ['AdminController', 'updateTool', ['POST']],
     'admin_users' => ['AdminController', 'users', ['GET']],
     'admin_tools' => ['AdminController', 'tools', ['GET']],
     'admin_categories' => ['AdminController', 'categories', ['GET']],
+    'admin_user_reviews' => ['AdminController', 'userReviews', ['GET']],
+    'admin_user_submissions' => ['AdminController', 'userSubmissions', ['GET']],
     'admin_create_category' => ['AdminController', 'createCategory', ['POST']],
     'admin_update_category' => ['AdminController', 'updateCategory', ['PUT', 'PATCH', 'POST']],
     'admin_delete_category' => ['AdminController', 'deleteCategory', ['DELETE', 'POST']],
-    
+    'admin_add_tool_to_category' => ['AdminController', 'addToolToCategory', ['POST']],
+    'admin_remove_tool_from_category' => ['AdminController', 'removeToolFromCategory', ['POST']],
+
     'admin_models' => ['AdminController', 'models', ['GET']],
+    'admin_providers' => ['AdminController', 'providers', ['GET']],
+    'admin_features' => ['AdminController', 'features', ['GET']],
+    'admin_plans' => ['AdminController', 'plans', ['GET']],
     'admin_create_model' => ['AdminController', 'createModel', ['POST']],
     'admin_update_model' => ['AdminController', 'updateModel', ['PUT', 'PATCH', 'POST']],
     'admin_delete_model' => ['AdminController', 'deleteModel', ['DELETE', 'POST']],
-    
+
     'admin_notifications' => ['AdminController', 'notifications', ['GET']],
     'admin_send_notification' => ['AdminController', 'sendNotification', ['POST']],
     'admin_delete_notification' => ['AdminController', 'deleteNotification', ['DELETE', 'POST']],
-    
+
     'admin_reports' => ['AdminController', 'reports', ['GET']],
     'admin_update_report_status' => ['AdminController', 'updateReportStatus', ['POST', 'PUT']],
 
-    'admin_submissions'   => ['AdminController', 'submissions',   ['GET']],
-    'admin_approve_tool'  => ['AdminController', 'approveTool',   ['POST']],
-    'admin_reject_tool'   => ['AdminController', 'rejectTool',    ['POST']],
-    'admin_delete_tool'   => ['AdminController', 'deleteTool',    ['DELETE', 'POST']],
-    'admin_create_tool'   => ['AdminController', 'createTool',    ['POST']],
+    'admin_submissions' => ['AdminController', 'submissions', ['GET']],
+    'admin_approve_tool' => ['AdminController', 'approveTool', ['POST']],
+    'admin_reject_tool' => ['AdminController', 'rejectTool', ['POST']],
+    'admin_delete_tool' => ['AdminController', 'deleteTool', ['DELETE', 'POST']],
+    'admin_create_tool' => ['AdminController', 'createTool', ['POST']],
     'admin_validate_tool' => ['ValidationController', 'validateTool', ['POST']],
 ];
 

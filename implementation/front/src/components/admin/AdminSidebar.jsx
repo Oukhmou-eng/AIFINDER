@@ -55,7 +55,7 @@ export default function AdminSidebar() {
               <Sparkles className="h-6 w-6 text-sidebar-primary-foreground" />
             </div>
             <div className="flex flex-col">
-              <span className="font-semibold text-lg">AI Tools</span>
+              <span className="font-semibold text-lg">AI Finder</span>
               <span className="text-xs text-sidebar-foreground/60">Admin Panel</span>
             </div>
           </div>
@@ -116,12 +116,12 @@ export default function AdminSidebar() {
       <div className="border-t border-sidebar-border p-4">
         <div className={cn("flex items-center gap-3", collapsed && "flex-col")}>
           <Avatar className="h-9 w-9">
-            <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="Admin" />
-            <AvatarFallback>AD</AvatarFallback>
+            <AvatarImage src={user?.avatar} alt={user?.name} />
+            <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">Emma Petit</p>
+              <p className="text-sm font-medium truncate">{user?.name}</p>
               <p className="text-xs text-sidebar-foreground/60 truncate">Administrateur</p>
             </div>
           )}

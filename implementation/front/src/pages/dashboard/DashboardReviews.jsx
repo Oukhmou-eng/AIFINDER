@@ -29,81 +29,75 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAuth } from '../../contexts/auth-context';
-import { CatalogAPI } from '../../services/catalogAPI';
+import AuthAPI from '../../services/authAPI';
+import CatalogAPI from '../../services/catalogAPI';
 import { toast } from 'sonner';
 
 export default function DashboardReviews() {
   const { user } = useAuth();
   const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingComment, setEditingComment] = useState(null);
   const [editContent, setEditContent] = useState('');
-  const [editRating, setEditRating] = useState(0);
   const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
-    const fetchReviews = async () => {
+    const fetchComments = async () => {
+      setIsLoading(true);
       try {
-        setLoading(true);
-        const data = await CatalogAPI.myReviews();
+        const data = await AuthAPI.userComments();
         setComments(data);
       } catch (error) {
-        console.error('Erreur lors du chargement des avis:', error);
-        toast.error('Impossible de charger vos avis');
+        console.error('Erreur commentaires:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-    fetchReviews();
+    fetchComments();
   }, []);
 
-  const handleEdit = (comment) => {
-    setEditingComment(comment.id);
-    setEditContent(comment.comment);
-    setEditRating(comment.rating);
+  const handleEdit = (commentId, content) => {
+    setEditingComment(commentId);
+    setEditContent(content);
   };
 
   const handleSaveEdit = async () => {
     if (!editingComment) return;
     try {
-      const updatedReviews = await CatalogAPI.updateReview(editingComment, {
-        comment: editContent,
-        rating: editRating
-      });
-      setComments(updatedReviews);
+      // Pour l'instant on utilise addComment sans parentId pour "écraser" ou on pourrait avoir un updateComment
+      // Mais ici on simule la mise à jour locale car l'API update_comment n'est pas encore faite.
+      // Dans une version complète, on ferait CatalogAPI.updateComment(...)
+      toast.info('La modification sera disponible prochainement');
       setEditingComment(null);
-      setEditContent('');
-      toast.success('Avis mis à jour');
     } catch (error) {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error('Erreur modification');
     }
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      const updatedReviews = await CatalogAPI.deleteReview(deleteId);
-      setComments(updatedReviews);
+      await CatalogAPI.deleteComment(deleteId);
+      setComments(prev => prev.filter(c => c.id !== deleteId));
       setDeleteId(null);
       toast.success('Avis supprimé');
     } catch (error) {
-      toast.error('Erreur lors de la suppression');
+      toast.error('Erreur suppression');
     }
   };
 
-  const renderStars = (rating, interactive = false) => {
+  const renderStars = (rating) => {
     return Array.from({ length: 5 }).map((_, i) => (
       <Star
         key={i}
-        className={`h-4 w-4 ${i < rating ? 'fill-warning text-warning' : 'text-muted-foreground/30'} ${interactive ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
-        onClick={() => interactive && setEditRating(i + 1)}
+        className={`h-4 w-4 ${i < rating ? 'fill-warning text-warning' : 'text-muted-foreground/30'}`}
       />
     ));
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
+      <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -150,8 +144,8 @@ export default function DashboardReviews() {
                       </Avatar>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{user?.name}</span>
-                          <Badge variant="outline" className="text-xs">Vous</Badge>
+                          <span className="font-medium">Vous</span>
+                          <Badge variant="outline" className="text-xs">Auteur</Badge>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>Sur</span>
@@ -174,7 +168,7 @@ export default function DashboardReviews() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(comment)}>
+                        <DropdownMenuItem onClick={() => handleEdit(comment.id, comment.content)}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Modifier
                         </DropdownMenuItem>
@@ -190,11 +184,11 @@ export default function DashboardReviews() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {/* Note par étoiles */}
-                  <div className="flex items-center gap-1">
-                    {editingComment === comment.id ? renderStars(editRating, true) : renderStars(comment.rating)}
-                    <span className="ml-2 text-sm font-medium">{editingComment === comment.id ? editRating : comment.rating}/5</span>
-                  </div>
+                  {/* Note par étoiles (fictive si on n'a pas séparé Avis et Commentaires en base) */}
+                  {/* <div className="flex items-center gap-1">
+                    {renderStars(comment.rating || 5)}
+                    <span className="ml-2 text-sm font-medium">{comment.rating || 5}/5</span>
+                  </div> */}
 
                   {/* Contenu de l'avis (modifiable) */}
                   {editingComment === comment.id ? (
@@ -214,33 +208,7 @@ export default function DashboardReviews() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-foreground">{comment.comment}</p>
-                  )}
-
-                  {/* Réponses (si existantes) */}
-                  {comment.replies && comment.replies.length > 0 && (
-                    <div className="mt-4 space-y-3 border-l-2 border-border pl-4">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        {comment.replies.length} réponse{comment.replies.length > 1 ? 's' : ''}
-                      </p>
-                      {comment.replies.map((reply) => (
-                        <div key={reply.id} className="flex gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={reply.userAvatar} alt={reply.userName} />
-                            <AvatarFallback>{reply.userName.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">{reply.userName}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(reply.createdAt).toLocaleDateString('fr-FR')}
-                              </span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{reply.comment}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm text-foreground">{comment.content}</p>
                   )}
                 </CardContent>
               </Card>

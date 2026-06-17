@@ -1,6 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import * as Icons from 'lucide-react';
+import {
+  Search,
+  ArrowRight,
+  Sparkles,
+  TrendingUp,
+  Star,
+  Zap,
+  Code,
+  Image as ImageIcon,
+  MessageSquare,
+  Mic,
+  Video,
+  PenLine,
+} from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
@@ -11,35 +25,111 @@ import { ToolCard } from '../components/tools/tool-card';
 import {
   getFeaturedTools,
   getTrendingTools,
-  categories,
-  tools,
+  categories as mockCategories,
+  tools as mockTools,
 } from '../lib/mock-data';
 import Sidebar from '../components/layout/sidebar';
 import CatalogAPI from '../services/catalogAPI';
 
-// Map des icônes (identique)
-const toPascalCase = (str) =>
-  str.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('');
-
-const getIcon = (iconName) => {
-  if (!iconName) return Icons.HelpCircle;
-  const pascal = toPascalCase(iconName);
-  return Icons[pascal] || Icons.HelpCircle;
+const iconMap = {
+  PenLine,
+  Image: ImageIcon,
+  Code,
+  Mic,
+  Video,
+  Zap,
+  MessageSquare,
+  Search,
+  Palette: Sparkles,
+  TrendingUp,
 };
 
 export default function HomePage() {
-  const [apiTools, setApiTools] = useState([]);
-  const [apiCategories, setApiCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [featuredTools, setFeaturedTools] = useState([]);
+  const [trendingTools, setTrendingTools] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [stats, setStats] = useState({
+    totalTools: mockTools.length,
+    totalCategories: mockCategories.length,
+    totalModels: 15,
+    averageRating: 4.5,
+  });
 
   useEffect(() => {
-    CatalogAPI.featuredTools(6).then(setApiTools).catch(() => setApiTools([]));
-    CatalogAPI.categories().then(setApiCategories).catch(() => setApiCategories([]));
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Appels API parallèles
+        const [featuredRes, categoriesRes, recentRes, statsRes] = await Promise.allSettled([
+          CatalogAPI.featuredTools(6),
+          CatalogAPI.categories(),
+          CatalogAPI.tools({ sortBy: 'recent', limit: 6 }),
+          CatalogAPI.stats(),
+        ]);
+
+        console.log('API Results:', { featuredRes, categoriesRes, recentRes, statsRes });
+
+        // Gestion des outils vedettes
+        if (featuredRes.status === 'fulfilled' && featuredRes.value?.length) {
+          setFeaturedTools(featuredRes.value.slice(0, 6));
+        } else {
+          setFeaturedTools(getFeaturedTools().slice(0, 6));
+        }
+
+        // Gestion des catégories
+        if (categoriesRes.status === 'fulfilled' && categoriesRes.value?.length) {
+          setCategories(categoriesRes.value);
+        } else {
+          setCategories(mockCategories);
+        }
+
+        // Gestion des outils récents
+        if (recentRes.status === 'fulfilled' && recentRes.value?.length) {
+          setTrendingTools(recentRes.value.slice(0, 6));
+        } else {
+          // Fallback : trier des données mockées par date (optionnel)
+          const sortedMock = [...mockTools].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          setTrendingTools(sortedMock.slice(0, 6));
+        }
+
+        // Gestion des statistiques
+        if (statsRes.status === 'fulfilled' && statsRes.value) {
+          setStats(statsRes.value);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+        // Fallback complet vers les mocks
+        setFeaturedTools(getFeaturedTools().slice(0, 6));
+        setTrendingTools(getTrendingTools(6));
+        setCategories(mockCategories);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const featuredTools = apiTools.length ? apiTools.slice(0, 6) : getFeaturedTools();
-  const trendingTools = apiTools.length ? [...apiTools].sort((a, b) => b.trendingScore - a.trendingScore).slice(0, 6) : getTrendingTools(6);
-  const topCategories = (apiCategories.length ? apiCategories : categories).slice(0, 6);
-  const totalTools = apiTools.length || tools.length;
+  const topCategories = categories.slice(0, 6);
+  console.log('Top Categories:', topCategories);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex flex-1">
+          <Sidebar />
+          <main className="flex-1 container mx-auto px-4 py-8">
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          </main>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -55,8 +145,8 @@ export default function HomePage() {
             <div className="container mx-auto px-4 py-20 md:py-28 relative">
               <div className="max-w-3xl mx-auto text-center">
                 <Badge variant="secondary" className="mb-4">
-                  <Icons.Sparkles className="h-3 w-3 mr-1" />
-                  Plus de {totalTools} outils AI répertoriés
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Plus de {stats.totalTools} outils AI répertoriés
                 </Badge>
 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 text-balance">
@@ -74,7 +164,7 @@ export default function HomePage() {
                 <form action="/search" method="get" className="max-w-2xl mx-auto">
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
                         type="search"
                         name="q"
@@ -122,14 +212,14 @@ export default function HomePage() {
                 <Link to="/categories">
                   <Button variant="ghost" className="hidden sm:flex">
                     Voir toutes
-                    <Icons.ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {topCategories.map((category) => {
-                  const IconComponent = getIcon(category.icon);
+                  const IconComponent = iconMap[category.icon] || Zap;
                   return (
                     <Link key={category.id} to={`/categories/${category.slug}`}>
                       <Card className="group hover:border-primary/50 hover:shadow-md transition-all cursor-pointer h-full">
@@ -154,7 +244,7 @@ export default function HomePage() {
                 <Link to="/categories">
                   <Button variant="outline">
                     Voir toutes les catégories
-                    <Icons.ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -167,7 +257,7 @@ export default function HomePage() {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
-                    <Icons.Sparkles className="h-6 w-6 text-primary" />
+                    <Sparkles className="h-6 w-6 text-primary" />
                     Outils en vedette
                   </h2>
                   <p className="text-muted-foreground mt-1">
@@ -177,13 +267,13 @@ export default function HomePage() {
                 <Link to="/tools?featured=true">
                   <Button variant="ghost" className="hidden sm:flex">
                     Voir tous
-                    <Icons.ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredTools.slice(0, 6).map((tool) => (
+                {featuredTools.filter((tool) => tool.featured).map((tool) => (
                   <ToolCard key={tool.id} tool={tool} />
                 ))}
               </div>
@@ -196,17 +286,17 @@ export default function HomePage() {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
-                    <Icons.TrendingUp className="h-6 w-6 text-primary" />
-                    Tendances
+                    <Sparkles className="h-6 w-6 text-primary" />   {/* ou une autre icône comme Clock */}
+                    Nouveautés
                   </h2>
                   <p className="text-muted-foreground mt-1">
-                    Les outils qui montent en ce moment
+                    Les derniers outils ajoutés à notre catalogue
                   </p>
                 </div>
-                <Link to="/ranking">
+                <Link to="/tools?sort=recent">
                   <Button variant="ghost" className="hidden sm:flex">
-                    Voir le classement
-                    <Icons.ArrowRight className="ml-2 h-4 w-4" />
+                    Voir tous
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -221,7 +311,7 @@ export default function HomePage() {
                 <Link to="/ranking">
                   <Button variant="outline">
                     Voir le classement complet
-                    <Icons.ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -233,10 +323,10 @@ export default function HomePage() {
             <div className="container mx-auto px-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 {[
-                  { value: `${totalTools}+`, label: 'Outils répertoriés', icon: Icons.Zap },
-                  { value: '10+', label: 'Catégories', icon: Icons.Search },
-                  { value: '15+', label: 'Modèles AI', icon: Icons.Sparkles },
-                  { value: '4.5', label: 'Note moyenne', icon: Icons.Star },
+                  { value: `${stats.totalTools}+`, label: 'Outils répertoriés', icon: Zap },
+                  { value: `${stats.totalCategories}+`, label: 'Catégories', icon: Search },
+                  { value: `${stats.totalModels}+`, label: 'Modèles AI', icon: Sparkles },
+                  { value: stats.averageRating, label: 'Note moyenne', icon: Star },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
                     <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
@@ -267,7 +357,7 @@ export default function HomePage() {
               <Link to="/propose-tool">
                 <Button size="lg">
                   Proposer un outil
-                  <Icons.ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>

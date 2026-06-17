@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { ToolOwnFeatures } from '../../components/ui/tool-own-features';
+import { PricingPlansSection } from '../../components/ui/pricing-plans';
 import {
   Select,
   SelectContent,
@@ -33,7 +36,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
-import { Search, Wrench, Clock, CheckCircle, XCircle, Plus, Star, MoreHorizontal, Eye, Trash2, Loader2, ShieldCheck } from 'lucide-react';
+import { 
+  Search, Wrench, Clock, CheckCircle, XCircle, Plus, Star, MoreHorizontal, Eye, Trash2, Loader2, ShieldCheck,
+  Info, Building, Users, FileText, Layers, Zap, CreditCard, Award, Flag, Calendar, LinkIcon, Globe, Tag, Cpu
+} from 'lucide-react';
 import { getModelById } from '../../lib/mock-data';
 import { toast } from 'sonner';
 import api from '../../services/api';
@@ -83,6 +89,12 @@ function scoreBorder(score) {
   if (score >= 60) return 'border-warning/40 bg-warning/5';
   return 'border-destructive/40 bg-destructive/5';
 }
+
+const pricingLabels = {
+  free: 'Gratuit',
+  freemium: 'Freemium',
+  paid: 'Payant'
+};
 
 // Panneau du score final + scores par champ
 function ValidationPanel({ validation }) {
@@ -144,80 +156,249 @@ function ValidationPanel({ validation }) {
   );
 }
 
-// Détails de la proposition affichés en haut de la modale de validation
+
 function ProposalInfo({ tool, submission }) {
   if (!tool) return null;
 
   return (
-    <div className="grid gap-4 text-sm">
-      <div className="grid gap-3 md:grid-cols-2">
-        <div>
-          <p className="text-muted-foreground">Nom</p>
-          <p className="font-medium">{tool.name}</p>
+    <Card className="overflow-hidden">
+      <CardHeader className="bg-muted/30 pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Info className="h-5 w-5 text-primary" />
+          Informations de l'outil
+        </CardTitle>
+        <CardDescription>Détails complets de la proposition</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-6 space-y-6">
+        {/* Section Général */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+            <Building className="h-4 w-4" /> Général
+          </h4>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex justify-between items-center border-b pb-1">
+              <span className="text-muted-foreground">Nom</span>
+              <span className="font-medium">{tool.name}</span>
+            </div>
+            <div className="flex justify-between items-center border-b pb-1">
+              <span className="text-muted-foreground">Fournisseur</span>
+              <span className="font-medium">{tool.provider || '-'}</span>
+            </div>
+            <div className="flex justify-between items-center border-b pb-1">
+              <span className="text-muted-foreground">URL</span>
+              <a href={tool.url} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1 truncate max-w-[200px]">
+                <LinkIcon className="h-3 w-3" /> {tool.url}
+              </a>
+            </div>
+            <div className="flex justify-between items-center border-b pb-1">
+              <span className="text-muted-foreground">Tarification</span>
+              <Badge variant="outline" className={
+                tool.pricing === 'free' ? 'border-success text-success' :
+                  tool.pricing === 'freemium' ? 'border-info text-info' :
+                    'border-warning text-warning'
+              }>
+                {pricingLabels[tool.pricing] || 'Inconnu'}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center border-b pb-1">
+              <span className="text-muted-foreground">Date de sortie</span>
+              <span className="font-medium flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {tool.releaseDate ? new Date(tool.releaseDate).toLocaleDateString('fr-FR') : '-'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center border-b pb-1">
+              <span className="text-muted-foreground">Open Source</span>
+              <Badge variant={tool.openSource ? 'default' : 'secondary'}>
+                {tool.openSource ? 'Oui' : 'Non'}
+              </Badge>
+            </div>
+          </div>
         </div>
-        <div>
-          <p className="text-muted-foreground">Fournisseur</p>
-          <p className="font-medium">{tool.provider || '-'}</p>
-        </div>
-        <div>
-          <p className="text-muted-foreground">URL officielle</p>
-          <a href={tool.url} target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
-            {tool.url}
-          </a>
-        </div>
-        <div>
-          <p className="text-muted-foreground">Tarification</p>
-          <p className="font-medium">{tool.pricing || '-'}</p>
-        </div>
-        <div>
-          <p className="text-muted-foreground">Proposé par</p>
-          <p className="font-medium">
-            {submission ? `${submission.userName} (${submission.userEmail})` : '-'}
-          </p>
-        </div>
-        <div>
-          <p className="text-muted-foreground">Date</p>
-          <p className="font-medium">
-            {submission?.createdAt ? new Date(submission.createdAt).toLocaleDateString('fr-FR') : '-'}
-          </p>
-        </div>
-      </div>
 
-      <div>
-        <p className="text-muted-foreground">Description courte</p>
-        <p className="font-medium">{tool.description || '-'}</p>
-      </div>
-      <div>
-        <p className="text-muted-foreground">Description détaillée</p>
-        <p className="whitespace-pre-line">{tool.longDescription || '-'}</p>
-      </div>
+        {/* Section Soumission */}
+        {(submission?.userName || submission?.createdAt) && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+              <Users className="h-4 w-4" /> Soumission
+            </h4>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex justify-between items-center border-b pb-1">
+                <span className="text-muted-foreground">Proposé par</span>
+                <span className="font-medium">{submission.userName || '-'}</span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-1">
+                <span className="text-muted-foreground">Email</span>
+                <span className="font-medium">{submission.userEmail || '-'}</span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-1">
+                <span className="text-muted-foreground">Date de soumission</span>
+                <span className="font-medium">
+                  {submission.createdAt ? new Date(submission.createdAt).toLocaleDateString('fr-FR') : '-'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <div>
-          <p className="mb-2 text-muted-foreground">Catégories</p>
-          <div className="flex flex-wrap gap-2">
-            {tool.categories?.length ? tool.categories.map(cat => <Badge key={cat.id} variant="outline">{cat.name}</Badge>) : '-'}
+        {/* Section Descriptions */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+            <FileText className="h-4 w-4" /> Descriptions
+          </h4>
+          <div className="space-y-2">
+            <div>
+              <span className="text-muted-foreground text-sm">Courte :</span>
+              <p className="text-sm mt-1 bg-muted/30 p-2 rounded">{tool.description || '-'}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground text-sm">Détaillée :</span>
+              <p className="text-sm mt-1 bg-muted/30 p-2 rounded whitespace-pre-line max-h-60 overflow-y-auto">
+                {tool.longDescription || '-'}
+              </p>
+            </div>
           </div>
         </div>
-        <div>
-          <p className="mb-2 text-muted-foreground">Plateformes</p>
-          <div className="flex flex-wrap gap-2">
-            {tool.platforms?.length ? tool.platforms.map(platform => <Badge key={platform} variant="secondary">{platform}</Badge>) : '-'}
+
+        {/* Classifications */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+            <Layers className="h-4 w-4" /> Classifications
+          </h4>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <span className="text-muted-foreground text-xs">Catégories</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {tool.categories?.length ? tool.categories.map(cat => (
+                  <Badge key={cat.id} variant="outline" className="flex items-center gap-1">
+                    <Tag className="h-3 w-3" /> {cat.name}
+                  </Badge>
+                )) : <span className="text-xs text-muted-foreground">-</span>}
+              </div>
+            </div>
+            <div>
+              <span className="text-muted-foreground text-xs">Plateformes</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {tool.platforms?.length ? tool.platforms.map(platform => (
+                  <Badge key={platform} variant="secondary" className="flex items-center gap-1">
+                    <Globe className="h-3 w-3" /> {platform}
+                  </Badge>
+                )) : <span className="text-xs text-muted-foreground">-</span>}
+              </div>
+            </div>
+            <div>
+              <span className="text-muted-foreground text-xs">Modèles IA</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {tool.aiModels?.length ? tool.aiModels.map(model => (
+                  <Badge key={model.modelId} variant="outline" className="flex items-center gap-1">
+                    <Cpu className="h-3 w-3" /> {model.name}
+                  </Badge>
+                )) : <span className="text-xs text-muted-foreground">-</span>}
+              </div>
+            </div>
           </div>
         </div>
-        <div>
-          <p className="mb-2 text-muted-foreground">Modèles IA</p>
-          <div className="flex flex-wrap gap-2">
-            {tool.aiModels?.length ? tool.aiModels.map(model => <Badge key={model.modelId} variant="outline">{model.name}</Badge>) : '-'}
+
+        {/* Fonctionnalités */}
+        {(tool.ownFeatures?.length > 0 || tool.functions?.length > 0) && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+              <Zap className="h-4 w-4" /> Fonctionnalités
+            </h4>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {tool.ownFeatures?.length > 0 && (
+                <div>
+                  <span className="text-muted-foreground text-xs">Propres :</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {tool.ownFeatures.map(f => <Badge key={f} variant="secondary">{f}</Badge>)}
+                  </div>
+                </div>
+              )}
+              {tool.functions?.length > 0 && (
+                <div>
+                  <span className="text-muted-foreground text-xs">Détectées :</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {tool.functions.map(f => <Badge key={f} variant="secondary">{f}</Badge>)}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+        )}
+
+        {/* Plans tarifaires */}
+        {tool.pricingPlans?.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+              <CreditCard className="h-4 w-4" /> Plans tarifaires
+            </h4>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {tool.pricingPlans.map(plan => (
+                <div key={plan.id} className="border rounded-lg p-3 bg-card hover:shadow-sm transition-shadow">
+                  <div className="font-medium text-primary">{plan.name}</div>
+                  <div className="text-sm mt-1">
+                    <span className="text-lg font-bold">{plan.price}</span> {plan.currency} / {plan.period}
+                  </div>
+                  {plan.description && <p className="text-xs text-muted-foreground mt-1">{plan.description}</p>}
+                  {plan.features?.length > 0 && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {plan.features.slice(0, 2).join(', ')}{plan.features.length > 2 && '...'}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Benchmarks */}
+        {tool.benchmarks && Object.keys(tool.benchmarks).length > 0 && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+              <Award className="h-4 w-4" /> Performances (benchmarks)
+            </h4>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {Object.entries(tool.benchmarks).map(([key, value]) => (
+                <div key={key} className="flex justify-between items-center">
+                  <span className="capitalize text-sm flex items-center gap-1">
+                    <Star className="h-3 w-3 text-warning" /> {key}
+                  </span>
+                  <span className="font-mono font-bold">{value}/100</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Note admin et tentatives */}
+        {(tool.adminNote || tool.tentativesMax > 0) && (
+          <div className="space-y-3 pt-2 border-t">
+            {tool.adminNote && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="font-medium text-destructive flex items-center gap-2">
+                  <Flag className="h-4 w-4" /> Note administrative
+                </p>
+                <p className="text-sm mt-1 whitespace-pre-line">{tool.adminNote}</p>
+              </div>
+            )}
+            {tool.tentativesMax > 0 && (
+              <div className="flex justify-between items-center text-sm bg-muted/20 p-2 rounded">
+                <span className="text-muted-foreground">Tentatives restantes pour modification :</span>
+                <span className="font-bold">
+                  {tool.tentativesMax - tool.tentativesEffectuees} / {tool.tentativesMax}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
 // Composant ToolsTable local
 function ToolsTable({ tools, onView, onValidate, onApprove, onReject, onDelete, loading = false }) {
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -234,6 +415,7 @@ function ToolsTable({ tools, onView, onValidate, onApprove, onReject, onDelete, 
       </div>
     );
   }
+  const navigate = useNavigate();
 
   return (
     <Table>
@@ -243,7 +425,6 @@ function ToolsTable({ tools, onView, onValidate, onApprove, onReject, onDelete, 
           <TableHead>Catégorie</TableHead>
           <TableHead>Statut</TableHead>
           <TableHead>Note</TableHead>
-          <TableHead>Utilisations</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -277,7 +458,6 @@ function ToolsTable({ tools, onView, onValidate, onApprove, onReject, onDelete, 
                   {tool.rating}/5
                 </div>
               </TableCell>
-              <TableCell>{(tool.usageCount || 0).toLocaleString()}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -286,7 +466,7 @@ function ToolsTable({ tools, onView, onValidate, onApprove, onReject, onDelete, 
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onView(tool)}>
+                    <DropdownMenuItem onClick={() => navigate(`/admin/proposals/${tool.id}`)}>
                       <Eye className="mr-2 h-4 w-4" />
                       Voir détails
                     </DropdownMenuItem>
@@ -294,15 +474,7 @@ function ToolsTable({ tools, onView, onValidate, onApprove, onReject, onDelete, 
                       <>
                         <DropdownMenuItem onClick={() => onValidate(tool)}>
                           <ShieldCheck className="mr-2 h-4 w-4" />
-                          Tester / valider les champs
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onApprove(tool)}>
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Approuver
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onReject(tool)}>
-                          <XCircle className="mr-2 h-4 w-4" />
-                          Refuser
+                          valider / rejeter les champs
                         </DropdownMenuItem>
                       </>
                     )}
@@ -327,6 +499,7 @@ export default function AdminTools() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedTool, setSelectedTool] = useState(null);
   const [tools, setTools] = useState([]);
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -339,6 +512,10 @@ export default function AdminTools() {
     validation: null,
     loading: false,
   });
+
+  const navigate = useNavigate();
+
+
 
   // Lance la validation des champs via l'API (action: admin_validate_tool)
   const openValidation = async (tool) => {
@@ -393,7 +570,7 @@ export default function AdminTools() {
   const filteredTools = tools.filter((tool) => {
     const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tool.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     let matchesStatus = statusFilter === 'all';
     if (!matchesStatus) {
       if (statusFilter === 'active') matchesStatus = (tool.status === 'active' || tool.status === 'actif');
@@ -488,6 +665,29 @@ export default function AdminTools() {
     }
   };
 
+  // Génère un résumé des scores critiques (< 60) pour pré-remplir le motif de refus
+  const getRejectionSummary = (validation) => {
+    if (!validation || !validation.fields) return '';
+
+    const criticalFields = Object.entries(validation.fields)
+      .filter(([_, field]) => field.score < 60)
+      .sort((a, b) => a[1].score - b[1].score); // du plus faible au moins faible
+
+    if (criticalFields.length === 0) {
+      return 'Aucun champ critique détecté, mais vous pouvez ajouter un motif.';
+    }
+
+    const lines = criticalFields.map(([fieldName, field]) => {
+      const label = field.label || fieldName;
+      const issues = field.issues?.length ? ` (${field.issues.join(', ')})` : '';
+      return `- ${label} : ${field.score}/100${issues}`;
+    });
+
+    return `Validation échouée pour les champs suivants :\n${lines.join('\n')}\n\nVeuillez corriger ces points.`;
+  };
+
+
+
   return (
     <div className="space-y-6">
       {/* En-tête */}
@@ -496,7 +696,7 @@ export default function AdminTools() {
           <h1 className="text-3xl font-bold text-foreground">Gestion des outils AI</h1>
           <p className="text-muted-foreground mt-1">Validez et gérez les outils de la plateforme</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
+        <Button onClick={() => navigate('/propose-tool')}>
           <Plus className="mr-2 h-4 w-4" />
           Ajouter un outil
         </Button>
@@ -569,13 +769,14 @@ export default function AdminTools() {
 
       {/* Modale de détails de l'outil */}
       <Dialog open={!!selectedTool} onOpenChange={() => setSelectedTool(null)}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Détails de l&apos;outil</DialogTitle>
             <DialogDescription>Informations complètes et options de gestion</DialogDescription>
           </DialogHeader>
           {selectedTool && (
             <div className="space-y-6">
+              {/* En-tête */}
               <div className="flex items-start gap-4">
                 <div className="h-16 w-16 rounded-lg bg-secondary flex items-center justify-center overflow-hidden shrink-0">
                   {selectedTool.logo ? (
@@ -591,20 +792,8 @@ export default function AdminTools() {
                     {selectedTool.categories?.map(cat => (
                       <Badge key={cat.id} variant="outline">{cat.name}</Badge>
                     ))}
-                    <Badge
-                      variant={
-                        selectedTool.status === 'active' || selectedTool.status === 'actif'
-                          ? 'default'
-                          : selectedTool.status === 'pending' || selectedTool.status === 'en_attente'
-                            ? 'secondary'
-                            : 'destructive'
-                      }
-                    >
-                      {selectedTool.status === 'active' || selectedTool.status === 'actif'
-                        ? 'Approuvé'
-                        : selectedTool.status === 'pending' || selectedTool.status === 'en_attente'
-                          ? 'En attente'
-                          : 'Refusé'}
+                    <Badge variant={selectedTool.status === 'active' ? 'default' : 'secondary'}>
+                      {selectedTool.status === 'active' ? 'Actif' : selectedTool.status === 'pending' ? 'En attente' : 'Refusé'}
                     </Badge>
                     <div className="flex items-center gap-1 text-sm">
                       <Star className="h-4 w-4 fill-warning text-warning" />
@@ -614,69 +803,115 @@ export default function AdminTools() {
                 </div>
               </div>
 
-              <div>
-                <h4 className="font-medium mb-2">Description complète</h4>
-                <p className="text-sm text-muted-foreground">{selectedTool.longDescription || selectedTool.description}</p>
-              </div>
+              {/* Onglets */}
+              <Tabs defaultValue="details" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="details">Détails</TabsTrigger>
+                  <TabsTrigger value="models">Modèles IA</TabsTrigger>
+                  <TabsTrigger value="features">Fonctionnalités</TabsTrigger>
+                  <TabsTrigger value="pricing">Tarifs</TabsTrigger>
+                </TabsList>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-medium mb-2">Modèles AI utilisés</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTool.aiModels?.map((m) => {
-                      const modelName = getModelById ? getModelById(m.modelId)?.name : m.modelId;
-                      return (
-                        <Badge key={m.modelId} variant="outline">
-                          {modelName || m.modelId}
-                          <span className={`ml-1 ${m.accessType === 'free' ? 'text-success' : 'text-warning'}`}>
-                            ({m.accessType === 'free' ? 'Gratuit' : 'Payant'})
-                          </span>
+                {/* Onglet Détails */}
+                <TabsContent value="details" className="space-y-4 mt-4">
+                  <div>
+                    <h4 className="font-medium mb-1">Description complète</h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">
+                      {selectedTool.longDescription || selectedTool.description}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><span className="text-muted-foreground">Fournisseur :</span> {selectedTool.provider || '-'}</div>
+                    <div><span className="text-muted-foreground">URL :</span> <a href={selectedTool.url} target="_blank" className="text-primary hover:underline">{selectedTool.url}</a></div>
+                    <div><span className="text-muted-foreground">Date de sortie :</span> {selectedTool.releaseDate ? new Date(selectedTool.releaseDate).toLocaleDateString('fr-FR') : '-'}</div>
+                    <div><span className="text-muted-foreground">Open Source :</span> {selectedTool.openSource ? 'Oui' : 'Non'}</div>
+                    <div><span className="text-muted-foreground">Tarification :</span> {pricingLabels[selectedTool.pricing] || selectedTool.pricing}</div>
+                    <div><span className="text-muted-foreground">Créé le :</span> {selectedTool.createdAt ? new Date(selectedTool.createdAt).toLocaleDateString('fr-FR') : '-'}</div>
+                    <div><span className="text-muted-foreground">Dernière mise à jour :</span> {selectedTool.updatedAt ? new Date(selectedTool.updatedAt).toLocaleDateString('fr-FR') : '-'}</div>
+                    <div><span className="text-muted-foreground">Stats mises à jour :</span> {selectedTool.statsUpdatedAt ? new Date(selectedTool.statsUpdatedAt).toLocaleDateString('fr-FR') : '-'}</div>
+                    <div><span className="text-muted-foreground">Total utilisateurs :</span> {selectedTool.totalUsers?.toLocaleString() || 0}</div>
+                    <div><span className="text-muted-foreground">Favoris :</span> {selectedTool.usageCount || 0}</div>
+                    <div><span className="text-muted-foreground">Score tendance :</span> {selectedTool.trendingScore || 0}</div>
+                  </div>
+
+                  {selectedTool.benchmarks && Object.keys(selectedTool.benchmarks).length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2">Performances (benchmarks)</h4>
+                      <div className="space-y-2">
+                        {Object.entries(selectedTool.benchmarks).map(([key, value]) => (
+                          <BenchmarkScore key={key} label={key} score={value} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTool.tentativesMax > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-1">Tentatives de soumission</h4>
+                      <p className="text-sm">Utilisées : {selectedTool.tentativesEffectuees} / {selectedTool.tentativesMax}</p>
+                      {selectedTool.tentativesEffectuees >= selectedTool.tentativesMax && (
+                        <p className="text-xs text-destructive">Maximum atteint, plus de modifications possibles.</p>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedTool.adminNote && (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <h4 className="font-medium text-destructive">Note administrative</h4>
+                      <p className="text-sm mt-1">{selectedTool.adminNote}</p>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Onglet Modèles IA */}
+                <TabsContent value="models" className="space-y-4 mt-4">
+                  {selectedTool.aiModels?.length > 0 ? (
+                    selectedTool.aiModels.map((m) => (
+                      <div key={m.modelId} className="border rounded-lg p-3">
+                        <p className="font-medium">{m.name || m.modelId}</p>
+                        <Badge className={m.accessType === 'free' ? 'bg-success' : 'bg-warning'}>
+                          {m.accessType === 'free' ? 'Gratuit' : 'Payant'}
                         </Badge>
-                      );
-                    }) || <p className="text-xs text-muted-foreground">Aucun modèle spécifié</p>}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Plateformes</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTool.platforms?.map((platform) => (
-                      <Badge key={platform} variant="secondary">
-                        {platform}
-                      </Badge>
-                    )) || <p className="text-xs text-muted-foreground">Non spécifié</p>}
-                  </div>
-                </div>
-              </div>
+                      </div>
+                    ))
+                  ) : <p className="text-muted-foreground">Aucun modèle associé</p>}
+                </TabsContent>
 
+                {/* Onglet Fonctionnalités */}
+                <TabsContent value="features" className="space-y-4 mt-4">
+                  {selectedTool.ownFeatures?.length > 0 && (
+                    <ToolOwnFeatures features={selectedTool.ownFeatures} />
+                  )}
+                  <div>
+                    <h4 className="font-medium mb-2">Fonctionnalités détectées</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTool.functions?.map(func => <Badge key={func} variant="secondary">{func}</Badge>)}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Onglet Plans tarifaires */}
+                <TabsContent value="pricing" className="space-y-4 mt-4">
+                  {selectedTool.pricingPlans?.length > 0 ? (
+                    <PricingPlansSection plans={selectedTool.pricingPlans} type="tool" />
+                  ) : <p className="text-muted-foreground">Aucun plan tarifaire défini</p>}
+                </TabsContent>
+              </Tabs>
+
+              {/* Actions */}
               <DialogFooter className="flex-col sm:flex-row gap-2">
                 {(selectedTool.status === 'pending' || selectedTool.status === 'en_attente') && (
                   <>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        handleReject(selectedTool);
-                        setSelectedTool(null);
-                      }}
-                    >
+                    <Button variant="outline" onClick={() => { handleReject(selectedTool); setSelectedTool(null); }}>
                       Refuser
                     </Button>
-                    <Button
-                      onClick={() => {
-                        handleApprove(selectedTool);
-                        setSelectedTool(null);
-                      }}
-                    >
+                    <Button onClick={() => { handleApprove(selectedTool); setSelectedTool(null); }}>
                       Approuver
                     </Button>
                   </>
                 )}
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    handleDelete(selectedTool);
-                    setSelectedTool(null);
-                  }}
-                >
+                <Button variant="destructive" onClick={() => { handleDelete(selectedTool); setSelectedTool(null); }}>
                   Supprimer
                 </Button>
               </DialogFooter>
@@ -723,7 +958,14 @@ export default function AdminTools() {
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
-              onClick={() => setRejectDialog({ open: true, tool: validationDialog.tool, reason: '' })}
+              onClick={() => {
+                const summary = getRejectionSummary(validationDialog.validation);
+                setRejectDialog({
+                  open: true,
+                  tool: validationDialog.tool,
+                  reason: summary
+                });
+              }}
               disabled={
                 !validationDialog.tool ||
                 !(validationDialog.tool.status === 'pending' || validationDialog.tool.status === 'en_attente') ||

@@ -86,7 +86,7 @@ export default function ToolsPage() {
 
               {filteredTools.length > 0 ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredTools.map((tool) => (
+                  {filteredTools.filter((tool) => tool.status === 'active').map((tool) => (
                     <ToolCard key={tool.id} tool={tool} />
                   ))}
                 </div>

@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   X, Check, Minus, ArrowLeft, Plus, Brain, 
   BarChart3, Star, Cpu, Package, Award, 
-  TrendingUp, Layers, Zap
+  TrendingUp, Layers, Zap, Loader2
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -25,9 +25,9 @@ import {
 } from '../components/ui/select';
 import { Header } from '../components/layout/header';
 import { Footer } from '../components/layout/footer';
-import { aiModels, tools } from '../lib/mock-data';
 import { cn } from '../lib/utils';
 import Sidebar from '../components/layout/sidebar';
+import CatalogAPI from '../services/catalogAPI';
 
 const pricingColors = {
   free: 'bg-success/10 text-success border-success/20',
@@ -58,8 +58,11 @@ function FeatureCheck({ has }) {
 }
 
 export default function CompareModelsPage() {
+  const [allModels, setAllModels] = useState([]);
+  const [allTools, setAllTools] = useState([]);
   const [selectedModels, setSelectedModels] = useState([]);
   const [modelToAdd, setModelToAdd] = useState('');
+  const [loading, setLoading] = useState(true);
   const [visibleSections, setVisibleSections] = useState({
     general: true,
     capabilities: true,
@@ -67,9 +70,29 @@ export default function CompareModelsPage() {
     benchmarks: true,
   });
 
+  // Chargement des données depuis l'API
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [modelsData, toolsData] = await Promise.all([
+          CatalogAPI.models(),
+          CatalogAPI.tools()
+        ]);
+        setAllModels(modelsData);
+        setAllTools(toolsData);
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
   const addModel = (modelId) => {
     if (selectedModels.length >= 4) return;
-    const model = aiModels.find(m => m.id === modelId);
+    const model = allModels.find(m => m.id === modelId);
     if (model && !selectedModels.find(m => m.id === modelId)) {
       setSelectedModels([...selectedModels, model]);
       setModelToAdd('');
@@ -85,7 +108,9 @@ export default function CompareModelsPage() {
   };
 
   const getToolsUsingModel = (modelId) => {
-    return tools.filter(t => t.aiModels.some(m => m.modelId === modelId));
+    return allTools.filter(tool => 
+      tool.aiModels?.some(model => model.modelId === modelId)
+    );
   };
 
   const allCapabilities = ['text', 'image', 'audio', 'video', 'code', 'reasoning'];
@@ -111,15 +136,15 @@ export default function CompareModelsPage() {
     }
 
     const mostCapable = selectedModels.reduce((best, m) =>
-      m.capabilities.length > best.capabilities.length ? m : best
+      m.capabilities?.length > best.capabilities?.length ? m : best
     );
-    summaries.push(`${mostCapable.name} offre le plus de capacités (${mostCapable.capabilities.length} types).`);
+    summaries.push(`${mostCapable.name} offre le plus de capacités (${mostCapable.capabilities?.length || 0} types).`);
 
     const toolCounts = selectedModels.map(m => ({
       name: m.name,
       count: getToolsUsingModel(m.id).length
     }));
-    const mostUsed = toolCounts.reduce((best, t) => t.count > best.count ? t : best);
+    const mostUsed = toolCounts.reduce((best, t) => t.count > best.count ? t : best, { count: 0 });
     if (mostUsed.count > 0) {
       summaries.push(`${mostUsed.name} est utilisé par le plus grand nombre d'outils (${mostUsed.count}).`);
     }
@@ -139,11 +164,26 @@ export default function CompareModelsPage() {
   };
 
   const summary = generateSummary();
-  const availableModels = aiModels.filter(m => !selectedModels.find(s => s.id === m.id));
+  const availableModels = allModels.filter(m => !selectedModels.find(s => s.id === m.id));
 
   const toggleSection = (section) => {
     setVisibleSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex flex-1">
+          <Sidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </main>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (selectedModels.length === 0) {
     return (
@@ -174,7 +214,7 @@ export default function CompareModelsPage() {
                       <SelectValue placeholder="Choisir un modèle..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {aiModels.map((model) => (
+                      {allModels.map((model) => (
                         <SelectItem key={model.id} value={model.id}>
                           {model.name} ({model.provider})
                         </SelectItem>
@@ -292,7 +332,7 @@ export default function CompareModelsPage() {
                     <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-border mb-3">
                       <Brain className="h-8 w-8 text-primary" />
                     </div>
-                    <Link to={`/models/${model.id}`}>
+                    <Link to={`/models/${model.slug || model.id}`}>
                       <h3 className="font-semibold text-foreground hover:text-primary transition-colors">
                         {model.name}
                       </h3>
@@ -335,8 +375,8 @@ export default function CompareModelsPage() {
                         <TableCell className="font-medium">Tarification</TableCell>
                         {selectedModels.map((model) => (
                           <TableCell key={model.id} className="text-center">
-                            <Badge variant="outline" className={pricingColors[model.pricing]}>
-                              {pricingLabels[model.pricing]}
+                            <Badge variant="outline" className={pricingColors[model.pricing] || pricingColors.free}>
+                              {pricingLabels[model.pricing] || 'Gratuit'}
                             </Badge>
                           </TableCell>
                         ))}
@@ -364,7 +404,7 @@ export default function CompareModelsPage() {
                           </TableCell>
                           {selectedModels.map((model) => (
                             <TableCell key={model.id}>
-                              <FeatureCheck has={model.capabilities.includes(cap)} />
+                              <FeatureCheck has={model.capabilities?.includes(cap)} />
                             </TableCell>
                           ))}
                         </TableRow>
@@ -402,7 +442,7 @@ export default function CompareModelsPage() {
                             <TableCell key={model.id} className="text-center">
                               <div className="flex flex-col gap-1">
                                 {modelTools.slice(0, 3).map((tool) => {
-                                  const accessType = tool.aiModels.find(m => m.modelId === model.id)?.accessType;
+                                  const accessType = tool.aiModels?.find(m => m.modelId === model.id)?.accessType;
                                   return (
                                     <Link
                                       key={tool.id}

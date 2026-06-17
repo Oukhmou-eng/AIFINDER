@@ -5,13 +5,13 @@ import { Button } from '../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
-import { 
-  Users, 
-  Wrench, 
-  Flag, 
-  TrendingUp, 
-  Clock, 
-  CheckCircle, 
+import {
+  Users,
+  Wrench,
+  Flag,
+  TrendingUp,
+  Clock,
+  CheckCircle,
   ArrowRight,
   Loader2,
   AlertTriangle,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminAPI } from '../../services/adminAPI';
+import { CatalogAPI } from '../../services/catalogAPI';
 
 // Composant StatCard dynamique
 function StatCard({ title, value, description, icon: Icon, trend, variant = 'primary', loading = false }) {
@@ -85,7 +86,7 @@ function ToolsTable({ tools }) {
             <span className="text-xs text-muted-foreground hidden sm:block">
               {new Date(tool.createdAt).toLocaleDateString('fr-FR')}
             </span>
-            <Link to={`/admin/tools`}>
+            <Link to={`/admin/proposals/${tool.IDOUT}`}>
               <Button variant="outline" size="sm" className="h-8">Traiter</Button>
             </Link>
           </div>
@@ -155,10 +156,10 @@ function ReportsTable({ reports }) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-             <Badge variant="outline" className="text-[10px] bg-muted/50">
-               {report.commentId ? 'Commentaire' : 'Outil'}
-             </Badge>
-             <Link to={`/admin/reports?view=${report.id}`}>
+            <Badge variant="outline" className="text-[10px] bg-muted/50">
+              {report.commentId ? 'Commentaire' : 'Outil'}
+            </Badge>
+            <Link to={`/admin/reports?view=${report.id}`}>
               <Button variant="ghost" size="sm" className="h-8">Traiter</Button>
             </Link>
           </div>
@@ -170,15 +171,24 @@ function ReportsTable({ reports }) {
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
+  const [recentTools, setRecentTools] = useState([]);
   const [loading, setLoading] = useState(true);
+
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const response = await AdminAPI.dashboard();
-      setData(response);
+      const [dashboardRes, recentToolsRes] = await Promise.all([
+        AdminAPI.dashboard(),
+        CatalogAPI.tools({ sortBy: 'recent', limit: 5 })
+      ]);
+      setData(dashboardRes);
+      setRecentTools(recentToolsRes || []);
+      console.log('Données du dashboard:', dashboardRes);
+      console.log('Outils en attente:', dashboardRes.pendingTools);
+      console.log('Outils récents:', recentToolsRes);
     } catch (err) {
-      toast.error('Erreur lors de la récupération des données du tableau de bord');
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -201,10 +211,10 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground mt-1 text-lg">Vue d&apos;ensemble de votre plateforme IA</p>
         </div>
         <div className="flex items-center gap-2">
-           <Button variant="outline" onClick={fetchDashboardData} disabled={loading}>
-             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-             Actualiser
-           </Button>
+          <Button variant="outline" onClick={fetchDashboardData} disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Actualiser
+          </Button>
         </div>
       </div>
 
@@ -275,44 +285,64 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Colonne droite : Activité plateforme */}
+        {/* Colonne droite : Derniers outils ajoutés */}
         <Card className="shadow-sm">
           <CardHeader className="border-b pb-4">
-            <CardTitle className="text-xl">Activité du système</CardTitle>
-            <CardDescription>État actuel des services</CardDescription>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-primary" />
+              Derniers outils ajoutés
+            </CardTitle>
+            <CardDescription>Les 5 outils les plus récents dans le catalogue</CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
-             <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-                      <span className="text-sm font-medium">Base de données</span>
-                   </div>
-                   <Badge variant="outline" className="text-success border-success/30 bg-success/5">Opérationnel</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-                      <span className="text-sm font-medium">API IA Finder</span>
-                   </div>
-                   <Badge variant="outline" className="text-success border-success/30 bg-success/5">Opérationnel</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-warning" />
-                      <span className="text-sm font-medium">Stockage Images</span>
-                   </div>
-                   <Badge variant="outline" className="text-warning border-warning/30 bg-warning/5">Lent</Badge>
-                </div>
-                
-                <div className="pt-4 border-t">
-                   <p className="text-xs font-bold uppercase text-muted-foreground mb-3">Statistiques Catégories</p>
-                   <div className="flex items-center justify-between py-1">
-                      <span className="text-sm">Total domaines</span>
-                      <span className="font-bold">{stats.totalCategories || 0}</span>
-                   </div>
-                </div>
-             </div>
+          <CardContent className="pt-2">
+            {loading ? (
+              <div className="py-10 text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+              </div>
+            ) : recentTools.length === 0 ? (
+              <div className="py-10 text-center text-muted-foreground">
+                Aucun outil pour le moment
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {recentTools.map((tool, idx) => (
+                  <div key={tool.id} className="flex items-center justify-between py-3 group hover:bg-muted/50 px-2 rounded-lg transition-colors">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-muted-foreground w-6">
+                        {idx + 1}
+                      </span>
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold">
+                        {tool.name.charAt(0)}
+                      </div>
+                      <div>
+                        <Link to={`/tools/${tool.slug}`} className="font-medium text-foreground hover:underline">
+                          {tool.name}
+                        </Link>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Badge variant="outline" className="text-[10px] uppercase">
+                            {tool.pricing}
+                          </Badge>
+                          <span>⭐ {tool.rating}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Link to={`/admin/proposals/${tool.id}?edit=true`}>
+                      <Button variant="ghost" size="sm" className="h-8">
+                        Éditer
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-4 text-center">
+              <Link to="/admin/tools">
+                <Button variant="outline" size="sm" className="w-full">
+                  Voir tous les outils
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -320,16 +350,16 @@ export default function AdminDashboard() {
       {/* Onglets bas de page */}
       <Tabs defaultValue="users" className="space-y-4">
         <div className="flex items-center justify-between">
-           <TabsList className="grid w-[400px] grid-cols-2">
-             <TabsTrigger value="users" className="flex items-center gap-2 font-bold">
-                <Users className="h-4 w-4" /> Utilisateurs récents
-             </TabsTrigger>
-             <TabsTrigger value="reports" className="flex items-center gap-2 font-bold">
-                <Flag className="h-4 w-4" /> Signalements récents
-             </TabsTrigger>
-           </TabsList>
+          <TabsList className="grid w-[400px] grid-cols-2">
+            <TabsTrigger value="users" className="flex items-center gap-2 font-bold">
+              <Users className="h-4 w-4" /> Utilisateurs récents
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2 font-bold">
+              <Flag className="h-4 w-4" /> Signalements récents
+            </TabsTrigger>
+          </TabsList>
         </div>
-        
+
         <TabsContent value="users">
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
@@ -371,7 +401,7 @@ export default function AdminDashboard() {
               </Link>
             </CardHeader>
             <CardContent className="pt-2">
-               {loading ? (
+              {loading ? (
                 <div className="py-10 text-center">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                 </div>

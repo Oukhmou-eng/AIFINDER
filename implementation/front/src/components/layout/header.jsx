@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom'; // ← remplace next/link et usePathname
-import { 
-  Search, 
-  Menu, 
-  X, 
+import {
+  Search,
+  Menu,
+  X,
   ChevronDown,
   User,
   LogOut,
@@ -53,7 +53,7 @@ export function Header() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-lg font-bold text-primary-foreground">AI</span>
           </div>
-          <span className="text-xl font-bold text-foreground">Tools</span>
+          <span className="text-xl font-bold text-foreground">Finder</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -100,32 +100,33 @@ export function Header() {
           {isAuthenticated ? (
             <>
               {/* Notifications */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-5 w-5" />
-                    {unreadNotificationCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground flex items-center justify-center">
-                        {unreadNotificationCount}
-                      </span>
-                    )}
-                    <span className="sr-only">Notifications</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80">
-                  <div className="p-2 font-medium">Notifications</div>
-                  <DropdownMenuSeparator />
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    {unreadNotificationCount === 0 ? 'Aucune nouvelle notification' : `${unreadNotificationCount} notification(s) non lue(s)`}
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard/notifications" className="cursor-pointer">
-                      Voir toutes les notifications
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {!isAdmin && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="h-5 w-5" />
+                      {unreadNotificationCount > 0 && (
+                        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground flex items-center justify-center">
+                          {unreadNotificationCount}
+                        </span>
+                      )}
+                      <span className="sr-only">Notifications</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-80">
+                    <div className="p-2 font-medium">Notifications</div>
+                    <DropdownMenuSeparator />
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      {unreadNotificationCount === 0 ? 'Aucune nouvelle notification' : `${unreadNotificationCount} notification(s) non lue(s)`}
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard/notifications" className="cursor-pointer">
+                        Voir toutes les notifications
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>)}
 
               {/* User menu */}
               <DropdownMenu>
@@ -192,7 +193,7 @@ export function Header() {
                     Rechercher
                   </Button>
                 </Link>
-                
+
                 <nav className="flex flex-col gap-1">
                   {navItems.map((item) => (
                     <Link

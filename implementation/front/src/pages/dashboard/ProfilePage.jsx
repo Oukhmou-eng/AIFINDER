@@ -46,7 +46,7 @@ export default function ProfilePage() {
         prenom: user.prenom || '',
         email: user.email || '',
       });
-      setAvatarUrl(user.avatar_url || '');
+      setAvatarUrl(user.avatar || '');
       setAvatarSeed(user.prenom || 'user');
     }
   }, [user]);
@@ -58,7 +58,7 @@ export default function ProfilePage() {
         nom: profile.name,
         prenom: profile.prenom,
         email: profile.email,
-        avatar_url: avatarUrl
+        avatar_url: avatarUrl // Both snake_case and camelCase work now
       });
       updateProfile(data.user);
       toast.success('Profil mis à jour avec succès !');
@@ -163,7 +163,7 @@ export default function ProfilePage() {
           <div className="flex flex-col sm:flex-row items-center gap-6 pb-2">
             <div className="relative group">
               <Avatar className="h-24 w-24 border-2 border-primary/20 shadow-md">
-                <AvatarImage src={avatarUrl} alt={profile.name} />
+                <AvatarImage src={avatarUrl || null} alt={profile.name} />
                 <AvatarFallback className="bg-primary/5 text-primary font-bold text-2xl">
                   {getInitials()}
                 </AvatarFallback>
@@ -252,18 +252,19 @@ export default function ProfilePage() {
       </Card>
 
       {/* Zone de danger */}
-      <Card className="border-destructive/30 shadow-sm overflow-hidden">
-        <CardHeader className="bg-destructive/5 border-b">
+      <Card className="border-destructive/50">
+        <CardHeader >
           <CardTitle className="flex items-center gap-2 text-destructive">
             <Trash2 className="h-5 w-5" />
             Zone de danger
           </CardTitle>
+          <CardDescription>Actions irréversibles sur votre compte</CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+        <CardContent >
+          <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-4">
             <div>
-              <p className="font-bold text-destructive">Supprimer mon compte</p>
-              <p className="text-sm text-muted-foreground">Attention, cette action est irréversible et supprimera toutes vos données.</p>
+              <p className="font-medium">Supprimer mon compte</p>
+              <p className="text-sm text-muted-foreground">Cette action supprimera définitivement votre compte et toutes vos données.</p>
             </div>
             <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)}>Supprimer le compte</Button>
           </div>
@@ -340,29 +341,22 @@ export default function ProfilePage() {
       </Dialog>
 
       {/* Confirmation Suppression */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-destructive">Suppression définitive du compte</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-             <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive mb-4">
-                <AlertTriangle className="h-5 w-5 shrink-0" />
-                <p className="text-sm font-bold">Cette action ne peut pas être annulée.</p>
-             </div>
-             <p className="text-sm text-muted-foreground leading-relaxed">
-               En confirmant, vous perdrez l'accès à votre compte ainsi qu'à toutes vos données personnelles : 
-               <strong> favoris, collections, avis et outils proposés</strong>.
-             </p>
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Êtes-vous absolument sûr ?</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowDeleteConfirm(false)}><X className="h-4 w-4" /></Button>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">Cette action est irréversible. Cela supprimera définitivement votre compte et toutes les données associées : favoris, collections, commentaires et outils proposés.</p>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Annuler</Button>
+              <Button variant="destructive" onClick={handleDeleteAccount}>Supprimer mon compte</Button>
+            </div>
           </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>Annuler</Button>
-            <Button variant="destructive" onClick={handleDeleteAccount} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmer la suppression'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
+
     </div>
   );
 }

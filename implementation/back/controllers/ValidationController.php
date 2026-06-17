@@ -4,12 +4,6 @@ require_once __DIR__ . '/../models/Catalog.php';
 require_once __DIR__ . '/../utils/validator.php';
 require_once __DIR__ . '/../services/ToolValidationApi.php';
 
-/**
- * Controleur de validation des propositions d'outils (scores par champ).
- *
- * NOUVEAU FICHIER - suit le meme pattern que AdminController :
- * helpers ok()/fail(), requireAdmin() avec token, donnees via Catalog.
- */
 class ValidationController
 {
     private Catalog $catalog;
@@ -19,11 +13,6 @@ class ValidationController
         $this->catalog = new Catalog();
     }
 
-    /**
-     * Action : admin_validate_tool
-     * Calcule les scores de chaque champ d'un outil propose (en attente)
-     * et retourne le resultat + les infos de soumission pour la modale admin.
-     */
     public function validateTool(array $data)
     {
         $this->requireAdmin($data);
@@ -38,11 +27,10 @@ class ValidationController
             fail('Outil introuvable', 404);
         }
 
-        // Infos du proposant (soumission liee a l'outil)
+        // Récupérer la soumission liée à l'outil
         $submission = $this->findSubmission((int) $tool['id']);
 
-        // Construction du payload attendu par ToolValidationApi
-        // (les cles correspondent au format de Catalog::formatTool)
+        // Préparer le payload pour l'API de validation
         $payload = [
             'name'            => $tool['name'] ?? '',
             'provider'        => $tool['provider'] ?? '',
@@ -71,25 +59,28 @@ class ValidationController
         ]);
     }
 
-    /**
-     * Recupere la soumission la plus recente liee a un outil
-     * (proposant, email, date) pour l'affichage dans la modale.
-     */
     private function findSubmission(int $toolId): ?array
     {
         $pdo = require __DIR__ . '/../config/database.php';
 
         $stmt = $pdo->prepare("
-            SELECT s.id_soum AS id, s.statut, s.note_admin AS adminNote, s.created_at AS createdAt,
-                   u.idU AS userId, u.nom AS userName, u.prenom AS userFirstName, u.email AS userEmail
-            FROM soumission_outil s
-            JOIN utilisateur u ON u.idU = s.idU
-            WHERE s.idOut = :tool_id
-            ORDER BY s.created_at DESC, s.id_soum DESC
+            SELECT 
+                s.ID_SOUMISSION AS id,
+                s.STATUT,
+                s.NOTE_ADMIN AS adminNote,
+                s.DATE_MISE_A_JOUR AS createdAt,
+                u.IDU AS userId,
+                u.NOM AS userName,
+                u.PRENOM AS userFirstName,
+                u.EMAIL AS userEmail
+            FROM SOUMISSION_OUTIL s
+            JOIN UTILISATEUR u ON u.IDU = s.IDU
+            WHERE s.IDOUT = :tool_id
+            ORDER BY s.DATE_MISE_A_JOUR DESC, s.ID_SOUMISSION DESC
             LIMIT 1
         ");
         $stmt->execute(['tool_id' => $toolId]);
-        $row = $stmt->fetch();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$row) {
             return null;
@@ -97,11 +88,11 @@ class ValidationController
 
         return [
             'id'        => (string) $row['id'],
-            'status'    => $row['statut'],
+            'status'    => $row['STATUT'],
             'adminNote' => $row['adminNote'],
             'createdAt' => $row['createdAt'],
             'userId'    => (string) $row['userId'],
-            'userName'  => trim($row['userFirstName'] . ' ' . $row['userName']),
+            'userName'  => trim(($row['userFirstName'] ?? '') . ' ' . ($row['userName'] ?? '')),
             'userEmail' => $row['userEmail'],
         ];
     }

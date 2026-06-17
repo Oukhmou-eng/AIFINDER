@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect, useMemo  } from 'react';
+import { Link, useLocation, useNavigate  } from 'react-router-dom';
 import { useAuth } from '../../contexts/auth-context';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -12,7 +12,8 @@ import {
   DialogFooter,
 } from '../../components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { PlusCircle, Clock, CheckCircle, XCircle, AlertCircle, Edit, Loader2, ExternalLink } from 'lucide-react';
+import { Input } from '../../components/ui/input';
+import { PlusCircle, Clock, CheckCircle, XCircle, AlertCircle, Edit, Loader2, ExternalLink,Search  } from 'lucide-react';
 import { CatalogAPI } from '../../services/catalogAPI';
 import { toast } from 'sonner';
 import { FullProposalEditor } from '../../components/dashboard/FullProposalEditor';
@@ -65,7 +66,7 @@ function ProposalDetailDialog({ proposal, open, onOpenChange, onEdit }) {
         <DialogHeader>
           <DialogTitle>Détails de la proposition : {proposal.toolName || proposal.name}</DialogTitle>
         </DialogHeader>
-        
+
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -172,10 +173,15 @@ function ProposalDetailDialog({ proposal, open, onOpenChange, onEdit }) {
 export default function DashboardProposals() {
   const location = useLocation();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [editingProposal, setEditingProposal] = useState(null);
+
+  // États pour la recherche et le filtre
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'approved', 'rejected'
 
   const fetchProposals = async () => {
     try {
@@ -193,6 +199,27 @@ export default function DashboardProposals() {
   useEffect(() => {
     fetchProposals();
   }, []);
+
+  // Filtrage des propositions
+  const filteredProposals = useMemo(() => {
+    let result = submissions;
+    
+    // Filtre par statut
+    if (statusFilter !== 'all') {
+      result = result.filter(p => p.status === statusFilter);
+    }
+    
+    // Filtre par recherche (nom ou description)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(p => 
+        p.toolName?.toLowerCase().includes(query) ||
+        p.toolDescription?.toLowerCase().includes(query)
+      );
+    }
+    
+    return result;
+  }, [submissions, statusFilter, searchQuery]);
 
   const pendingCount = submissions.filter(p => p.status === 'pending').length;
   const approvedCount = submissions.filter(p => p.status === 'approved').length;
@@ -234,7 +261,7 @@ export default function DashboardProposals() {
     );
   }
 
-  return (
+    return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -253,18 +280,44 @@ export default function DashboardProposals() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Historique des propositions</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Historique des propositions</CardTitle>
+          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par nom ou description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant={statusFilter === 'all' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('all')}>Tous</Button>
+              <Button variant={statusFilter === 'pending' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('pending')}>En attente</Button>
+              <Button variant={statusFilter === 'approved' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('approved')}>Approuvés</Button>
+              <Button variant={statusFilter === 'rejected' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('rejected')}>Refusés</Button>
+            </div>
+          </div>
+        </CardHeader>
         <CardContent>
-          {submissions.length > 0 ? (
+          {filteredProposals.length > 0 ? (
             <div className="space-y-4">
-              {submissions.map((proposal) => {
+              {filteredProposals.map((proposal) => {
                 const statusConfig = getStatusConfig(proposal.status);
                 const StatusIcon = statusConfig.icon;
                 return (
                   <div
                     key={proposal.id}
                     id={`proposal-${proposal.id}`}
-                    onClick={() => setSelectedProposal(proposal)}
+                    onClick={() => {
+                      if (proposal.status === 'approved' && proposal.toolSlug) {
+                        navigate(`/tools/${proposal.toolSlug}`);
+                      } else {
+                        {/*setSelectedProposal(proposal);*/}
+                        navigate(`/tools/${proposal.toolSlug}`);
+                      }
+                    }}
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border border-border gap-3 transition-all cursor-pointer hover:bg-muted/50"
                   >
                     <div className="flex-1">
@@ -280,26 +333,30 @@ export default function DashboardProposals() {
                         <span>Proposé le : {new Date(proposal.createdAt).toLocaleDateString('fr-FR')}</span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      {proposal.status === 'pending' && (
-                        <Button variant="outline" size="sm" disabled>En cours d'examen</Button>
-                      )}
-                      {proposal.status === 'approved' && proposal.toolSlug && (
-                        <Link to={`/tools/${proposal.toolSlug}`} onClick={(e) => e.stopPropagation()}>
-                          <Button variant="outline" size="sm">Voir l'outil</Button>
-                        </Link>
-                      )}
-                    </div>
+                    {/* Le bouton "Voir l'outil" a été supprimé car la carte redirige directement */}
                   </div>
                 );
               })}
             </div>
           ) : (
             <div className="text-center py-12">
-              <PlusCircle className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium mb-2">Aucune proposition</h3>
-              <p className="text-muted-foreground mb-4">Vous n'avez pas encore proposé d'outil.</p>
-              <Link to="/propose-tool"><Button>Proposer un outil</Button></Link>
+              {searchQuery || statusFilter !== 'all' ? (
+                <>
+                  <Search className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Aucun résultat</h3>
+                  <p className="text-muted-foreground mb-4">Aucune proposition ne correspond à vos critères.</p>
+                  <Button variant="outline" onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}>
+                    Réinitialiser les filtres
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <PlusCircle className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Aucune proposition</h3>
+                  <p className="text-muted-foreground mb-4">Vous n'avez pas encore proposé d'outil.</p>
+                  <Link to="/propose-tool"><Button>Proposer un outil</Button></Link>
+                </>
+              )}
             </div>
           )}
         </CardContent>
@@ -324,7 +381,6 @@ export default function DashboardProposals() {
             <FullProposalEditor
               initialData={editingProposal}
               onSave={async (updatedProposal) => {
-                // Ici on appellerait l'API pour mettre à jour la proposition
                 toast.success('Proposition modifiée et renvoyée pour examen');
                 setEditingProposal(null);
                 fetchProposals();

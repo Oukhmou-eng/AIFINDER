@@ -7,6 +7,11 @@ export const AuthAPI = {
     return data;
   },
 
+  async userComments() {
+    const data = await api.get('user_comments');
+    return data.comments || [];
+  },
+
   async register(payload) {
     return api.post('register', payload);
   },

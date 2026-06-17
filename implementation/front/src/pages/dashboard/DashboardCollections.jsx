@@ -35,131 +35,107 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAuth } from '../../contexts/auth-context';
-import { CatalogAPI } from '../../services/catalogAPI';
+import CatalogAPI from '../../services/catalogAPI';
 import { toast } from 'sonner';
 
 export default function DashboardCollections() {
-  const { user } = useAuth();
-  const [collections, setCollections] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user, addToCollection, removeFromCollection, createCollection, deleteCollection } = useAuth();
+  const [tools, setTools] = useState([]);
+  const [isLoadingTools, setIsLoadingTools] = useState(true);
+
+  const collections = user?.collections || [];
+
   const [selectedCollection, setSelectedCollection] = useState(null);
-  const [collectionTools, setCollectionTools] = useState([]);
-  const [loadingTools, setLoadingTools] = useState(false);
-  
   const [showAddTool, setShowAddTool] = useState(false);
   const [addSearchQuery, setAddSearchQuery] = useState('');
-  const [availableTools, setAvailableTools] = useState([]);
-  const [loadingAvailable, setLoadingAvailable] = useState(false);
   const [selectedToolToAdd, setSelectedToolToAdd] = useState(null);
-  
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [newCollection, setNewCollection] = useState({ name: '', description: '' });
   const [editCollection, setEditCollection] = useState({ id: '', name: '', description: '' });
 
-  // Chargement initial des collections
   useEffect(() => {
-    const fetchCollections = async () => {
+    const fetchTools = async () => {
+      setIsLoadingTools(true);
       try {
-        setLoading(true);
-        const data = await CatalogAPI.collections();
-        setCollections(data);
+        const data = await CatalogAPI.tools();
+        setTools(data);
       } catch (error) {
-        console.error('Erreur lors du chargement des collections:', error);
-        toast.error('Impossible de charger vos collections');
+        console.error('Erreur outils:', error);
       } finally {
-        setLoading(false);
+        setIsLoadingTools(false);
       }
     };
-    fetchCollections();
+    fetchTools();
   }, []);
 
-  // Chargement des outils de la collection sélectionnée
+  // Mettre à jour la collection sélectionnée si les collections de l'utilisateur changent
   useEffect(() => {
-    const fetchCollectionTools = async () => {
-      if (!selectedCollection || !selectedCollection.toolIds || selectedCollection.toolIds.length === 0) {
-        setCollectionTools([]);
-        return;
+    if (selectedCollection) {
+      const updated = collections.find(c => String(c.id) === String(selectedCollection.id));
+      if (updated) {
+        setSelectedCollection(updated);
+      } else {
+        setSelectedCollection(null);
       }
-      try {
-        setLoadingTools(true);
-        const tools = await CatalogAPI.tools({ ids: selectedCollection.toolIds });
-        setCollectionTools(tools);
-      } catch (error) {
-        console.error('Erreur lors du chargement des outils de la collection:', error);
-        toast.error('Erreur lors du chargement des outils');
-      } finally {
-        setLoadingTools(false);
-      }
-    };
-    fetchCollectionTools();
-  }, [selectedCollection]);
+    }
+  }, [collections]);
 
-  // Recherche d'outils à ajouter
-  useEffect(() => {
-    const searchAvailableTools = async () => {
-      if (!addSearchQuery.trim()) {
-        setAvailableTools([]);
-        return;
-      }
-      try {
-        setLoadingAvailable(true);
-        const data = await CatalogAPI.tools({ q: addSearchQuery, limit: 10 });
-        // Filtrer les outils déjà présents
-        const filtered = data.filter(t => !selectedCollection?.toolIds?.includes(t.id));
-        setAvailableTools(filtered);
-      } catch (error) {
-        console.error('Erreur lors de la recherche d\'outils:', error);
-      } finally {
-        setLoadingAvailable(false);
-      }
-    };
+  // Récupération des outils correspondant aux IDs de la collection
+  const getCollectionTools = (collection) => {
+    if (!collection || !collection.toolIds) return [];
+    const toolIdsStr = collection.toolIds.map(String);
+    return tools.filter(tool => toolIdsStr.includes(String(tool.id)));
+  };
 
-    const timer = setTimeout(searchAvailableTools, 300);
-    return () => clearTimeout(timer);
-  }, [addSearchQuery, selectedCollection]);
+  // Fonction pour ajouter un outil à la collection sélectionnée
+  const handleAddToolToSelectedCollection = async () => {
+    if (!selectedToolToAdd || !selectedCollection) return;
+    try {
+      await addToCollection(selectedCollection.id, selectedToolToAdd.id);
+      toast.success('Outil ajouté à la collection');
+      setShowAddTool(false);
+      setAddSearchQuery('');
+      setSelectedToolToAdd(null);
+    } catch (error) {
+      toast.error('Erreur lors de l\'ajout');
+    }
+  };
+
+  // Outils disponibles (non déjà présents dans la collection)
+  const availableTools = tools.filter(t => {
+    const toolIdStr = String(t.id);
+    const alreadyIn = selectedCollection?.toolIds?.map(String).includes(toolIdStr);
+    const matchesSearch = t.name.toLowerCase().includes(addSearchQuery.toLowerCase()) ||
+      t.description?.toLowerCase().includes(addSearchQuery.toLowerCase());
+    return !alreadyIn && matchesSearch;
+  });
 
   const handleCreateCollection = async () => {
     if (!newCollection.name.trim()) return;
     try {
-      const updatedCollections = await CatalogAPI.createCollection(newCollection.name, newCollection.description);
-      setCollections(updatedCollections);
+      await createCollection(newCollection.name, newCollection.description);
       setNewCollection({ name: '', description: '' });
       setIsCreateOpen(false);
-      toast.success('Collection créée avec succès');
+      toast.success('Collection créée');
     } catch (error) {
-      toast.error('Erreur lors de la création de la collection');
+      toast.error('Erreur création collection');
     }
   };
 
-  const handleEditCollection = async () => {
-    if (!editCollection.name.trim()) return;
-    try {
-      const updatedCollections = await CatalogAPI.updateCollection(editCollection.id, editCollection.name, editCollection.description);
-      setCollections(updatedCollections);
-      
-      if (selectedCollection?.id === editCollection.id) {
-        const updated = updatedCollections.find(c => c.id === editCollection.id);
-        setSelectedCollection(updated);
-      }
-      
-      setIsEditOpen(false);
-      toast.success('Collection mise à jour');
-    } catch (error) {
-      toast.error('Erreur lors de la mise à jour');
-    }
+  const handleEditCollection = () => {
+    // Note: Le backend n'a pas encore d'endpoint spécifique pour éditer une collection (nom/desc)
+    // On pourrait l'ajouter plus tard. Pour l'instant on affiche un toast.
+    toast.info('La modification du nom sera disponible prochainement');
+    setIsEditOpen(false);
   };
 
   const handleDeleteCollection = async (id) => {
     try {
-      const updatedCollections = await CatalogAPI.deleteCollection(id);
-      setCollections(updatedCollections);
-      if (selectedCollection?.id === id) {
-        setSelectedCollection(null);
-      }
+      await deleteCollection(id);
       toast.success('Collection supprimée');
     } catch (error) {
-      toast.error('Erreur lors de la suppression');
+      toast.error('Erreur suppression');
     }
   };
 
@@ -172,46 +148,25 @@ export default function DashboardCollections() {
     setIsEditOpen(true);
   };
 
-  const addToolToSelectedCollection = async () => {
-    if (!selectedToolToAdd || !selectedCollection) return;
-    try {
-      const updatedCollections = await CatalogAPI.addToolToCollection(selectedCollection.id, selectedToolToAdd.id);
-      setCollections(updatedCollections);
-      
-      const updated = updatedCollections.find(c => c.id === selectedCollection.id);
-      setSelectedCollection(updated);
-      
-      setShowAddTool(false);
-      setAddSearchQuery('');
-      setSelectedToolToAdd(null);
-      toast.success('Outil ajouté à la collection');
-    } catch (error) {
-      toast.error('Erreur lors de l\'ajout de l\'outil');
-    }
-  };
-
-  const removeFromCollection = async (toolId) => {
+  const handleRemoveFromCollection = async (toolId) => {
     if (!selectedCollection) return;
     try {
-      const updatedCollections = await CatalogAPI.removeToolFromCollection(selectedCollection.id, toolId);
-      setCollections(updatedCollections);
-      
-      const updated = updatedCollections.find(c => c.id === selectedCollection.id);
-      setSelectedCollection(updated);
-      
-      toast.success('Outil retiré de la collection');
+      await removeFromCollection(selectedCollection.id, toolId);
+      toast.success('Outil retiré');
     } catch (error) {
-      toast.error('Erreur lors du retrait de l\'outil');
+      toast.error('Erreur retrait');
     }
   };
 
-  if (loading) {
+  if (isLoadingTools) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
+      <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+
+  const collectionTools = selectedCollection ? getCollectionTools(selectedCollection) : [];
 
   return (
     <div className="space-y-6">
@@ -387,72 +342,61 @@ export default function DashboardCollections() {
                 </div>
               </CardHeader>
               <CardContent>
-                {loadingTools ? (
-                  <div className="flex h-32 items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                {showAddTool && (
+                  <div className="mt-4 p-3 border rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher un outil..."
+                        value={addSearchQuery}
+                        onChange={(e) => setAddSearchQuery(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button variant="outline" size="sm" onClick={() => setShowAddTool(false)}>
+                        Annuler
+                      </Button>
+                    </div>
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {availableTools.slice(0, 10).map(tool => (
+                        <div
+                          key={tool.id}
+                          className={`flex items-center justify-between p-2 rounded cursor-pointer hover:bg-muted ${selectedToolToAdd?.id === tool.id ? 'bg-primary/10' : ''
+                            }`}
+                          onClick={() => setSelectedToolToAdd(tool)}
+                        >
+                          <div>
+                            <p className="font-medium text-sm">{tool.name}</p>
+                            <p className="text-xs text-muted-foreground">{tool.description?.slice(0, 60)}...</p>
+                          </div>
+                          {selectedToolToAdd?.id === tool.id && <CheckCircle className="h-4 w-4 text-primary" />}
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      className="w-full mt-3"
+                      disabled={!selectedToolToAdd}
+                      onClick={handleAddToolToSelectedCollection}
+                    >
+                      Ajouter à la collection
+                    </Button>
                   </div>
-                ) : collectionTools.length > 0 ? (
+                )}
+                {collectionTools.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {collectionTools.map((tool) => (
                       <div key={tool.id} className="relative group">
                         <ToolCard tool={tool} showCategory={false} />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeFromCollection(tool.id)}
+                        <button
+                          className="absolute top-2 right-2 p-2 rounded-full bg-black/50 text-white hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 z-10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveFromCollection(tool.id);
+                          }}
                         >
                           <X className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </div>
                     ))}
-                    {showAddTool && (
-                      <div className="mt-4 p-3 border rounded-lg bg-muted/30">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Search className="h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Rechercher un outil..."
-                            value={addSearchQuery}
-                            onChange={(e) => setAddSearchQuery(e.target.value)}
-                            className="flex-1"
-                          />
-                          <Button variant="outline" size="sm" onClick={() => setShowAddTool(false)}>Annuler</Button>
-                        </div>
-                        <div className="max-h-40 overflow-y-auto space-y-1">
-                          {loadingAvailable ? (
-                            <div className="flex py-4 justify-center">
-                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                            </div>
-                          ) : availableTools.length > 0 ? (
-                            availableTools.map(tool => (
-                              <div
-                                key={tool.id}
-                                className={`flex items-center justify-between p-2 rounded cursor-pointer hover:bg-muted ${selectedToolToAdd?.id === tool.id ? 'bg-primary/10' : ''
-                                  }`}
-                                onClick={() => setSelectedToolToAdd(tool)}
-                              >
-                                <div>
-                                  <p className="font-medium text-sm">{tool.name}</p>
-                                  <p className="text-xs text-muted-foreground">{tool.description.slice(0, 60)}...</p>
-                                </div>
-                                {selectedToolToAdd?.id === tool.id && <CheckCircle className="h-4 w-4 text-primary" />}
-                              </div>
-                            ))
-                          ) : addSearchQuery.trim() !== '' ? (
-                            <p className="text-xs text-center py-2 text-muted-foreground">Aucun outil trouvé</p>
-                          ) : (
-                            <p className="text-xs text-center py-2 text-muted-foreground">Tapez pour rechercher des outils</p>
-                          )}
-                        </div>
-                        <Button
-                          className="w-full mt-3"
-                          disabled={!selectedToolToAdd}
-                          onClick={addToolToSelectedCollection}
-                        >
-                          Ajouter à la collection
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div className="py-8 text-center">
@@ -460,59 +404,13 @@ export default function DashboardCollections() {
                     <p className="mt-2 text-sm text-muted-foreground">
                       Cette collection est vide
                     </p>
-                    {showAddTool ? (
-                      <div className="mt-4 max-w-sm mx-auto p-3 border rounded-lg bg-muted/30">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Search className="h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Rechercher un outil..."
-                            value={addSearchQuery}
-                            onChange={(e) => setAddSearchQuery(e.target.value)}
-                            className="flex-1"
-                          />
-                          <Button variant="outline" size="sm" onClick={() => setShowAddTool(false)}>Annuler</Button>
-                        </div>
-                        <div className="max-h-40 overflow-y-auto space-y-1">
-                          {loadingAvailable ? (
-                            <div className="flex py-4 justify-center">
-                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                            </div>
-                          ) : availableTools.length > 0 ? (
-                            availableTools.map(tool => (
-                              <div
-                                key={tool.id}
-                                className={`flex items-center justify-between p-2 rounded cursor-pointer hover:bg-muted ${selectedToolToAdd?.id === tool.id ? 'bg-primary/10' : ''
-                                  }`}
-                                onClick={() => setSelectedToolToAdd(tool)}
-                              >
-                                <div className="text-left">
-                                  <p className="font-medium text-sm">{tool.name}</p>
-                                  <p className="text-xs text-muted-foreground">{tool.description.slice(0, 60)}...</p>
-                                </div>
-                                {selectedToolToAdd?.id === tool.id && <CheckCircle className="h-4 w-4 text-primary" />}
-                              </div>
-                            ))
-                          ) : addSearchQuery.trim() !== '' ? (
-                            <p className="text-xs text-center py-2 text-muted-foreground">Aucun outil trouvé</p>
-                          ) : (
-                            <p className="text-xs text-center py-2 text-muted-foreground">Tapez pour rechercher des outils</p>
-                          )}
-                        </div>
-                        <Button
-                          className="w-full mt-3"
-                          disabled={!selectedToolToAdd}
-                          onClick={addToolToSelectedCollection}
-                        >
-                          Ajouter à la collection
-                        </Button>
-                      </div>
-                    ) : (
-                      <Link to="/tools">
-                        <Button className="mt-4">Explorer les outils</Button>
-                      </Link>
-                    )}
+                    <Link to="/tools">
+                      <Button className="mt-4">Ajouter des outils</Button>
+                    </Link>
                   </div>
                 )}
+
+
               </CardContent>
             </Card>
           ) : (

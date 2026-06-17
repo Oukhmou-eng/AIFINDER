@@ -5,6 +5,17 @@ export const AdminAPI = {
     return api.get('admin_dashboard');
   },
 
+  async getUserSubmissions(userId) {
+    return api.get('admin_user_submissions', { userId });
+  },
+  async getUserReviews(userId) {
+    return api.get('admin_user_reviews', { userId });
+  },
+
+  async updateTool(id, data) {
+    return api.post('admin_update_tool', { id, ...data });
+  },
+
   async users() {
     return api.get('admin_users');
   },
@@ -12,7 +23,7 @@ export const AdminAPI = {
   async tools(params = {}) {
     return api.get('admin_tools', params);
   },
-  
+
 
   async categories() {
     return api.get('admin_categories');
@@ -30,8 +41,27 @@ export const AdminAPI = {
     return api.post('admin_delete_category', { id_Cat: id });
   },
 
+  async addToolToCategory(toolId, categoryId) {
+    return api.post('admin_add_tool_to_category', { toolId, categoryId });
+  },
+  async removeToolFromCategory(toolId, categoryId) {
+    return api.post('admin_remove_tool_from_category', { toolId, categoryId });
+  },
+
   async models() {
     return api.get('admin_models');
+  },
+
+  async providers() {
+    return api.get('admin_providers');
+  },
+
+  async features() {
+    return api.get('admin_features');
+  },
+
+  async plans() {
+    return api.get('admin_plans');
   },
 
   async createModel(data) {

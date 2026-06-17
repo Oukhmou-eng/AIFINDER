@@ -1,7 +1,8 @@
 <?php
 
 $host = '127.0.0.1';
-$dbname = 'dbai';
+//$dbname = 'dbai';
+$dbname = 'AI_TOOL';
 $username = 'root';
 $password = '';
 

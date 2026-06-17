@@ -16,6 +16,20 @@ export const CatalogAPI = {
     return data.tool;
   },
 
+  // Dans CatalogAPI.js
+  async platforms() {
+    return api.get('platforms');
+  },
+
+
+
+
+  async trendingTools(limit = 6) {
+    const data = await api.get('tools', { limit, sortBy: 'usage' });
+    return data.tools || [];
+  },
+
+
   async categories() {
     const data = await api.get('categories');
     return data.categories || [];
@@ -29,6 +43,20 @@ export const CatalogAPI = {
   async model(idOrSlug) {
     const data = await api.get('model', { slug: idOrSlug });
     return data.model;
+  },
+
+  async comments(toolId) {
+    const data = await api.get('comments', { toolId });
+    return data.comments || [];
+  },
+
+  async addComment(payload) {
+    const data = await api.post('add_comment', payload);
+    return data.comments || [];
+  },
+
+  async deleteComment(commentId) {
+    await api.post('delete_comment', { commentId });
   },
 
   async reviews(toolId) {
@@ -46,8 +74,8 @@ export const CatalogAPI = {
     return data.reviews || [];
   },
 
-  async myProposals() {
-    const data = await api.get('my_proposals');
+  async myProposals(id) {
+    const data = await api.get('my_proposals', { id });
     return data.submissions || [];
   },
 
@@ -71,8 +99,8 @@ export const CatalogAPI = {
     return data.favorites || [];
   },
 
-  async myFavorites() {
-    const data = await api.get('my_favorites');
+  async myFavorites(id) {
+    const data = await api.get('my_favorites', { id });
     return data.tools || [];
   },
 
